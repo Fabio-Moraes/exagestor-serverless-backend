@@ -1,19 +1,19 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
 
 import { z } from 'zod';
 
 const router = express.Router();
 
-router.get('/finish', async (req: Request, res: Response) => {
+router.get('/select-material', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
         token: z.string().min(1).optional(),
-        protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+        protocol: z.string().refine((data) => customFormatRegex.test(data)).optional()
     });
 
     const { token, protocol } = paramsSchema.parse(req.query);

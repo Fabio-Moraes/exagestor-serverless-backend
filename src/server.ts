@@ -5,6 +5,7 @@ import http from 'http';
 
 import routesAuthenticate from './routes/authenticate';
 import routesHistoricService from './routes/historic';
+import routesDetailsService from './routes/historic/details';
 import routesNewService from './routes/new';
 import routesRunningService from './routes/running';
 import routesCancelService from './routes/running/cancel';
@@ -33,6 +34,7 @@ app.use(express.json());
 // Rotas
 app.use('/api/auth', routesAuthenticate);
 app.use('/api/services', routesHistoricService);
+app.use('/api/services', routesDetailsService);
 app.use('/api/services', routesNewService);
 app.use('/api/services', routesRunningService);
 app.use('/api/services', routesSelectService);

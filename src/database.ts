@@ -53,6 +53,7 @@ CREATE TABLE `users_services` (
   `status` varchar(50) NOT NULL,
   `update_count` int NOT NULL,
   `service_ids` varchar(255),
+  `observation` TEXT CHECK (LENGTH(`observation`) <= 500),
   `created_at` timestamp NULL,
   `modification_at` timestamp NULL,
   `finished_at` timestamp NULL,

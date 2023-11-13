@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../database';
+import { JWT_SECRET_KEY } from '../../../../../constants';
+import { executeQuery } from '../../../../../database';
 
 import { z, ZodError } from 'zod';
 

@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { createProtocol } from '../../components/CreateProtocol';
-import { JWT_SECRET_KEY } from '../../constants';
-import { executeQuery } from '../../database';
+import { createProtocol } from '../../../components/CreateProtocol';
+import { JWT_SECRET_KEY } from '../../../constants';
+import { executeQuery } from '../../../database';
 
 import { z } from 'zod';
 

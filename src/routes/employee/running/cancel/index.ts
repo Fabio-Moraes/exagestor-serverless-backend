@@ -1,14 +1,14 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
 
 import { z } from 'zod';
 
 const router = express.Router();
 
-router.get('/start', async (req: Request, res: Response) => {
+router.get('/cancel', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
@@ -50,8 +50,8 @@ router.get('/start', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Requisição inválido' });
         }
 
-        if (rows[0].status === 'active') {
-            console.log('Serviço já inicializado')
+        if (rows[0].status === 'canceled') {
+            console.log('Serviço já cancelado')
             return res.status(409).json({ error: 'Serviço já pausado' });
         }
 
@@ -63,8 +63,8 @@ router.get('/start', async (req: Request, res: Response) => {
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
 
-        const newModificationAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        const newStatus = 'active';
+        const newDateStatus = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        const newStatus = 'canceled';
 
         const values = [
             rows[0].employee_id,
@@ -77,11 +77,12 @@ router.get('/start', async (req: Request, res: Response) => {
             newStatus,
             rows[0].update_count + 1,
             rows[0].created_at,
-            newModificationAt
+            newDateStatus,
+            newDateStatus
         ];
 
         const insertSql =
-            'INSERT INTO users_services (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, service_ids, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
+            'INSERT INTO users_services (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, service_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)';
 
         await executeQuery(insertSql, values);
 

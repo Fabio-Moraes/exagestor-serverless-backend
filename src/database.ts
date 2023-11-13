@@ -1,6 +1,5 @@
 import mysql, { Pool, PoolConnection } from 'mysql2/promise';
 
-// Configurações de conexão
 const dbConfig = {
   host: 'aws.connect.psdb.cloud',
   user: 'nbwp6r51iwjr2wxmxdjl',
@@ -13,15 +12,12 @@ const dbConfig = {
   }
 };
 
-// Crie um pool de conexão
 const dbPool: Pool = mysql.createPool(dbConfig);
 
-// Trate o encerramento do aplicativo
 process.on('beforeExit', () => {
   dbPool.end();
 });
 
-// Função para executar consultas
 export async function executeQuery(query: string, values?: any[]): Promise<any[]> {
   let connection: PoolConnection | null = null;
   try {

@@ -1,16 +1,22 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../constants';
-import { executeQuery } from '../../database';
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
 
 import { z } from 'zod';
 
 const router = express.Router();
 
-router.get('/historic', async (req: Request, res: Response) => {
-    const paramsSchema = z.object({ token: z.string().min(1).optional() });
-    const { token } = paramsSchema.parse(req.query);
+router.get('/historic/details', async (req: Request, res: Response) => {
+    const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
+    const paramsSchema = z.object({ 
+        token: z.string().min(1).optional(), 
+        protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+        update_count: z.string().min(1).optional(), 
+    });
+    const { token, protocol, update_count } = paramsSchema.parse(req.query);
 
     if (!token) {
         console.error('Token não fornecido');
@@ -29,9 +35,9 @@ router.get('/historic', async (req: Request, res: Response) => {
         }
 
         const { id: employeeId } = decoded as { id: number };
-        const sql = `SELECT * FROM users_services WHERE employee_id = ? ORDER BY id DESC`;
+        const sql = 'SELECT * FROM users_services WHERE employee_id = ? AND protocol = ? AND update_count = ?';
 
-        const rows = await executeQuery(sql, [employeeId]);
+        const rows = await executeQuery(sql, [employeeId, protocol, update_count]);
         res.json(rows);
     });
 });

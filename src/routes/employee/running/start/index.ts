@@ -1,14 +1,14 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
 
 import { z } from 'zod';
 
 const router = express.Router();
 
-router.get('/pause', async (req: Request, res: Response) => {
+router.get('/start', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
@@ -50,8 +50,8 @@ router.get('/pause', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Requisição inválido' });
         }
 
-        if (rows[0].status === 'paused') {
-            console.log('Serviço já pausado')
+        if (rows[0].status === 'active') {
+            console.log('Serviço já inicializado')
             return res.status(409).json({ error: 'Serviço já pausado' });
         }
 
@@ -64,7 +64,7 @@ router.get('/pause', async (req: Request, res: Response) => {
         const seconds = now.getSeconds().toString().padStart(2, '0');
 
         const newModificationAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        const newStatus = 'paused';
+        const newStatus = 'active';
 
         const values = [
             rows[0].employee_id,

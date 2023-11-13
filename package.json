@@ -1,15 +1,16 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "back_end",
+  "author": "fabio_vieira_moraes",
+  "license": "OWNER",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "vitest"
   },
   "keywords": [],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.13",

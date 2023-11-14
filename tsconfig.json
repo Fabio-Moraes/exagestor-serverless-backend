@@ -1,12 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"]
-    },
-    "target": "es2020",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "baseUrl": "src",
+    "target": "es5",
+    "module": "commonjs",
     "resolveJsonModule": true,
     "outDir": "dist",
     "esModuleInterop": true,

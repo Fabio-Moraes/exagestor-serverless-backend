@@ -3,19 +3,8 @@ import dotenv from 'dotenv';
 import express, {  Request, Response } from 'express';
 import http from 'http';
 
-import 'esm';
-import 'module-alias/register';
-
-import moduleAlias from 'module-alias';
-
 import employee from './routes/employee';
 import auth from './routes/auth';
-
-const baseUrl = new URL('./src', import.meta.url).pathname;
-process.env.NODE_PATH = baseUrl;
-
-// Adicionar aliases
-moduleAlias.addAlias('@', baseUrl);
 
 dotenv.config();
 

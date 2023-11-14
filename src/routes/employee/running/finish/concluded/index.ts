@@ -6,6 +6,18 @@ import { executeQuery } from '../../../../../database';
 
 import { z, ZodError } from 'zod';
 
+interface Decoded {
+  user: {
+    id: number;
+    name: string;
+    role: string;
+  };
+  company: {
+    id: number;
+    name: string;
+  };
+}
+
 const router = express.Router();
 
 const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;

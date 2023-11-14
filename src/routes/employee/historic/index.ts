@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import type { Decoded } from '../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';

@@ -1,4 +1,4 @@
-interface Decoded {
+export interface Decoded {
   user: {
     id: number;
     name: string;

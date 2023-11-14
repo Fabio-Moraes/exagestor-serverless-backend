@@ -2,12 +2,12 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { executeQuery } from 'database';
 
-import routesCancelService from './cancel';
-import routesPauseService from './pause';
-import routesStartService from './start';
-import routesFinishService from './finish';
+import routesCancel from './cancel';
+import routesPause from './pause';
+import routesStart from './start';
+import routesFinish from './finish';
 
 import { z } from 'zod';
 
@@ -57,9 +57,9 @@ router.get('/running', async (req: Request, res: Response) => {
     });
 });
 
-router.use(routesFinishService);
-router.use(routesCancelService);
-router.use(routesPauseService);
-router.use(routesStartService);
+router.use(routesFinish);
+router.use(routesCancel);
+router.use(routesPause);
+router.use(routesStart);
 
 export default router;

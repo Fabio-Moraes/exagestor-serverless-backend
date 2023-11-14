@@ -32,9 +32,9 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
             }
 
-            const { id: employeeId } = decoded as { id: number };
+            const { user, company } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM users_services WHERE employee_id = ? AND protocol = ? ORDER BY id DESC', [employeeId, protocol]);
+            const [row] = await executeQuery('SELECT * FROM ams_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
 
             if (!row) {
                 console.error('Requisição inválida');
@@ -50,6 +50,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
             const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
 
             const values = [
+                row.company_id,
                 row.employee_id,
                 row.client_name,
                 row.city,
@@ -61,12 +62,13 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 row.update_count + 1,
                 row.created_at,
                 row.modification_at,
-                serviceIds,
+                row.used_service_id,
+                row.used_material_id,
                 observation,
                 formattedDate
             ];
 
-            const insertSql = 'INSERT INTO users_services (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, service_ids, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertSql = 'INSERT INTO ams_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             await executeQuery(insertSql, values);
 

@@ -37,8 +37,9 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
 }
 
 /* 
-CREATE TABLE `users_services` (
+CREATE TABLE `ams_operations` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int NOT NULL,
   `employee_id` int NOT NULL,
   `client_name` varchar(100) NOT NULL,
   `city` varchar(100) NOT NULL,
@@ -48,8 +49,9 @@ CREATE TABLE `users_services` (
   `protocol` varchar(30) NOT NULL,
   `status` varchar(50) NOT NULL,
   `update_count` int NOT NULL,
-  `service_ids` varchar(255),
-  `observation` TEXT CHECK (LENGTH(`observation`) <= 500),
+  `used_service_id` varchar(255),
+  `used_material_id` varchar(255),
+  `observation` varchar(1000),
   `created_at` timestamp NULL,
   `modification_at` timestamp NULL,
   `finished_at` timestamp NULL,

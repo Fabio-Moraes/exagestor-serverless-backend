@@ -57,10 +57,11 @@ router.post('/new', async (req: Request, res: Response) => {
         const status = 'active';
         const updateCount = 0
 
-        const { id: employeeId } = decoded as { id: number };
+        const { user, company } = decoded as Decoded;
 
         const values = [
-            employeeId,
+            company.id,
+            user.id,
             clientName,
             city,
             classification,
@@ -73,7 +74,7 @@ router.post('/new', async (req: Request, res: Response) => {
         ];
 
         const sql =
-            'INSERT INTO users_services (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, service_ids, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
+            'INSERT INTO ams_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
 
         await executeQuery(sql, values);
 

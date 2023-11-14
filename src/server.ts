@@ -4,6 +4,7 @@ import express, {  Request, Response } from 'express';
 import http from 'http';
 
 import employee from './routes/employee';
+import admin from './routes/admin';
 import auth from './routes/auth';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(
 
 app.use(express.json());
 app.use('/api/employee', employee);
+app.use('/api/admin', admin);
 app.use('/api/auth', auth);
 
 app.use((err: Error, req: Request, res: Response) => {

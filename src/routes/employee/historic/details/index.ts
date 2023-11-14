@@ -34,10 +34,10 @@ router.get('/historic/details', async (req: Request, res: Response) => {
             }
         }
 
-        const { id: employeeId } = decoded as { id: number };
-        const sql = 'SELECT * FROM users_services WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+        const { user, company } = decoded as Decoded;
+        const sql = 'SELECT * FROM ams_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
 
-        const rows = await executeQuery(sql, [employeeId, protocol, update_count]);
+        const rows = await executeQuery(sql, [user.id, company.id, protocol, update_count]);
         res.json(rows);
     });
 });

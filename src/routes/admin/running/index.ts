@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import type { Decoded } from '../../../types/jwt';
 
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
@@ -30,24 +31,25 @@ router.get('/running', async (req: Request, res: Response) => {
  
         const statusCanceled = 'canceled';
         const statusCompleted = 'concluded';
-        const { id: employeeId } = decoded as { id: number };
+        const { company } = decoded as Decoded;
 
         const sql = `
-        SELECT *
-        FROM ams_operations u1
+        SELECT u1.*, sms_users.name AS name_employee
+        FROM sms_operations u1
+        JOIN sms_users 
+        ON u1.employee_id = sms_users.id
         WHERE (u1.status <> ? AND u1.status <> ?)
-        AND u1.employee_id = ?
+        AND u1.company_id = ?
         AND NOT EXISTS (
             SELECT 1
-            FROM ams_operations u2
-            WHERE u2.employee_id = u1.employee_id
-            AND u2.protocol = u1.protocol
+            FROM sms_operations u2
+            WHERE u2.protocol = u1.protocol
             AND u2.id > u1.id
         )
-        ORDER BY u1.created_at DESC
-        `;
-
-        const rows = await executeQuery(sql, [statusCanceled, statusCompleted, employeeId]);
+        ORDER BY u1.created_at DESC;
+            `;
+    
+        const rows = await executeQuery(sql, [statusCanceled, statusCompleted, company.id]);
         res.json(rows);
     });
 });

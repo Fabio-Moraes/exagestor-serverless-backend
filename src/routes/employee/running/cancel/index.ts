@@ -42,7 +42,7 @@ router.get('/cancel', async (req: Request, res: Response) => {
 
         const { user, company } = decoded as Decoded;
 
-        const selectSql = 'SELECT * FROM ams_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC';
+        const selectSql = 'SELECT * FROM sms_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC';
 
         const rows = await executeQuery(selectSql, [user.id, company.id, protocol]);
 
@@ -84,7 +84,7 @@ router.get('/cancel', async (req: Request, res: Response) => {
         ];
 
         const insertSql =
-            'INSERT INTO ams_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id used_material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
+            'INSERT INTO sms_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id used_material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
 
         await executeQuery(insertSql, values);
 

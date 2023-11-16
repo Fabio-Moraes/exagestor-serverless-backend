@@ -37,7 +37,7 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
 }
 
 /* 
-CREATE TABLE `ams_operations` (
+CREATE TABLE `sms_operations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `company_id` int NOT NULL,
   `employee_id` int NOT NULL,
@@ -59,4 +59,25 @@ CREATE TABLE `ams_operations` (
 ) ENGINE InnoDB,
   CHARSET utf8mb4,
   COLLATE utf8mb4_0900_ai_ci;
+*/
+
+/* 
+CREATE TABLE `sms_users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `role` varchar(30) NOT NULL,
+  `cnpj` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `created_at` timestamp NULL,
+  PRIMARY KEY (`id`)
+) ENGINE InnoDB,
+  CHARSET utf8mb4,
+  COLLATE utf8mb4_0900_ai_ci;
+*/
+
+/* 
+INSERT INTO `sms_users` (`company_id`, `name`, `role`, `cnpj`, `password`, `created_at`)
+VALUES
+(1, 'Jubileu', 'employee', '00.000.000/0000-00', '123456789', NOW())
 */

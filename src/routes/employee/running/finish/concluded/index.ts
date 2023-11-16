@@ -46,7 +46,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
 
             const { user, company } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM ams_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
+            const [row] = await executeQuery('SELECT * FROM sms_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
 
             if (!row) {
                 console.error('Requisição inválida');
@@ -80,7 +80,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 formattedDate
             ];
 
-            const insertSql = 'INSERT INTO ams_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertSql = 'INSERT INTO sms_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             await executeQuery(insertSql, values);
 

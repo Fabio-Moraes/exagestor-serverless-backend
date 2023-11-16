@@ -40,12 +40,12 @@ router.get('/running', async (req: Request, res: Response) => {
 
     const sql = `
     SELECT *
-    FROM ams_operations u1
+    FROM sms_operations u1
     WHERE (u1.status <> ? AND u1.status <> ?)
     AND u1.employee_id = ? AND u1.company_id = ?
     AND NOT EXISTS (
         SELECT 1
-        FROM ams_operations u2
+        FROM sms_operations u2
         WHERE u2.protocol = u1.protocol
         AND u2.id > u1.id
     )
@@ -64,22 +64,19 @@ router.use(routesStart);
 
 export default router;
 
-
 /* 
-
     const sql = `
         SELECT *
-        FROM ams_operations u1
+        FROM sms_operations u1
         WHERE (u1.status <> ? AND u1.status <> ?)
         AND u1.employee_id = ? AND u1.company_id = ?
         AND NOT EXISTS (
             SELECT 1
-            FROM ams_operations u2
+            FROM sms_operations u2
             WHERE u2.employee_id = u1.employee_id
             AND u2.protocol = u1.protocol
             AND u2.id > u1.id
         )
         ORDER BY u1.created_at DESC
         `;
-
 */

@@ -42,7 +42,7 @@ router.get('/select-material', async (req: Request, res: Response) => {
 
         const status = 'finished';
         const { user, company } = decoded as Decoded;
-        const sql = `SELECT * FROM ams_operations WHERE employee_id = ? AND company_id = ? AND protocol = ?`;
+        const sql = `SELECT * FROM sms_operations WHERE employee_id = ? AND company_id = ? AND protocol = ?`;
         const rows = await executeQuery(sql, [user.id, company.id, protocol, status]);
         res.json(rows);
     });

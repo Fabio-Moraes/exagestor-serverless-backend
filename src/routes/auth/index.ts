@@ -4,7 +4,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { JWT_SECRET_KEY } from '../../constants';
 
-import { z } from 'zod';
+import { executeQuery } from '../../database';
+
+import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
@@ -50,8 +52,8 @@ const company: Company = {
 
 const user: User = {
   '00.000.000/0000-00': {
-    id: 20,
-    company_id: 0,
+    id: 0,
+    company_id: 1,
     name: 'James Junio',
     cnpj: '00.000.000/0000-00',
     role: 'admin',
@@ -59,8 +61,8 @@ const user: User = {
   },
 
   '11.111.111/1111-11': {
-    id: 21,
-    company_id: 0,
+    id: 1,
+    company_id: 1,
     name: 'Ichigo Kurosaki',
     cnpj: '11.111.111/1111-11',
     role: 'employee',
@@ -68,8 +70,8 @@ const user: User = {
   },
 
   '22.222.222/2222-22': {
-    id: 22,
-    company_id: 0,
+    id: 2,
+    company_id: 1,
     name: 'Naruto Uzumaki',
     cnpj: '22.222.222/2222-22',
     role: 'employee',
@@ -77,32 +79,46 @@ const user: User = {
   }
 };
 
-router.post('/signin', (req: Request, res: Response) => {
-  const paramsSchema = z.object({
-    cnpj: z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/),
-    password: z.string().min(1)
-  });
+router.post('/signin', async (req: Request, res: Response) => {
+  try {
+    const paramsSchema = z.object({
+      cnpj: z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/),
+      password: z.string().min(1)
+    });
 
-  const { password, cnpj } = paramsSchema.parse(req.body);
+    const { password, cnpj } = paramsSchema.parse(req.body);
 
-  const contentJwt = { 
-    user: {
-      id: user[cnpj].id,
-      name: user[cnpj].name, 
-      role: user[cnpj].role, 
-    },
-    company: {
-      id: user[cnpj].company_id , 
-      name: company[user[cnpj].company_id].id
+    const sql = `SELECT * FROM sms_users WHERE cnpj = ?`;
+    const rows = await executeQuery(sql, [cnpj]);
+
+    const contentJwt = {
+      user: {
+        id: rows[0].id,
+        name: rows[0].name,
+        role: rows[0].role,
+      },
+      company: {
+        id: rows[0].company_id,
+        name: 'Exa Telecom'
+      }
     }
-  }
 
-  // Gerando um token JWT com o id do usuário
-  if (bcrypt.compareSync(password, user[cnpj].password)) {
-    const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
-    res.json({ token });
-  } else {
-    res.status(401).send('Credenciais inválidas');
+    // Gerando um token JWT com o id do usuário
+    if (bcrypt.compareSync(password, rows[0].password)) {
+      const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
+      res.json({ token });
+    } else {
+      res.status(401).send('Credenciais inválidas');
+    }
+
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
   }
 });
 

@@ -6,11 +6,12 @@ import { createProtocol } from '../../../components/CreateProtocol';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
 router.post('/new', async (req: Request, res: Response) => {
+  try {
     const paramsSchema = z.object({
         clientName: z.string().min(1).regex(/^[^0-9]*$/),
         city: z.string().min(1).regex(/^[^0-9]*$/),
@@ -82,6 +83,15 @@ router.post('/new', async (req: Request, res: Response) => {
         res.json({ success: true });
         console.log('Usuário registrado com sucesso!');
     });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
 });
 
 export default router;

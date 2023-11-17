@@ -5,11 +5,12 @@ import type { Decoded } from '../../../types/jwt';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
+  try {
     const paramsSchema = z.object({ token: z.string().min(1).optional() });
     const { token } = paramsSchema.parse(req.query);
 
@@ -52,6 +53,15 @@ router.get('/running', async (req: Request, res: Response) => {
         const rows = await executeQuery(sql, [statusCanceled, statusCompleted, company.id]);
         res.json(rows);
     });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
 });
 
 export default router;

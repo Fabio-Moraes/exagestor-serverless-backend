@@ -6,21 +6,26 @@ import bcrypt from 'bcryptjs';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
 router.post('/register', async (req: Request, res: Response) => {
+  try {
     const paramsSchema = z.object({
         name: z.string().min(1).regex(/^[^0-9]*$/),
-        cnpj: z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/),
+        identification: z.string().refine(value => {
+          const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
+          const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
+          return isCnpj || isCpf;
+      }),
         password: z.string().min(1),
         token: z.string()
     });
 
     const {
       name,
-      cnpj,
+      identification,
       password,
       token
     } = paramsSchema.parse(req.body);
@@ -59,19 +64,37 @@ router.post('/register', async (req: Request, res: Response) => {
             company.id,
             name,
             'employee',
-            cnpj,
+            identification,
             hash,
             createdAt,
         ];
 
-        const sql =
-            'INSERT INTO sms_users (company_id, name, role, cnpj, password, created_at) VALUES (?, ?, ?, ?, ?, ?)';
+        const sqlSelect = 'SELECT * FROM sms_users WHERE company_id = ? AND identification = ?';
 
-        await executeQuery(sql, values);
+        const rows = await executeQuery(sqlSelect, [company.id, identification]);
 
-        res.json({ success: true });
+        if (rows.length > 0) {
+          res.json({ status: 'already registered' });
+          console.log('Funcionário(a) não registrado!');
+          return
+        }
+
+        const sqlInsert = `INSERT INTO sms_users (company_id, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+
+        await executeQuery(sqlInsert, values);
+
+        res.json({ status: 'success' });
         console.log('Funcionário(a) registrado com sucesso!');
     });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
 });
 
 export default router;

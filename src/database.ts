@@ -67,7 +67,7 @@ CREATE TABLE `sms_users` (
   `company_id` int NOT NULL,
   `name` varchar(100) NOT NULL,
   `role` varchar(30) NOT NULL,
-  `cnpj` varchar(50) NOT NULL,
+  `identification` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_at` timestamp NULL,
   PRIMARY KEY (`id`)
@@ -77,7 +77,13 @@ CREATE TABLE `sms_users` (
 */
 
 /* 
-INSERT INTO `sms_users` (`company_id`, `name`, `role`, `cnpj`, `password`, `created_at`)
+INSERT INTO `sms_users` (`company_id`, `name`, `role`, `identification`, `password`, `created_at`)
 VALUES
-(1, 'Jubileu', 'employee', '00.000.000/0000-00', '123456789', NOW())
+(1, 'James Junio', 'admin', '46.557.719/0001-29', '$2a$10$sA6cfgM7gf/41JF53Tn.6eg6RbfAsCbWV7ph1Sf4TAcG4atyIQ9.W', NOW())
 */
+
+
+//admin
+//46.557.719/0001-29
+//090807junio
+ 

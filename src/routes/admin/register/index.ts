@@ -76,7 +76,7 @@ router.post('/register', async (req: Request, res: Response) => {
         if (rows.length > 0) {
           res.json({ status: 'already registered' });
           console.log('Funcionário(a) não registrado!');
-          return
+          return;
         }
 
         const sqlInsert = `INSERT INTO sms_users (company_id, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;

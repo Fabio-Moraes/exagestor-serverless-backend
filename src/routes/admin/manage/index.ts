@@ -32,7 +32,7 @@ router.get('/manage', async (req: Request, res: Response) => {
  
         const { company } = decoded as Decoded;
 
-        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role <> ? AND company_id = ?`;
+        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role <> ? AND company_id = ? ORDER BY id DESC`;
         const rows = await executeQuery(sql, ['admin', company.id]);
         res.json(rows);
     });

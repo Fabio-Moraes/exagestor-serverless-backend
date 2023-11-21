@@ -69,7 +69,7 @@ router.post('/register', async (req: Request, res: Response) => {
             createdAt,
         ];
 
-        const sqlSelect = 'SELECT * FROM sms_users WHERE company_id = ? AND identification = ?';
+        const sqlSelect = 'SELECT * FROM exa_users WHERE company_id = ? AND identification = ?';
 
         const rows = await executeQuery(sqlSelect, [company.id, identification]);
 
@@ -79,7 +79,7 @@ router.post('/register', async (req: Request, res: Response) => {
           return;
         }
 
-        const sqlInsert = `INSERT INTO sms_users (company_id, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+        const sqlInsert = `INSERT INTO exa_users (company_id, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
 
         await executeQuery(sqlInsert, values);
 

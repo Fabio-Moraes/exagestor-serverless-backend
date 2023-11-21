@@ -33,7 +33,7 @@ router.get('/historic', async (req: Request, res: Response) => {
         }
 
         const { user, company } = decoded as Decoded;
-        const sql = `SELECT * FROM sms_operations WHERE employee_id = ? AND company_id = ? ORDER BY id DESC`;
+        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND company_id = ? ORDER BY id DESC`;
 
         const rows = await executeQuery(sql, [user.id, company.id]);
         res.json(rows);

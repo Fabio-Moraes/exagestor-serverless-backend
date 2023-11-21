@@ -23,7 +23,7 @@ router.post('/signin', async (req: Request, res: Response) => {
 
     const { password, identification } = paramsSchema.parse(req.body);
 
-    const sql = `SELECT * FROM sms_users WHERE identification = ?`;
+    const sql = `SELECT * FROM exa_users WHERE identification = ?`;
     const rows = await executeQuery(sql, [identification]);
  
     if (rows.length === 0) {

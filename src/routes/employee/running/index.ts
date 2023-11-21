@@ -41,12 +41,12 @@ router.get('/running', async (req: Request, res: Response) => {
 
     const sql = `
     SELECT *
-    FROM sms_operations u1
+    FROM exa_operations u1
     WHERE (u1.status <> ? AND u1.status <> ?)
     AND u1.employee_id = ? AND u1.company_id = ?
     AND NOT EXISTS (
         SELECT 1
-        FROM sms_operations u2
+        FROM exa_operations u2
         WHERE u2.protocol = u1.protocol
         AND u2.id > u1.id
     )

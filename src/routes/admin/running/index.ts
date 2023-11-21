@@ -35,15 +35,15 @@ router.get('/running', async (req: Request, res: Response) => {
         const { company } = decoded as Decoded;
 
         const sql = `
-        SELECT u1.*, sms_users.name AS name_employee
-        FROM sms_operations u1
-        JOIN sms_users 
-        ON u1.employee_id = sms_users.id
+        SELECT u1.*, exa_users.name AS name_employee
+        FROM exa_operations u1
+        JOIN exa_users 
+        ON u1.employee_id = exa_users.id
         WHERE (u1.status <> ? AND u1.status <> ?)
         AND u1.company_id = ?
         AND NOT EXISTS (
             SELECT 1
-            FROM sms_operations u2
+            FROM exa_operations u2
             WHERE u2.protocol = u1.protocol
             AND u2.id > u1.id
         )

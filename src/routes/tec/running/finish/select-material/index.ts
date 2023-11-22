@@ -42,9 +42,9 @@ router.get('/select-material', async (req: Request, res: Response) => {
         }
 
         const status = 'finished';
-        const { user, company } = decoded as Decoded;
+        const { user } = decoded as Decoded;
         const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ?`;
-        const rows = await executeQuery(sql, [user.id, company.id, protocol, status]);
+        const rows = await executeQuery(sql, [user.id, user.team, protocol, status]);
         res.json(rows);
     });
   } catch (error) {

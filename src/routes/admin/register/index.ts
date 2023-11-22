@@ -56,7 +56,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-      const { company } = decoded as Decoded;
+      const { user } = decoded as Decoded;
 
       const hash = bcrypt.hashSync(password, 10)
 
@@ -71,7 +71,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const sqlSelect = 'SELECT * FROM exa_users WHERE team = ? AND identification = ?';
 
-      const rows = await executeQuery(sqlSelect, [company.id, identification]);
+      const rows = await executeQuery(sqlSelect, [user.team, identification]);
 
       if (rows.length > 0) {
         res.json({ status: 'already registered' });

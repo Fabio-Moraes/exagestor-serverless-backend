@@ -41,11 +41,11 @@ router.get('/cancel', async (req: Request, res: Response) => {
             }
         }
 
-        const { user, company } = decoded as Decoded;
+        const { user } = decoded as Decoded;
 
         const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC';
 
-        const rows = await executeQuery(selectSql, [user.id, company.id, protocol]);
+        const rows = await executeQuery(selectSql, [user.id, user.id, protocol]);
 
         if (!rows) {
             console.log('Requisição inválido')

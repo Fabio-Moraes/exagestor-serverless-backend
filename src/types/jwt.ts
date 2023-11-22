@@ -3,9 +3,6 @@ export interface Decoded {
     id: number;
     name: string;
     role: string;
-  };
-  company: {
-    id: number;
-    name: string;
+    team: string;
   };
 }

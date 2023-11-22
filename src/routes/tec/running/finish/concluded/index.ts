@@ -1,22 +1,11 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import type { Decoded } from '../../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeQuery } from '../../../../../database';
 
 import { z, ZodError } from 'zod';
-
-interface Decoded {
-  user: {
-    id: number;
-    name: string;
-    role: string;
-  };
-  company: {
-    id: number;
-    name: string;
-  };
-}
 
 const router = express.Router();
 
@@ -44,9 +33,9 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
             }
 
-            const { user, company } = decoded as Decoded
+            const { user } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
+            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC', [user.id, user.team, protocol]);
 
             if (!row) {
                 console.error('Requisição inválida');

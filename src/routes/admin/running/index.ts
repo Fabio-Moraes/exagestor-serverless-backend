@@ -32,7 +32,7 @@ router.get('/running', async (req: Request, res: Response) => {
  
         const statusCanceled = 'canceled';
         const statusCompleted = 'concluded';
-        const { company } = decoded as Decoded;
+        const { user } = decoded as Decoded;
 
         const sql = `
         SELECT u1.*, exa_users.name AS name_tec
@@ -50,7 +50,7 @@ router.get('/running', async (req: Request, res: Response) => {
         ORDER BY u1.created_at DESC;
             `;
     
-        const rows = await executeQuery(sql, [statusCanceled, statusCompleted, company.id]);
+        const rows = await executeQuery(sql, [statusCanceled, statusCompleted, user.team]);
         res.json(rows);
     });
   } catch (error) {

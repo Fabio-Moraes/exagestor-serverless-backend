@@ -61,10 +61,10 @@ router.post('/manage/new', async (req: Request, res: Response) => {
         const status = 'active';
         const updateCount = 0
 
-        const { /*user,*/ company } = decoded as Decoded;
+        const { user } = decoded as Decoded;
 
         const values = [
-            company.id,
+            user.team,
             userId,
             clientName,
             city,

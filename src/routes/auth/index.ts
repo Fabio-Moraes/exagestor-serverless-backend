@@ -35,10 +35,7 @@ router.post('/signin', async (req: Request, res: Response) => {
         id: rows[0]?.id,
         name: rows[0]?.name,
         role: rows[0]?.role,
-      },
-      company: {
-        id: rows[0]?.company_id,
-        name: 'Exa Telecom'
+        team: rows[0]?.team,
       }
     }
 

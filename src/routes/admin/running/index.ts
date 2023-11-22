@@ -35,12 +35,12 @@ router.get('/running', async (req: Request, res: Response) => {
         const { company } = decoded as Decoded;
 
         const sql = `
-        SELECT u1.*, exa_users.name AS name_employee
+        SELECT u1.*, exa_users.name AS name_tec
         FROM exa_operations u1
         JOIN exa_users 
         ON u1.employee_id = exa_users.id
         WHERE (u1.status <> ? AND u1.status <> ?)
-        AND u1.company_id = ?
+        AND u1.team = ?
         AND NOT EXISTS (
             SELECT 1
             FROM exa_operations u2

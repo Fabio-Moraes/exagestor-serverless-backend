@@ -13,14 +13,14 @@ const router = express.Router();
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({
-        name: z.string().min(1).regex(/^[^0-9]*$/),
-        identification: z.string().refine(value => {
-          const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
-          const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
-          return isCnpj || isCpf;
+      name: z.string().min(1).regex(/^[^0-9]*$/),
+      identification: z.string().refine(value => {
+        const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
+        const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
+        return isCnpj || isCpf;
       }),
-        password: z.string().min(1),
-        token: z.string()
+      password: z.string().min(1),
+      token: z.string()
     });
 
     const {
@@ -31,60 +31,60 @@ router.post('/register', async (req: Request, res: Response) => {
     } = paramsSchema.parse(req.body);
 
     if (!token) {
-        console.error('Token não fornecido');
-        return res.status(401).json({ error: 'Token não fornecido' });
+      console.error('Token não fornecido');
+      return res.status(401).json({ error: 'Token não fornecido' });
     }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-        if (error) {
-            if (error instanceof TokenExpiredError) {
-                console.log('** verify token expired **')
-                return res.status(403).json({ error: 'Token expirado' });
-            } else {
-                console.log('** verify token inválido **')
-                return res.status(403).json({ error: 'Token inválido' });
-            }
+      if (error) {
+        if (error instanceof TokenExpiredError) {
+          console.log('** verify token expired **')
+          return res.status(403).json({ error: 'Token expirado' });
+        } else {
+          console.log('** verify token inválido **')
+          return res.status(403).json({ error: 'Token inválido' });
         }
+      }
 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
 
-        const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-        const { company } = decoded as Decoded;
+      const { company } = decoded as Decoded;
 
-        const hash = bcrypt.hashSync ( password ,  10 )
-        
-        const values = [
-            company.id,
-            name,
-            'employee',
-            identification,
-            hash,
-            createdAt,
-        ];
+      const hash = bcrypt.hashSync(password, 10)
 
-        const sqlSelect = 'SELECT * FROM exa_users WHERE company_id = ? AND identification = ?';
+      const values = [
+        'campo',
+        name,
+        'tec',
+        identification,
+        hash,
+        createdAt,
+      ];
 
-        const rows = await executeQuery(sqlSelect, [company.id, identification]);
+      const sqlSelect = 'SELECT * FROM exa_users WHERE team = ? AND identification = ?';
 
-        if (rows.length > 0) {
-          res.json({ status: 'already registered' });
-          console.log('Funcionário(a) não registrado!');
-          return;
-        }
+      const rows = await executeQuery(sqlSelect, [company.id, identification]);
 
-        const sqlInsert = `INSERT INTO exa_users (company_id, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+      if (rows.length > 0) {
+        res.json({ status: 'already registered' });
+        console.log('Funcionário(a) não registrado!');
+        return;
+      }
 
-        await executeQuery(sqlInsert, values);
+      const sqlInsert = `INSERT INTO exa_users (team, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
 
-        res.json({ status: 'success' });
-        console.log('Funcionário(a) registrado com sucesso!');
+      await executeQuery(sqlInsert, values);
+
+      res.json({ status: 'success' });
+      console.log('Funcionário(a) registrado com sucesso!');
     });
   } catch (error) {
     if (error instanceof ZodError) {

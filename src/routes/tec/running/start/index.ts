@@ -43,7 +43,7 @@ router.get('/start', async (req: Request, res: Response) => {
 
         const { user, company } = decoded as Decoded;
 
-        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC';
+        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC';
 
         const rows = await executeQuery(selectSql, [user.id, company.id, protocol]);
 
@@ -69,7 +69,7 @@ router.get('/start', async (req: Request, res: Response) => {
         const newStatus = 'active';
 
         const values = [
-            rows[0].company_id,
+            rows[0].team,
             rows[0].employee_id,
             rows[0].client_name,
             rows[0].city,
@@ -84,7 +84,7 @@ router.get('/start', async (req: Request, res: Response) => {
         ];
 
         const insertSql =
-            'INSERT INTO exa_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
+            'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
         await executeQuery(insertSql, values);
 

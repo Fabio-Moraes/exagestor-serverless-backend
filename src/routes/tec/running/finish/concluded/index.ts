@@ -46,7 +46,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
 
             const { user, company } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND company_id = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
+            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC', [user.id, company.id, protocol]);
 
             if (!row) {
                 console.error('Requisição inválida');
@@ -62,7 +62,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
             const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
 
             const values = [
-                row.company_id,
+                row.team,
                 row.employee_id,
                 row.client_name,
                 row.city,
@@ -80,7 +80,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 formattedDate
             ];
 
-            const insertSql = 'INSERT INTO exa_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertSql = 'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             await executeQuery(insertSql, values);
 

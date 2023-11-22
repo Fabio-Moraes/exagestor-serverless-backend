@@ -5,6 +5,8 @@ import type { Decoded } from '../../../types/jwt';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
+import routesNewService from './new';
+
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
@@ -32,7 +34,7 @@ router.get('/manage', async (req: Request, res: Response) => {
  
         const { company } = decoded as Decoded;
 
-        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role <> ? AND company_id = ? ORDER BY id DESC`;
+        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role <> ? AND team = ? ORDER BY id DESC`;
         const rows = await executeQuery(sql, ['admin', company.id]);
         res.json(rows);
     });
@@ -46,5 +48,7 @@ router.get('/manage', async (req: Request, res: Response) => {
     }
   }
 });
+
+router.use(routesNewService);
 
 export default router;

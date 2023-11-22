@@ -1,18 +1,19 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import type { Decoded } from '../../../types/jwt'
+import type { Decoded } from '../../../../types/jwt'
 
-import { createProtocol } from '../../../components/CreateProtocol';
-import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { createProtocol } from '../../../../components/CreateProtocol';
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
 
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-router.post('/new', async (req: Request, res: Response) => {
+router.post('/manage/new', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({
+        userId: z.number().min(1),
         clientName: z.string().min(1).regex(/^[^0-9]*$/),
         city: z.string().min(1).regex(/^[^0-9]*$/),
         classification: z.string().min(1).max(2),
@@ -22,6 +23,7 @@ router.post('/new', async (req: Request, res: Response) => {
     });
 
     const {
+        userId,
         clientName,
         city,
         classification,
@@ -59,11 +61,11 @@ router.post('/new', async (req: Request, res: Response) => {
         const status = 'active';
         const updateCount = 0
 
-        const { user, company } = decoded as Decoded;
+        const { /*user,*/ company } = decoded as Decoded;
 
         const values = [
             company.id,
-            user.id,
+            userId,
             clientName,
             city,
             classification,
@@ -76,7 +78,7 @@ router.post('/new', async (req: Request, res: Response) => {
         ];
 
         const sql =
-            'INSERT INTO exa_operations (company_id, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
+            'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
 
         await executeQuery(sql, values);
 

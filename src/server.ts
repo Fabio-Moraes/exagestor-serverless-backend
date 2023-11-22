@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import express, {  Request, Response } from 'express';
 import http from 'http';
 
-import employee from './routes/employee';
+import tec from './routes/tec';
 import admin from './routes/admin';
 import auth from './routes/auth';
 
@@ -21,7 +21,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use('/api/employee', employee);
+app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);
 

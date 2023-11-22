@@ -43,7 +43,7 @@ router.get('/running', async (req: Request, res: Response) => {
     SELECT *
     FROM exa_operations u1
     WHERE (u1.status <> ? AND u1.status <> ?)
-    AND u1.employee_id = ? AND u1.company_id = ?
+    AND u1.employee_id = ? AND u1.team = ?
     AND NOT EXISTS (
         SELECT 1
         FROM exa_operations u2

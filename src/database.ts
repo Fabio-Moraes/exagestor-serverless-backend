@@ -39,7 +39,7 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
 /* 
 CREATE TABLE `exa_operations` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `company_id` int NOT NULL,
+  `team` int NOT NULL,
   `employee_id` int NOT NULL,
   `client_name` varchar(100) NOT NULL,
   `city` varchar(100) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE `exa_operations` (
 /* 
 CREATE TABLE `exa_users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `company_id` int NOT NULL,
+  `team` int NOT NULL,
   `name` varchar(100) NOT NULL,
   `role` varchar(30) NOT NULL,
   `identification` varchar(50) NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE `exa_users` (
 */
 
 /* 
-INSERT INTO `exa_users` (`company_id`, `name`, `role`, `identification`, `password`, `created_at`)
+INSERT INTO `exa_users` (`team`, `name`, `role`, `identification`, `password`, `created_at`)
 VALUES
 (1, 'James Junio', 'admin', '46.557.719/0001-29', '$2a$10$sA6cfgM7gf/41JF53Tn.6eg6RbfAsCbWV7ph1Sf4TAcG4atyIQ9.W', NOW())
 */

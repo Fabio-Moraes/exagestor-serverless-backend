@@ -61,7 +61,6 @@ router.post('/register', async (req: Request, res: Response) => {
       const hash = bcrypt.hashSync(password, 10)
 
       const values = [
-        'campo',
         name,
         'tec',
         identification,
@@ -69,9 +68,9 @@ router.post('/register', async (req: Request, res: Response) => {
         createdAt,
       ];
 
-      const sqlSelect = 'SELECT * FROM exa_users WHERE team = ? AND identification = ?';
+      const sqlSelect = 'SELECT * FROM exa_users WHERE identification = ?';
 
-      const rows = await executeQuery(sqlSelect, [user.team, identification]);
+      const rows = await executeQuery(sqlSelect, [ identification]);
 
       if (rows.length > 0) {
         res.json({ status: 'already registered' });
@@ -79,7 +78,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO exa_users (team, name, role, identification, password, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO exa_users ( name, role, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?)`;
 
       await executeQuery(sqlInsert, values);
 

@@ -59,11 +59,10 @@ router.post('/new', async (req: Request, res: Response) => {
         const status = 'active';
         const updateCount = 0
 
-        const { user } = decoded as Decoded;
+        const { user: employee } = decoded as Decoded;
 
         const values = [
-            user.team,
-            user.id,
+            employee.id,
             clientName,
             city,
             classification,
@@ -76,7 +75,7 @@ router.post('/new', async (req: Request, res: Response) => {
         ];
 
         const sql =
-            'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
+            'INSERT INTO exa_operations ( employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
 
         await executeQuery(sql, values);
 

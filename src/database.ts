@@ -39,8 +39,8 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
 /* 
 CREATE TABLE `exa_operations` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `team` int NOT NULL,
   `employee_id` int NOT NULL,
+  `admin_id` int,
   `client_name` varchar(100) NOT NULL,
   `city` varchar(100) NOT NULL,
   `classification` varchar(50) NOT NULL,

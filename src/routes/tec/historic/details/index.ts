@@ -40,7 +40,6 @@ router.get('/historic/details', async (req: Request, res: Response) => {
     const sql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
 
     const rows = await executeQuery(sql, [user.id, protocol, update_count]);
-    console.log('!!!', user )
     res.json(rows);
   });
 } catch (error) {

@@ -43,9 +43,9 @@ router.get('/cancel', async (req: Request, res: Response) => {
 
         const { user } = decoded as Decoded;
 
-        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC';
+        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
 
-        const rows = await executeQuery(selectSql, [user.id, user.id, protocol]);
+        const rows = await executeQuery(selectSql, [user.id, protocol]);
 
         if (!rows) {
             console.log('Requisição inválido')
@@ -69,7 +69,6 @@ router.get('/cancel', async (req: Request, res: Response) => {
         const newStatus = 'canceled';
 
         const values = [
-            rows[0].team,
             rows[0].employee_id,
             rows[0].client_name,
             rows[0].city,
@@ -85,7 +84,7 @@ router.get('/cancel', async (req: Request, res: Response) => {
         ];
 
         const insertSql =
-            'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id used_material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
+            'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id, used_material_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
 
         await executeQuery(insertSql, values);
 

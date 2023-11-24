@@ -51,7 +51,6 @@ router.get('/concluded', async (req: Request, res: Response) => {
             const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
 
             const values = [
-                row.team,
                 row.employee_id,
                 row.client_name,
                 row.city,
@@ -69,7 +68,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 formattedDate
             ];
 
-            const insertSql = 'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertSql = 'INSERT INTO exa_operations ( employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             await executeQuery(insertSql, values);
 

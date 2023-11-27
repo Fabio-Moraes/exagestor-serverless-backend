@@ -1,0 +1,106 @@
+import express, { Request, Response } from 'express';
+import jwt, { TokenExpiredError } from 'jsonwebtoken';
+//import type { Decoded } from '../../../../types/jwt'
+
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
+
+import { z, ZodError } from 'zod';
+
+const router = express.Router();
+
+router.get('/cancel', async (req: Request, res: Response) => {
+  try {
+    const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
+    const paramsSchema = z.object({
+      token: z.string(),
+      employeeId: z.string().min(1),
+      protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+    });
+
+    const { token, employeeId, protocol } = paramsSchema.parse(req.query);
+
+    if (!protocol) {
+        console.error('Protocol não fornecido');
+        return res.status(401).json({ error: 'Protocol não fornecido' });
+    }
+
+    if (!token) {
+        console.error('Token não fornecido');
+        return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+        if (error) {
+            if (error instanceof TokenExpiredError) {
+                console.log('Token expirado')
+                return res.status(403).json({ error: 'Token expirado' });
+            } else {
+                console.log('Token inválido')
+                return res.status(403).json({ error: 'Token inválido' });
+            }
+        }
+
+        //const { user } = decoded as Decoded;
+
+        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
+
+        const rows = await executeQuery(selectSql, [employeeId, protocol]);
+
+        if (!rows) {
+            console.log('Requisição inválido')
+            return res.status(400).json({ error: 'Requisição inválido' });
+        }
+
+        if (rows[0].status === 'canceled') {
+            console.log('Serviço já cancelado')
+            return res.status(409).json({ error: 'Serviço já pausado' });
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+
+        const newDateStatus = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        const newStatus = 'canceled';
+
+        const values = [
+          rows[0].employee_id,
+          rows[0].admin_id,
+          rows[0].client_name,
+          rows[0].city,
+          rows[0].classification,
+          rows[0].nomenclature,
+          rows[0].address,
+          rows[0].protocol,
+          newStatus,
+          rows[0].update_count + 1,
+          rows[0].created_at,
+            newDateStatus,
+            newDateStatus
+        ];
+
+        const insertSql =
+            'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id, used_material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
+
+        await executeQuery(insertSql, values);
+
+        res.json({ success: true });
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
+});
+
+export default router;

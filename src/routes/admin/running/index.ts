@@ -4,6 +4,11 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
+import routesCancel from './cancel';
+import routesPause from './pause';
+import routesStart from './start';
+import routesFinish from './finish';
+
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
@@ -64,5 +69,10 @@ router.get('/running', async (req: Request, res: Response) => {
     }
   }
 });
+
+router.use(routesFinish);
+router.use(routesCancel);
+router.use(routesPause);
+router.use(routesStart);
 
 export default router;

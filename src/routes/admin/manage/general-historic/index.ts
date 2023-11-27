@@ -1,0 +1,56 @@
+import express, { Request, Response } from 'express';
+import jwt, { TokenExpiredError } from 'jsonwebtoken';
+//import type { Decoded } from '../../../../types/jwt'
+
+import { JWT_SECRET_KEY } from '../../../../constants';
+import { executeQuery } from '../../../../database';
+
+import routesDetailsService from './details';
+
+import { z } from 'zod';
+
+const router = express.Router();
+
+router.get('/manage/general-historic', async (req: Request, res: Response) => {
+  const paramsSchema = z.object({
+    token: z.string().min(1).optional()
+  });
+  const { token } = paramsSchema.parse(req.query);
+
+  if (!token) {
+    console.error('Token não fornecido');
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+
+  jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    if (error) {
+      if (error instanceof TokenExpiredError) {
+        console.log('** verify token expired **')
+        return res.status(403).json({ error: 'Token expirado' });
+      } else {
+        console.log('** verify token inválido **')
+        return res.status(403).json({ error: 'Token inválido' });
+      }
+    }
+
+    //const { user } = decoded as Decoded;
+    const sql = `
+        SELECT u1.*, 
+        tec_user.name AS name_tec, 
+        admin_user.name AS name_admin
+        FROM exa_operations u1
+        JOIN exa_users tec_user
+        ON u1.employee_id = tec_user.id 
+        LEFT JOIN exa_users admin_user
+        ON u1.admin_id = admin_user.id
+        ORDER BY u1.created_at DESC;
+        `;
+
+    const rows = await executeQuery(sql);
+    res.json(rows);
+  });
+});
+
+router.use(routesDetailsService);
+
+export default router;

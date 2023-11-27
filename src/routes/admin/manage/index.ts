@@ -6,6 +6,7 @@ import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
 import routesNewService from './new';
+import routerGeneralHistoric from './general-historic'
 
 import { z, ZodError } from 'zod';
 
@@ -50,5 +51,6 @@ router.get('/manage', async (req: Request, res: Response) => {
 });
 
 router.use(routesNewService);
+router.use(routerGeneralHistoric);
 
 export default router;

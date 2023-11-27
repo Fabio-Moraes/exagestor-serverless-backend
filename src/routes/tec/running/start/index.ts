@@ -69,22 +69,22 @@ router.get('/start', async (req: Request, res: Response) => {
         const newStatus = 'active';
 
         const values = [
-            rows[0].team,
-            rows[0].employee_id,
-            rows[0].client_name,
-            rows[0].city,
-            rows[0].classification,
-            rows[0].nomenclature,
-            rows[0].address,
-            rows[0].protocol,
-            newStatus,
-            rows[0].update_count + 1,
-            rows[0].created_at,
-            newModificationAt
+          rows[0].employee_id,
+          rows[0].admin_id,
+          rows[0].client_name,
+          rows[0].city,
+          rows[0].classification,
+          rows[0].nomenclature,
+          rows[0].address,
+          rows[0].protocol,
+          newStatus,
+          rows[0].update_count + 1,
+          rows[0].created_at,
+          newModificationAt
         ];
-
+  
         const insertSql =
-            'INSERT INTO exa_operations (team, employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
+          'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
         await executeQuery(insertSql, values);
 

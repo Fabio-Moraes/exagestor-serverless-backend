@@ -34,8 +34,7 @@ router.post('/signin', async (req: Request, res: Response) => {
       user: {
         id: rows[0]?.id,
         name: rows[0]?.name,
-        role: rows[0]?.role,
-        team: rows[0]?.team,
+        role: rows[0]?.role
       }
     }
 

@@ -35,7 +35,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
 
             const { user } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND team = ? AND protocol = ? ORDER BY id DESC', [user.id, user.team, protocol]);
+            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC', [user.id, protocol]);
 
             if (!row) {
                 console.error('Requisição inválida');
@@ -58,7 +58,7 @@ router.get('/concluded', async (req: Request, res: Response) => {
                 row.nomenclature,
                 row.address,
                 row.protocol,
-                'concluded',
+                'analysis',
                 row.update_count + 1,
                 row.created_at,
                 row.modification_at,

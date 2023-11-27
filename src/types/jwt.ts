@@ -3,6 +3,5 @@ export interface Decoded {
     id: number;
     name: string;
     role: string;
-    team: string;
   };
 }

@@ -1,15 +1,20 @@
 import mysql, { Pool, PoolConnection } from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const mysqlSsl= JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED));
 
 const dbConfig = {
-  host: 'aws.connect.psdb.cloud',
-  user: 'nbwp6r51iwjr2wxmxdjl',
-  password: 'pscale_pw_Qss1rPEAumkslT9aSw06rVaOoVHAYQRBp17Iru8sO5b',
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
   database: 'apps',
   port: 3306,
   connectionLimit: 10,
-  ssl: {
-    rejectUnauthorized: true
-  }
+  ssl: mysqlSsl ? {
+   rejectUnauthorized: true
+  } : {}
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);
@@ -64,7 +69,6 @@ CREATE TABLE `exa_operations` (
 /* 
 CREATE TABLE `exa_users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `team` int NOT NULL,
   `name` varchar(100) NOT NULL,
   `role` varchar(30) NOT NULL,
   `identification` varchar(50) NOT NULL,
@@ -77,9 +81,13 @@ CREATE TABLE `exa_users` (
 */
 
 /* 
-INSERT INTO `exa_users` (`team`, `name`, `role`, `identification`, `password`, `created_at`)
+INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
 VALUES
-(1, 'James Junio', 'admin', '46.557.719/0001-29', '$2a$10$sA6cfgM7gf/41JF53Tn.6eg6RbfAsCbWV7ph1Sf4TAcG4atyIQ9.W', NOW())
+('James Junio', 'admin', '46.557.719/0001-29', '$2a$10$LdGm2KobjPi3my8fhj73VOVQa7HO00UY7Fsp7KjdiTmsmq9oN7Jvm', NOW());
+
+INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
+VALUES
+('Fabio Moraes', 'admin', '415.230.898-22', '$2a$12$WF.1omNnXZ/0DfgEFBjl.eAXYrYcQ6x/gPSMgrDc344dKO50HnDWe', NOW());
 */
 
 

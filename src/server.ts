@@ -1,6 +1,8 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express, {  Request, Response } from 'express';
+import express, { Request, Response } from 'express';
+import { Server } from "socket.io";
+
 import http from 'http';
 
 import tec from './routes/tec';
@@ -12,9 +14,21 @@ dotenv.config();
 const app = express();
 const serverHttp = http.createServer(app);
 
+const io = new Server(serverHttp, {
+  cors: {
+    origin: process.env.FRONTEND_ORIGIN,
+    methods: 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+    credentials: true
+  },
+});
+
+io.on('connection', socket => {
+io.emit("ON_USERS", JSON.stringify({user: 123}));
+});
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN, 
+    origin: process.env.FRONTEND_ORIGIN,
     methods: 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
     credentials: true
   })

@@ -15,6 +15,7 @@ const app = express();
 const serverHttp = http.createServer(app);
 
 const io = new Server(serverHttp, {
+  addTrailingSlash: false,
   cors: {
     origin: process.env.FRONTEND_ORIGIN,
     methods: ["GET", "POST"],

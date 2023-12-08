@@ -14,13 +14,12 @@ dotenv.config();
 const app = express();
 const serverHttp = http.createServer(app);
 
-const io = new Server( serverHttp,{
-  path: "/my-custom-path/"
- /*  cors: {
-    origin: "*",
+const io = new Server(serverHttp, {
+  cors: {
+    origin: process.env.FRONTEND_ORIGIN,
     methods: ["GET", "POST"],
     credentials: true
-  }, */
+  },
 });
 
 io.on('connection', socket => {
@@ -47,8 +46,8 @@ app.use((err: Error, req: Request, res: Response) => {
 
 const PORT = Number(process.env.PORT);
 
-io.listen(PORT/* , () => {
+serverHttp.listen(PORT, () => {
   console.log(`Server running at port ${PORT}`);
-} */);
+});
 
 // sudo killall -9 node

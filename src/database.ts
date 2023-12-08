@@ -3,8 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const mysqlSsl= JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED));
-
 const dbConfig = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
@@ -12,9 +10,8 @@ const dbConfig = {
   database: 'apps',
   port: 3306,
   connectionLimit: 10,
-  ssl: mysqlSsl ? {
-   rejectUnauthorized: true
-  } : {}
+  ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
+    && { ssl: { rejectUnauthorized: true } })
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);
@@ -41,7 +38,7 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
   }
 }
 
-/* 
+/*
 CREATE TABLE `exa_operations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
@@ -66,7 +63,7 @@ CREATE TABLE `exa_operations` (
   COLLATE utf8mb4_0900_ai_ci;
 */
 
-/* 
+/*
 CREATE TABLE `exa_users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
@@ -80,7 +77,7 @@ CREATE TABLE `exa_users` (
   COLLATE utf8mb4_0900_ai_ci;
 */
 
-/* 
+/*
 INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
 VALUES
 ('James Junio', 'admin', '46.557.719/0001-29', '$2a$10$LdGm2KobjPi3my8fhj73VOVQa7HO00UY7Fsp7KjdiTmsmq9oN7Jvm', NOW());
@@ -90,8 +87,6 @@ VALUES
 ('Fabio Moraes', 'admin', '415.230.898-22', '$2a$12$WF.1omNnXZ/0DfgEFBjl.eAXYrYcQ6x/gPSMgrDc344dKO50HnDWe', NOW());
 */
 
-
 //admin
 //46.557.719/0001-29
 //090807junio
- 

@@ -15,16 +15,17 @@ const app = express();
 const serverHttp = http.createServer(app);
 
 const io = new Server(serverHttp, {
-  addTrailingSlash: false,
-  cors: {
-    origin: process.env.FRONTEND_ORIGIN,
-    methods: ["GET", "POST"],
-    credentials: true
-  },
+  path: "/api/socket_io",
+  addTrailingSlash: false
+  /*  cors: {
+     origin: process.env.FRONTEND_ORIGIN,
+     methods: ["GET", "POST"],
+     credentials: true
+   }, */
 });
 
 io.on('connection', socket => {
-io.emit("ON_USERS", JSON.stringify({user: 123}));
+  io.emit("ON_USERS", JSON.stringify({ user: 123 }));
 });
 
 app.use(

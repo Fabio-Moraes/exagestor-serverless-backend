@@ -13,6 +13,8 @@ import auth from './routes/auth'; */
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server })
 
 app.use(
   cors({
@@ -21,11 +23,6 @@ app.use(
     credentials: true
   })
 );
-
-const server = http.createServer(app);
-
-const wss = new WebSocket.Server({ server })
-const PORT = Number(process.env.PORT);
 
 /* const io = new Server(serverHttp, {
 cors: {
@@ -44,15 +41,20 @@ app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);
   res.status(500).send('Ocorreu um erro interno.');
 });
- */
+*/
 
-server.listen(PORT, () => {
-  console.log(`Server running at port ${PORT}`);
-});
+const PORT = Number(process.env.PORT);
 
 wss.on('connection', (ws: WebSocket) => {
   ws.emit("ON_USERS", JSON.stringify({ user: 123 }));
 });
 
+server.listen(PORT, () => {
+  console.log(`Server running at port ${PORT}`);
+});
+
+setInterval(() => {
+  http.get('https://exatelecom-server.vercel.app');
+}, 60000); 
 // sudo killall -9 node
 //process.env.FRONTEND_ORIGIN

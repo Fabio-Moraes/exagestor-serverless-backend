@@ -46,7 +46,13 @@ app.use((err: Error, req: Request, res: Response) => {
 const PORT = Number(process.env.PORT);
 
 wss.on('connection', (ws: WebSocket) => {
-  ws.emit("ON_USERS", JSON.stringify({ user: 123 }));
+  console.log('Um cliente se conectou.');
+
+  ws.on('close', () => {
+    console.log('Um cliente se desconectou.');
+  });
+  
+  //ws.emit("ON_USERS", JSON.stringify({ user: 123 }));
 });
 
 server.listen(PORT, () => {

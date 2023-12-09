@@ -12,6 +12,15 @@ import auth from './routes/auth';
 dotenv.config();
 
 const app = express();
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN,
+    methods: 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+    credentials: true
+  })
+);
+
 const serverHttp = http.createServer(app);
 
 const io = new Server(serverHttp, {
@@ -25,14 +34,6 @@ const io = new Server(serverHttp, {
 io.on('connection', socket => {
   io.emit("ON_USERS", JSON.stringify({ user: 123 }));
 });
-
-app.use(
-  cors({
-    origin: process.env.FRONTEND_ORIGIN,
-    methods: 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
-    credentials: true
-  })
-);
 
 app.use(express.json());
 app.use('/api/tec', tec);

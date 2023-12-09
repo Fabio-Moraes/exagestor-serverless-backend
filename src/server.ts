@@ -48,11 +48,18 @@ const PORT = Number(process.env.PORT);
 wss.on('connection', (ws: WebSocket) => {
   console.log('Um cliente se conectou.');
 
+  wss.clients.forEach((client) => {
+    if (client !== ws && client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({
+        event: 'ON_USERS',
+        data: { user: 'Novo usuário entrou.' }
+      }));
+    }
+  });
+
   ws.on('close', () => {
     console.log('Um cliente se desconectou.');
   });
-  
-  //ws.emit("ON_USERS", JSON.stringify({ user: 123 }));
 });
 
 server.listen(PORT, () => {
@@ -60,7 +67,7 @@ server.listen(PORT, () => {
 });
 
 setInterval(() => {
-  http.get('https://exatelecom-server.vercel.app');
+  http.get('http://192.168.0.13:3333/');
 }, 60000); 
 // sudo killall -9 node
 //process.env.FRONTEND_ORIGIN

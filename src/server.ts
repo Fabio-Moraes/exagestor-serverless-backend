@@ -15,13 +15,11 @@ const app = express();
 const serverHttp = http.createServer(app);
 
 const io = new Server(serverHttp, {
-  path: "/api/socket_io",
-  addTrailingSlash: false
-  /*  cors: {
-     origin: process.env.FRONTEND_ORIGIN,
-     methods: ["GET", "POST"],
-     credentials: true
-   }, */
+  cors: {
+    origin: process.env.FRONTEND_ORIGIN,
+    methods: ["GET", "POST"],
+    credentials: true
+  },
 });
 
 io.on('connection', socket => {
@@ -53,3 +51,4 @@ serverHttp.listen(PORT, () => {
 });
 
 // sudo killall -9 node
+//process.env.FRONTEND_ORIGIN

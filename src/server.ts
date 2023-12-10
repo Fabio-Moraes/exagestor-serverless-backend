@@ -2,7 +2,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import { Server } from "socket.io";
-import WebSocket from 'ws';
+//import WebSocket from 'ws';
 
 import http from 'http';
 /* 
@@ -79,7 +79,7 @@ server.listen(PORT, () => {
 });
 
 setInterval(() => {
-  http.get('https://exatelecom-server.vercel.app');
+  http.get('wss://exatelecom-server.vercel.app');
 }, 60000);
 // sudo killall -9 node
 //process.env.FRONTEND_ORIGIN

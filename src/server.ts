@@ -1,7 +1,7 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
-//import { Server } from "socket.io";
+import { Server } from "socket.io";
 import WebSocket from 'ws';
 
 import http from 'http';
@@ -14,7 +14,8 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server })
+const io = new Server(server);
+//const wss = new WebSocket.Server({ server })
 
 app.use(
   cors({
@@ -43,11 +44,20 @@ app.use((err: Error, req: Request, res: Response) => {
 });
 */
 
-const PORT = Number(process.env.PORT);
+io.on("connection", (socket) => {
+  console.log("A user connected");
+  io.emit("ON_USERS", JSON.stringify({ users: 123 }));
+  // Listen for incoming messages
 
-wss.on('connection', (ws: WebSocket) => {
+  // Handle disconnection
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
+
+/* wss.on('connection', (ws: WebSocket) => {
   console.log('Um cliente se conectou.');
-
+  
   wss.clients.forEach((client) => {
     if (client !== ws && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({
@@ -56,18 +66,20 @@ wss.on('connection', (ws: WebSocket) => {
       }));
     }
   });
-
+  
   ws.on('close', () => {
     console.log('Um cliente se desconectou.');
   });
-});
+}); */
+
+const PORT = Number(process.env.PORT);
 
 server.listen(PORT, () => {
   console.log(`Server running at port ${PORT}`);
 });
 
 setInterval(() => {
-  http.get('http://192.168.0.13:3333/');
-}, 60000); 
+  http.get('https://exatelecom-server.vercel.app');
+}, 60000);
 // sudo killall -9 node
 //process.env.FRONTEND_ORIGIN

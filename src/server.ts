@@ -14,18 +14,30 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  transports: ['websocket']
+
+const PORT = Number(process.env.PORT);
+
+server.listen(PORT, () => {
+  console.log(`Server running at port ${PORT}`);
 });
+
+const io = new Server(server, {
+  transports: ['websocket'],
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
 //const wss = new WebSocket.Server({ server })
 
-app.use(
+/* app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN,
     methods: ["GET", "POST"],
     credentials: true
   })
-);
+); */
 
 /* const io = new Server(serverHttp, {
 cors: {
@@ -57,6 +69,10 @@ io.on("connection", (socket) => {
   });
 });
 
+setInterval(() => {
+  http.get('wss://exatelecom-server.vercel.app');
+}, 60000);
+
 /* wss.on('connection', (ws: WebSocket) => {
   console.log('Um cliente se conectou.');
   
@@ -74,14 +90,5 @@ io.on("connection", (socket) => {
   });
 }); */
 
-const PORT = Number(process.env.PORT);
-
-server.listen(PORT, () => {
-  console.log(`Server running at port ${PORT}`);
-});
-
-setInterval(() => {
-  http.get('wss://exatelecom-server.vercel.app');
-}, 60000);
 // sudo killall -9 node
 //process.env.FRONTEND_ORIGIN

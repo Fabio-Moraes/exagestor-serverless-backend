@@ -14,13 +14,15 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  transports: ['websocket']
+});
 //const wss = new WebSocket.Server({ server })
 
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN,
-    methods: 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+    methods: ["GET", "POST"],
     credentials: true
   })
 );

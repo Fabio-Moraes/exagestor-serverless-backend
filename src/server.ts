@@ -1,4 +1,4 @@
-import cors from 'cors';
+//import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import { Server } from "socket.io";
@@ -15,14 +15,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const PORT = Number(process.env.PORT);
-
-server.listen(PORT, () => {
-  console.log(`Server running at port ${PORT}`);
-});
-
 const io = new Server(server, {
-  transports: ['websocket'],
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],
@@ -69,13 +62,19 @@ io.on("connection", (socket) => {
   });
 });
 
-setInterval(() => {
+const PORT = Number(process.env.PORT);
+
+server.listen(PORT, () => {
+  console.log(`Server running at port ${PORT}`);
+});
+
+/* setInterval(() => {
   http.get('wss://exatelecom-server.vercel.app');
-}, 60000);
+}, 60000); */
 
 /* wss.on('connection', (ws: WebSocket) => {
   console.log('Um cliente se conectou.');
-  
+
   wss.clients.forEach((client) => {
     if (client !== ws && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({
@@ -84,7 +83,7 @@ setInterval(() => {
       }));
     }
   });
-  
+
   ws.on('close', () => {
     console.log('Um cliente se desconectou.');
   });

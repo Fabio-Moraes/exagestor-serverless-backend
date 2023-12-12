@@ -7,7 +7,7 @@ import { executeQuery } from '../../../../database';
 
 import { z, ZodError } from 'zod';
 
-import { socket } from '../../../../services/websocket'
+import io from '../../../../services/websocket'
 
 const router = express.Router();
 
@@ -88,11 +88,13 @@ router.get('/pause', async (req: Request, res: Response) => {
             'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
         await executeQuery(insertSql, values);
+
+        const socket = io();
         
         socket.on('ON_USERS', (newMessage) => {
           console.log(JSON.parse(newMessage));
         });
-
+    
         res.json({ success: true });
     });
   } catch (error) {

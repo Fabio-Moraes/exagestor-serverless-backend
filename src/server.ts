@@ -15,7 +15,7 @@ const server = http.createServer(app);
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN,
+    origin: process.env.FRONTEND_ORIGIN_BASEURL,
     methods: ["GET", "POST"],
     credentials: true
   })

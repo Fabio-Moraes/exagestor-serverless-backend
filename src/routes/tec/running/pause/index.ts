@@ -95,7 +95,10 @@ router.get('/pause', async (req: Request, res: Response) => {
 
         const socket =  io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
           transports: ['websocket'],
-          withCredentials: true, 
+          withCredentials: true,
+          extraHeaders: {
+            'my-custom-header': 'abcd'
+          }
         });
 
         socket.on('connect', () => {

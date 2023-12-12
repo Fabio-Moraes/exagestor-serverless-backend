@@ -19,7 +19,7 @@ router.get('/pause', async (req: Request, res: Response) => {
       protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     });
 
-    
+
     const { token, employeeId, protocol } = paramsSchema.parse(req.query);
     console.log('****', employeeId)
 

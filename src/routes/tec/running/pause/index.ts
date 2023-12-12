@@ -7,7 +7,11 @@ import { executeQuery } from '../../../../database';
 
 import { z, ZodError } from 'zod';
 
-import io from '../../../../services/websocket'
+import { io } from 'socket.io-client';
+
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 
@@ -89,12 +93,14 @@ router.get('/pause', async (req: Request, res: Response) => {
 
         await executeQuery(insertSql, values);
 
-        const socket = io();
-        
-        socket.on('ON_USERS', (newMessage) => {
-          console.log(JSON.parse(newMessage));
+        const socket =  io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
+          transports: ['websocket']
         });
-    
+
+        socket.on('connect', () => {
+          console.log('Connected to WebSocket server');
+        });
+
         res.json({ success: true });
     });
   } catch (error) {

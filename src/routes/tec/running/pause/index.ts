@@ -94,7 +94,8 @@ router.get('/pause', async (req: Request, res: Response) => {
         await executeQuery(insertSql, values);
 
         const socket =  io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-          transports: ['websocket']
+          transports: ['websocket'],
+          withCredentials: true, 
         });
 
         socket.on('connect', () => {

@@ -97,7 +97,6 @@ router.get('/pause', async (req: Request, res: Response) => {
           transports: ['websocket'],
           withCredentials: true,
           extraHeaders: {
-            "my-custom-header": "abcd",
             'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
           },
         });

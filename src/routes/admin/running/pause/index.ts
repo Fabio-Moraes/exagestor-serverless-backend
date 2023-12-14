@@ -99,7 +99,11 @@ router.get('/pause', async (req: Request, res: Response) => {
         },
       });
 
-      socket.emit('RUNNING_UPDATE_TEC', JSON.stringify({ employee_id: rows[0].employee_id, }));
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+      });
+
+      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
       res.json({ success: true });
     });

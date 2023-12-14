@@ -32,15 +32,6 @@ router.get('/pause', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    const socket = io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-      auth: { token },
-      transports: ['websocket'],
-      withCredentials: true,
-      extraHeaders: {
-        'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
-      },
-    });
-
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
@@ -98,12 +89,22 @@ router.get('/pause', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
       await executeQuery(insertSql, values);
+      
+      (async () => {
+        const socket = io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
+          auth: { token },
+          transports: ['websocket'],
+          withCredentials: true,
+          extraHeaders: {
+            'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
+          },
+        });
 
-      socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
-      });
-
-      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
+        socket.on('connect', () => {
+          console.log('Connected to WebSocket server');
+        });
+        socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
+      })()
 
       res.json({ success: true });
     });

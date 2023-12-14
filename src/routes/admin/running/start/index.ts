@@ -99,7 +99,7 @@ router.get('/start', async (req: Request, res: Response) => {
         },
       });
 
-      socket.emit('RUNNING_UPDATE_TEC', JSON.stringify({ employee_id: rows[0].employee_id, }));
+      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
       res.json({ success: true });
     });

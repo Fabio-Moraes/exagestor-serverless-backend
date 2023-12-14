@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 //import type { Decoded } from '../../../../types/jwt'
+import { io } from 'socket.io-client';
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
@@ -88,6 +89,17 @@ router.get('/start', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
       await executeQuery(insertSql, values);
+
+      const socket = io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
+        auth: { token },
+        transports: ['websocket'],
+        withCredentials: true,
+        extraHeaders: {
+          'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
+        },
+      });
+
+      socket.emit('RUNNING_UPDATE_TEC', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
       res.json({ success: true });
     });

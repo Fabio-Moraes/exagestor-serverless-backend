@@ -7,8 +7,6 @@ import { executeQuery } from '../../../../database';
 
 import { z, ZodError } from 'zod';
 
-import { io } from 'socket.io-client';
-
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -20,92 +18,80 @@ router.get('/pause', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
-        token: z.string().min(1).optional(),
-        protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+      token: z.string().min(1).optional(),
+      protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     });
 
     const { token, protocol } = paramsSchema.parse(req.query);
 
     if (!protocol) {
-        console.error('Protocol não fornecido');
-        return res.status(401).json({ error: 'Protocol não fornecido' });
+      console.error('Protocol não fornecido');
+      return res.status(401).json({ error: 'Protocol não fornecido' });
     }
 
     if (!token) {
-        console.error('Token não fornecido');
-        return res.status(401).json({ error: 'Token não fornecido' });
+      console.error('Token não fornecido');
+      return res.status(401).json({ error: 'Token não fornecido' });
     }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-        if (error) {
-            if (error instanceof TokenExpiredError) {
-                console.log('Token expirado')
-                return res.status(403).json({ error: 'Token expirado' });
-            } else {
-                console.log('Token inválido')
-                return res.status(403).json({ error: 'Token inválido' });
-            }
+      if (error) {
+        if (error instanceof TokenExpiredError) {
+          console.log('Token expirado')
+          return res.status(403).json({ error: 'Token expirado' });
+        } else {
+          console.log('Token inválido')
+          return res.status(403).json({ error: 'Token inválido' });
         }
+      }
 
-        const { user } = decoded as Decoded;
+      const { user } = decoded as Decoded;
 
-        const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
+      const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
 
-        const rows = await executeQuery(selectSql, [user.id, protocol]);
+      const rows = await executeQuery(selectSql, [user.id, protocol]);
 
-        if (!rows) {
-            console.log('Requisição inválido')
-            return res.status(400).json({ error: 'Requisição inválido' });
-        }
+      if (!rows) {
+        console.log('Requisição inválido')
+        return res.status(400).json({ error: 'Requisição inválido' });
+      }
 
-        if (rows[0].status === 'paused') {
-            console.log('Serviço já pausado')
-            return res.status(409).json({ error: 'Serviço já pausado' });
-        }
+      if (rows[0].status === 'paused') {
+        console.log('Serviço já pausado')
+        return res.status(409).json({ error: 'Serviço já pausado' });
+      }
 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
 
-        const newModificationAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        const newStatus = 'paused';
+      const newModificationAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      const newStatus = 'paused';
 
-        const values = [
-            rows[0].employee_id,
-            rows[0].client_name,
-            rows[0].city,
-            rows[0].classification,
-            rows[0].nomenclature,
-            rows[0].address,
-            rows[0].protocol,
-            newStatus,
-            rows[0].update_count + 1,
-            rows[0].created_at,
-            newModificationAt
-        ];
+      const values = [
+        rows[0].employee_id,
+        rows[0].client_name,
+        rows[0].city,
+        rows[0].classification,
+        rows[0].nomenclature,
+        rows[0].address,
+        rows[0].protocol,
+        newStatus,
+        rows[0].update_count + 1,
+        rows[0].created_at,
+        newModificationAt
+      ];
 
-        const insertSql =
-            'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
+      const insertSql =
+        'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
-        await executeQuery(insertSql, values);
+      await executeQuery(insertSql, values);
 
-        const socket =  io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-          transports: ['websocket'],
-          withCredentials: true,
-          extraHeaders: {
-            'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
-          },
-        });
-
-        socket.on('connect', () => {
-          console.log('Connected to WebSocket server');
-        });
-
-        res.json({ success: true });
+      res.json({ success: true });
     });
   } catch (error) {
     if (error instanceof ZodError) {

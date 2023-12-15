@@ -89,12 +89,34 @@ router.get('/start', async (req: Request, res: Response) => {
 
       await executeQuery(insertSql, values);
 
-      const socket = websocket(token);
+      let socket = websocket(token);
+  
+      const connectSocket = () => {
+        socket = websocket(token);
+        socket.on('connect', () => {
+          console.log('Connected to WebSocket server');
+        });
+        socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id }));
+      };
 
-      socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
-      });
-      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
+      let retryCount = 0;
+      const maxRetries = 5; // You can adjust the number of retries as needed
+
+      const retrySocketConnection = () => {
+        retryCount += 1;
+
+        if (retryCount <= maxRetries) {
+          console.log(`Retrying socket connection, attempt ${retryCount}`);
+          connectSocket();
+          setTimeout(retrySocketConnection, 5000); // Adjust the timeout as needed (in milliseconds)
+        } else {
+          console.log('Max retries reached. Could not establish socket connection.');
+          res.status(500).json({ error: 'Could not establish socket connection' });
+        }
+      };
+
+      connectSocket(); // Initial connection attempt
+      retrySocketConnection(); // Start the retry mechanism
 
       res.json({ success: true });
     });

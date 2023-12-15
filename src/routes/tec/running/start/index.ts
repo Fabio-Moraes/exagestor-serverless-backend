@@ -4,7 +4,7 @@ import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
-import { websocket } from '../../../../services/websocket'
+import { executeWebsocket } from '../functions/websocket/RUNNING-UPDATE';
 
 import { z, ZodError } from 'zod';
 
@@ -88,37 +88,7 @@ router.get('/start', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
       await executeQuery(insertSql, values);
-
-      let socket = websocket(token);
-
-      const connectSocket = async () => {
-        return new Promise<void>((resolve) => {
-          socket = websocket(token);
-          socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-            resolve();
-          });
-          socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id }));
-        });
-      };
-
-      let retryCount = 0;
-      const maxRetries = 5;
-      while (retryCount < maxRetries) {
-        try {
-          await connectSocket();
-          res.json({ success: true });
-          return;
-        } catch (connectError: unknown) {
-          retryCount += 1;
-
-          if (connectError instanceof Error) {
-            console.log(`Tentativa ${retryCount} de conexão falhou: ${connectError.message}`);
-          } else {
-            console.log(`Tentativa ${retryCount} de conexão falhou com erro desconhecido`);
-          }
-        }
-      }
+      await executeWebsocket({ token, employee_id: rows[0].employee_id });
 
       res.json({ success: true });
     });

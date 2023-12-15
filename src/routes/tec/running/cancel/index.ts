@@ -4,6 +4,7 @@ import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
+import { executeWebsocket } from '../functions/websocket/RUNNING-UPDATE';
 
 import { z, ZodError } from 'zod';
 
@@ -87,7 +88,8 @@ router.get('/cancel', async (req: Request, res: Response) => {
             'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id, used_material_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
 
         await executeQuery(insertSql, values);
-
+        await executeWebsocket({ token, employee_id: rows[0].employee_id });
+        
         res.json({ success: true });
     });
   } catch (error) {

@@ -98,6 +98,10 @@ router.get('/pause', async (req: Request, res: Response) => {
 
       socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
+      setTimeout(() => {
+        console.log('Temporizador de verificação');
+      }, 5000);
+
       res.json({ success: true });
     });
   } catch (error) {

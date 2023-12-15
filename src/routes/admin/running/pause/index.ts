@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 //import type { Decoded } from '../../../../types/jwt'
-import { io } from 'socket.io-client';
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
+import { websocket } from '../../../../services/websocket'
 
 import { z, ZodError } from 'zod';
 
@@ -89,22 +89,14 @@ router.get('/pause', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
       await executeQuery(insertSql, values);
-      
-      (async () => {
-        const socket = io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-          auth: { token },
-          transports: ['websocket'],
-          withCredentials: true,
-          extraHeaders: {
-            'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
-          },
-        });
 
-        socket.on('connect', () => {
-          console.log('Connected to WebSocket server');
-        });
-        socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
-      })()
+      const socket = websocket(token);
+
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+      });
+
+      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
       res.json({ success: true });
     });

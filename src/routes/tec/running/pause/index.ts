@@ -4,9 +4,9 @@ import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
+import { websocket } from '../../../../services/websocket'
 
 import { z, ZodError } from 'zod';
-import { io } from 'socket.io-client';
 
 import dotenv from 'dotenv';
 
@@ -34,7 +34,7 @@ router.get('/pause', async (req: Request, res: Response) => {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });
     }
-    
+
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
@@ -92,21 +92,12 @@ router.get('/pause', async (req: Request, res: Response) => {
 
       await executeQuery(insertSql, values);
 
-      (async () => {
-        const socket = io(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-          auth: { token },
-          transports: ['websocket'],
-          withCredentials: true,
-          extraHeaders: {
-            'Origin': String(process.env.BACKEND_ORIGIN_BASEURL),
-          },
-        });
+      const socket = websocket(token);
 
-        socket.on('connect', () => {
-          console.log('Connected to WebSocket server');
-        });
-        socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
-      })()
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+      });
+      socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id, }));
 
       res.json({ success: true });
     });

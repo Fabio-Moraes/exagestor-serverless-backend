@@ -89,35 +89,33 @@ router.get('/start', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
         await executeQuery(insertSql, values);
-
+        
         let socket = websocket(token);
-  
-        const connectSocket = () => {
-          socket = websocket(token);
-          socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
+
+        const connectSocket = async () => {
+          return new Promise<void>((resolve) => {
+            socket = websocket(token);
+            socket.on('connect', () => {
+              console.log('Connected to WebSocket server');
+              resolve();
+            });
+            socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id }));
           });
-          socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id }));
         };
   
         let retryCount = 0;
-        const maxRetries = 5; // You can adjust the number of retries as needed
+        const maxRetries = 5; // Número máximo de tentativas
   
-        const retrySocketConnection = () => {
-          retryCount += 1;
-  
-          if (retryCount <= maxRetries) {
-            console.log(`Retrying socket connection, attempt ${retryCount}`);
-            connectSocket();
-            setTimeout(retrySocketConnection, 5000); // Adjust the timeout as needed (in milliseconds)
-          } else {
-            console.log('Max retries reached. Could not establish socket connection.');
-            res.status(500).json({ error: 'Could not establish socket connection' });
+        while (retryCount < maxRetries) {
+          try {
+            await connectSocket();
+            res.json({ success: true });
+            return; // Retorna após o sucesso
+          } catch {
+            retryCount += 1;
+            console.log(`Tentativa ${retryCount} de conexão falhou`);
           }
-        };
-  
-        connectSocket(); // Initial connection attempt
-        retrySocketConnection(); // Start the retry mechanism
+        }
   
         res.json({ success: true });
     });

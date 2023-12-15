@@ -103,16 +103,20 @@ router.get('/start', async (req: Request, res: Response) => {
       };
 
       let retryCount = 0;
-      const maxRetries = 5; // Número máximo de tentativas
-
+      const maxRetries = 5;
       while (retryCount < maxRetries) {
         try {
           await connectSocket();
           res.json({ success: true });
-          return; // Retorna após o sucesso
-        } catch {
+          return;
+        } catch (connectError: unknown) {
           retryCount += 1;
-          console.log(`Tentativa ${retryCount} de conexão falhou`);
+
+          if (connectError instanceof Error) {
+            console.log(`Tentativa ${retryCount} de conexão falhou: ${connectError.message}`);
+          } else {
+            console.log(`Tentativa ${retryCount} de conexão falhou com erro desconhecido`);
+          }
         }
       }
 

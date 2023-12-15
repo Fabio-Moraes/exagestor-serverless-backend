@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-//import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
-import { websocket } from '../../../../services/websocket'
+
+import { executeWebsocket } from '../functions/websocket/RUNNING-UPDATE';
 
 import { z, ZodError } from 'zod';
 
@@ -43,10 +43,7 @@ router.get('/pause', async (req: Request, res: Response) => {
         }
       }
 
-      //const { user: admin } = decoded as Decoded;
-
       const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
-
       const rows = await executeQuery(selectSql, [employeeId, protocol]);
 
       if (!rows) {
@@ -89,34 +86,8 @@ router.get('/pause', async (req: Request, res: Response) => {
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
       await executeQuery(insertSql, values);
+      await executeWebsocket({ token, employee_id: rows[0].employee_id });
 
-      let socket = websocket(token);
-
-      const connectSocket = async () => {
-        return new Promise<void>((resolve) => {
-          socket = websocket(token);
-          socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-            resolve();
-          });
-          socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id: rows[0].employee_id }));
-        });
-      };
-
-      let retryCount = 0;
-      const maxRetries = 5; // Número máximo de tentativas
-
-      while (retryCount < maxRetries) {
-        try {
-          await connectSocket();
-          res.json({ success: true });
-          return; // Retorna após o sucesso
-        } catch {
-          retryCount += 1;
-          console.log(`Tentativa ${retryCount} de conexão falhou`);
-        }
-      }
-      
       res.json({ success: true });
     });
   } catch (error) {

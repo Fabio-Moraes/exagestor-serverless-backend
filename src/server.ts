@@ -7,7 +7,6 @@ import http from 'http';
 import tec from './routes/tec';
 import admin from './routes/admin';
 import auth from './routes/auth';
-import ping from './routes/ping';
 
 dotenv.config();
 
@@ -26,7 +25,6 @@ app.use(express.json());
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);
-app.use('/api/ping', ping);
 
 app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);

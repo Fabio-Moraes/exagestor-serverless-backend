@@ -17,7 +17,7 @@ router.get('/running', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({ token: z.string().min(1).optional() });
     const { token } = paramsSchema.parse(req.query);
-
+    
     if (!token) {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });
@@ -48,7 +48,8 @@ router.get('/running', async (req: Request, res: Response) => {
           SELECT 1
           FROM exa_operations u2
           WHERE u2.protocol = u1.protocol
-          AND u2.id > u1.id )
+          AND u2.id > u1.id 
+          )
           ORDER BY u1.created_at DESC;
           `;
 

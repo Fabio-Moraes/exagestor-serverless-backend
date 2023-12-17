@@ -48,8 +48,7 @@ router.get('/running', async (req: Request, res: Response) => {
           SELECT 1
           FROM exa_operations u2
           WHERE u2.protocol = u1.protocol
-          AND u2.id > u1.id
-          )
+          AND u2.id > u1.id )
           ORDER BY u1.created_at DESC;
           `;
 
@@ -59,6 +58,7 @@ router.get('/running', async (req: Request, res: Response) => {
       const rows = await executeQuery(sql, [statusCanceled, statusCompleted]);
       res.json(rows);
     });
+
   } catch (error) {
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);

@@ -4,7 +4,7 @@ import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
-import { executeWebsocket } from '../../functions/websocket/RUNNING-UPDATE';
+import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
 
 import { z, ZodError } from 'zod';
 

@@ -1,6 +1,7 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
+import cookieParser from 'cookie-parser';
 
 import http from 'http';
  
@@ -22,6 +23,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);

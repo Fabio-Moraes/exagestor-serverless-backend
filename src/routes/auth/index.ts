@@ -40,9 +40,17 @@ router.post('/signin', async (req: Request, res: Response) => {
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
-      res.json({ token });
+
+      res.cookie('auth_token', token, {
+        //expires: new Date(Date.now() + 900000),
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000 * 7, 
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+      res.status(200).send('Successfully');
     } else {
-      res.status(401).send('Credenciais inválidas');
+      res.status(401).send('Invalid credentials');
     }
 
   } catch (error) {

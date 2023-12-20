@@ -16,14 +16,19 @@ const router = express.Router();
 router.get('/running', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({ token: z.string().min(1).optional() });
-    const { token } = paramsSchema.parse(req.query);
+    //const { token } = paramsSchema.parse(req.query);
     
+    const token = req.cookies.auth_token;
+
+    console.log(token);
+
+
     if (!token) {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error: any) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')

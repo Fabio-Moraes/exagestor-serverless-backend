@@ -45,7 +45,8 @@ router.post('/signin', async (req: Request, res: Response) => {
         //expires: new Date(Date.now() + 900000),
         httpOnly: true,
         maxAge: 60 * 60 * 1000 * 7, 
-        secure: req.headers['x-forwarded-proto'] === 'https',
+        secure: req.secure,
+        sameSite: 'none',
       });
       res.json({token: 'successfully'});
     } else {

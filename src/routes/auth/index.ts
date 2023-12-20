@@ -48,7 +48,9 @@ router.post('/signin', async (req: Request, res: Response) => {
         secure: true,
         sameSite: 'none',
       });
-      res.json({token: 'successfully'});
+      
+      console.log('Login bem-sucedido. Token:', token);
+      res.json('successfully');
     } else {
       res.status(401).send('Invalid credentials');
     }

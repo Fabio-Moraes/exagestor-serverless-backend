@@ -47,8 +47,7 @@ router.post('/signin', async (req: Request, res: Response) => {
         maxAge: 60 * 60 * 1000 * 7, 
         secure: true,
       });
-
-      res.status(200).send('Successfully');
+      res.json({token: 'Successfully'});
     } else {
       res.status(401).send('Invalid credentials');
     }

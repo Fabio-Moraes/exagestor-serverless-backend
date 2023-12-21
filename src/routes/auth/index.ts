@@ -38,13 +38,16 @@ router.post('/signin', async (req: Request, res: Response) => {
       }
     }
 
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 24 * 7); 
+
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
 
       res.status(200).cookie('auth_token_test', token, {
         sameSite: 'none',
         path: '/',
-        expires: new Date(new Date().getTime() + 100 * 1000),
+        expires: expirationDate,
         httpOnly: true,
         secure: true,
         //maxAge: 3 * 60 * 1000,

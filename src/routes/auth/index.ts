@@ -45,12 +45,12 @@ router.post('/signin', async (req: Request, res: Response) => {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
 
       res.status(200).cookie('auth_token_test', token, {
-        sameSite: 'none',
-        path: '/',
-        expires: expirationDate,
+        path: "/",
+        sameSite: "lax",
         httpOnly: true,
         secure: true,
-        //maxAge: 3 * 60 * 1000,
+        expires: new Date(Date.now() + 60_000),
+        maxAge: 60,
       }).send("cookie being initialised")
 
       console.log('Login bem-sucedido. Token:', token);

@@ -42,7 +42,7 @@ router.post('/signin', async (req: Request, res: Response) => {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
 
       res.status(200).cookie('auth_token', token, {
-        sameSite: 'strict',
+        sameSite: 'none',
         path: '/',
         expires: new Date(new Date().getTime() + 100 * 1000),
         httpOnly: true,

@@ -42,12 +42,10 @@ router.post('/signin', async (req: Request, res: Response) => {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
 
       res.cookie('auth_token', token, {
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        //maxAge: 60 * 60 * 1000 * 7, 
         secure: true,
-        sameSite: 'none',
-        domain: 'https://exatelecom-server.verce'
+        sameSite: 'strict',
       });
 
       console.log('Login bem-sucedido. Token:', token);

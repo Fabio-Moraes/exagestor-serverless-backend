@@ -45,7 +45,7 @@ router.post('/signin', async (req: Request, res: Response) => {
         expires: new Date(Date.now() + 900000),
         httpOnly: true,
         //maxAge: 60 * 60 * 1000 * 7, 
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         //sameSite: 'none',
       });
 

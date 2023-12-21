@@ -45,7 +45,7 @@ router.post('/signin', async (req: Request, res: Response) => {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'none',
       });
 
       console.log('Login bem-sucedido. Token:', token);

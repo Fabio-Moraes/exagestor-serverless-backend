@@ -46,7 +46,8 @@ router.post('/signin', async (req: Request, res: Response) => {
         httpOnly: true,
         //maxAge: 60 * 60 * 1000 * 7, 
         secure: true,
-        //sameSite: 'none',
+        sameSite: 'none',
+        domain: 'https://exatelecom.vercel.app'
       });
 
       console.log('Login bem-sucedido. Token:', token);

@@ -8,6 +8,8 @@ import { executeQuery } from '../../database';
 
 import { z, ZodError } from 'zod';
 
+import cookie from 'cookie';
+
 const router = express.Router();
 
 router.post('/signin', async (req: Request, res: Response) => {
@@ -43,17 +45,34 @@ router.post('/signin', async (req: Request, res: Response) => {
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
       const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
+      
+      
+       /*
+      res.setHeader(
+        'Set-Cookie',
+        cookie.serialize('auth_token_jwt', token, {
+          httpOnly: false,
+          secure: false,
+          maxAge: 60 * 60 * 24 * 365,
+          //sameSite: 'strict',
+          path: '/'
+        })
+      );
+      */
+            
 
-      res.status(202).cookie('auth_token_test', token, {
-        httpOnly: true,
-        maxAge: 2 * 60 * 60 * 1000,
-        path: '/',
-        sameSite: 'strict',
-        secure: true,
+      res.status(202).cookie('auth_token_jwt', token, {
+          httpOnly: true,
+          secure: true,
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: 'none',
+          path: '/'
+          
+          //expires: new Date(Date.now() + 60000),
+        }).send("cookie being initialised")
         
-        //expires: new Date(Date.now() + 60000),
-      }).send("cookie being initialised")
-
+        
+        
       console.log('Login bem-sucedido. Token:', token);
     } else {
       res.status(401).send('Invalid credentials');

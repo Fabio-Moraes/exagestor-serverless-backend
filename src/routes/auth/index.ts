@@ -65,7 +65,7 @@ router.post('/signin', async (req: Request, res: Response) => {
           httpOnly: true,
           secure: true,
           maxAge: 60 * 60 * 24 * 365,
-          sameSite: 'none',
+          sameSite: 'strict',
           path: '/'
           
           //expires: new Date(Date.now() + 60000),

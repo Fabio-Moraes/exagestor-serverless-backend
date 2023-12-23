@@ -1,14 +1,12 @@
 import express, { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+//import jwt from 'jsonwebtoken';
 
 import bcrypt from 'bcryptjs';
-import { JWT_SECRET_KEY } from '../../constants';
+//import { JWT_SECRET_KEY } from '../../constants';
 
 import { executeQuery } from '../../database';
 
 import { z, ZodError } from 'zod';
-
-import cookie from 'cookie';
 
 const router = express.Router();
 
@@ -32,48 +30,22 @@ router.post('/signin', async (req: Request, res: Response) => {
      return res.status(401).send('Credenciais inválidas');
     }
 
-    const contentJwt = {
+ /*    const contentJwt = {
       user: {
         id: rows[0]?.id,
         name: rows[0]?.name,
         role: rows[0]?.role
       }
-    }
+    } */
 
-    const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + 24 * 7); 
+   // const expirationDate = new Date();
+  //expirationDate.setHours(expirationDate.getHours() + 24 * 7); 
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
-      const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
-      
-      
-       /*
-      res.setHeader(
-        'Set-Cookie',
-        cookie.serialize('auth_token_jwt', token, {
-          httpOnly: false,
-          secure: false,
-          maxAge: 60 * 60 * 24 * 365,
-          //sameSite: 'strict',
-          path: '/'
-        })
-      );
-      */
-            
-
-      res.status(202).cookie('auth_token_jwt', token, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 60 * 60 * 24 * 365,
-          sameSite: 'strict',
-          path: '/'
-          
-          //expires: new Date(Date.now() + 60000),
-        }).send("cookie being initialised")
-        
-        
-        
-      console.log('Login bem-sucedido. Token:', token);
+      //const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
+    
+      res.json({ success: true });  
+      console.log('Login bem-sucedido. Token:');
     } else {
       res.status(401).send('Invalid credentials');
     }

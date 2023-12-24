@@ -9,19 +9,11 @@ import routesPause from './pause';
 import routesStart from './start';
 import routesFinish from './finish';
 
-import { z, ZodError } from 'zod';
-
 const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
   try {
-    const paramsSchema = z.object({ token: z.string().min(1).optional() });
-    //const { token } = paramsSchema.parse(req.query);
-    
     const token = req.cookies.auth_token;
-
-    console.log(token);
-
 
     if (!token) {
       console.error('Token não fornecido');
@@ -66,13 +58,8 @@ router.get('/running', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    if (error instanceof ZodError) {
-      console.error('Requisição inválida Zod', error.errors);
-      return res.status(400).json({ error: error.errors });
-    } else {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
-    }
   }
 });
 

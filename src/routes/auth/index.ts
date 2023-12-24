@@ -1,9 +1,5 @@
 import express, { Request, Response } from 'express';
-//import jwt from 'jsonwebtoken';
-
 import bcrypt from 'bcryptjs';
-//import { JWT_SECRET_KEY } from '../../constants';
-
 import { executeQuery } from '../../database';
 
 import { z, ZodError } from 'zod';
@@ -22,7 +18,6 @@ router.post('/signin', async (req: Request, res: Response) => {
     });
 
     const { password, identification } = paramsSchema.parse(req.body);
-
     const sql = `SELECT * FROM exa_users WHERE identification = ?`;
     const rows = await executeQuery(sql, [identification]);
  
@@ -30,21 +25,17 @@ router.post('/signin', async (req: Request, res: Response) => {
      return res.status(401).send('Credenciais inválidas');
     }
 
- /*    const contentJwt = {
+    const content = {
       user: {
         id: rows[0]?.id,
         name: rows[0]?.name,
         role: rows[0]?.role
       }
-    } */
-
-   // const expirationDate = new Date();
-  //expirationDate.setHours(expirationDate.getHours() + 24 * 7); 
+    }
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
-      //const token = jwt.sign(contentJwt, JWT_SECRET_KEY, { expiresIn: '7d' });
     
-      res.json({ success: true });  
+      res.json( content );  
       console.log('Login bem-sucedido. Token:');
     } else {
       res.status(401).send('Invalid credentials');

@@ -17,6 +17,13 @@ const server = http.createServer(app);
 const appEnv = process.env.APP_ENV === 'production';
 
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_ORIGIN_BASEURL,);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN_BASEURL,
@@ -24,6 +31,7 @@ app.use(
     credentials: true
   })
 );
+
 app.use(express.json());
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);

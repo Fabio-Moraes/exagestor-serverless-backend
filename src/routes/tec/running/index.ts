@@ -14,24 +14,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-router.get('/running', async (req: Request, res: Response) => {
-  const { cookies } = req;
-  const token = cookies.auth_token;
-  
+router.get('/running', async (req: Request, res: Response) => {  
   try {
+    const { cookies } = req;
+    const token = cookies.auth_token;
+    
     if (!token) {
-      console.error('Token não fornecido');
-      return res.status(401).json({ error: 'Token não fornecido' });
+      console.error('Token not provided');
+      return res.status(401).json({ error: 'Token not provided' });
     }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error: any, decoded: any) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
+          console.log('** Verify token expired **')
+          return res.status(403).json({ error: 'Token expired' });
         } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
+          console.log('** Verify token invalid **')
+          return res.status(403).json({ error: 'Invalid token' });
         }
       }
 
@@ -55,16 +55,16 @@ router.get('/running', async (req: Request, res: Response) => {
           FROM exa_operations u2
           WHERE u2.protocol = u1.protocol
           AND u2.id > u1.id
-          )
-          ORDER BY u1.created_at DESC;
-          `;
+        )
+        ORDER BY u1.created_at DESC;
+      `;
 
       const rows = await executeQuery(sql, [statusCanceled, statusCompleted, user.id]);
       res.json(rows);
     });
   } catch (error) {
     if (error instanceof ZodError) {
-      console.error('Requisição inválida Zod', error.errors);
+      console.error('Invalid Zod request', error.errors);
       return res.status(400).json({ error: error.errors });
     } else {
       console.error(error);

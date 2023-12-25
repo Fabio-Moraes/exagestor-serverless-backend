@@ -20,11 +20,12 @@ router.get('/pause', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
-      token: z.string().min(1).optional(),
       protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     });
 
-    const { token, protocol } = paramsSchema.parse(req.query);
+    const { protocol } = paramsSchema.parse(req.query);
+
+    const token: string | undefined = req.cookies.auth_token;
 
     if (!protocol) {
       console.error('Protocol não fornecido');

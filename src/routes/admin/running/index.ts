@@ -12,9 +12,10 @@ import routesFinish from './finish';
 const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
-  try {
-    const token: string | undefined = req.cookies.auth_token;
+  const { cookies } = req;
+  const token = cookies.auth_token;
 
+  try {
     if (!token) {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });

@@ -15,15 +15,16 @@ import { z, ZodError } from 'zod';
 const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
+  const { cookies } = req;
+  const token = cookies.auth_token;
+  
   try {
-    const token: string | undefined = req.cookies.auth_token;
-
     if (!token) {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error: any, decoded: any) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')

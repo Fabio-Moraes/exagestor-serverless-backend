@@ -18,6 +18,8 @@ router.get('/running', async (req: Request, res: Response) => {
   try {
     const { cookies } = req;
     const token = cookies.auth_token;
+
+    console.log('@Cookies:', cookies);
     
     if (!token) {
       console.error('Token not provided');

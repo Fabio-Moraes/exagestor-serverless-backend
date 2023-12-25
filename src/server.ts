@@ -16,7 +16,7 @@ const server = http.createServer(app);
 
 const appEnv = process.env.APP_ENV === 'production';
 
-app.use(cookieParser('seuSegredoAqui'));
+app.use(cookieParser());
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN_BASEURL,

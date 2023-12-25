@@ -13,6 +13,8 @@ const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
   try {
+
+    console.log('9999', req.headers )
     const { cookies } = req;
     const token = cookies.auth_token;
 

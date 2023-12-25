@@ -14,6 +14,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+app.use(cookieParser());
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN_BASEURL,
@@ -21,9 +22,7 @@ app.use(
     credentials: true
   })
 );
-
 app.use(express.json());
-app.use(cookieParser());
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);

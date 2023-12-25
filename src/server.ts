@@ -27,12 +27,12 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN_BASEURL,
-    methods: ['GET','PUT','POST','DELETE','PATCH','OPTIONS'],
+    //methods: ['GET','PUT','POST','DELETE','PATCH','OPTIONS'],
     credentials: true
   })
 );
 
-app.options('*', cors());
+//app.options('*', cors());
 
 app.use(express.json());
 app.use('/api/tec', tec);

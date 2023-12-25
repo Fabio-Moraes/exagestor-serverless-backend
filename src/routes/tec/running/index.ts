@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
   try {
-    const token: string | undefined = req.cookies.auth_token;
+    const token: string | undefined = req.cookies.get('auth_token')?.value
 
     if (!token) {
       console.error('Token não fornecido');

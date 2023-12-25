@@ -16,6 +16,12 @@ const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {  
   try {
+    const authorizationHeader = req.headers['authorization'];
+
+    if (authorizationHeader) {
+      console.log('zzzzzzzz',authorizationHeader.split(' ')[1])
+    } 
+
     const token = req.headers.cookie;
     
     if (!token) {

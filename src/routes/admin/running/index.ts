@@ -13,11 +13,11 @@ const router = express.Router();
 
 router.get('/running', async (req: Request, res: Response) => {
   try {
-    let token = req.cookies.get('auth_token')?.value;
+    const { cookies } = req;
+    const token = cookies.auth_token;
 
-    //const { cookies } = req;
-    //const token = cookies.auth_token;
-
+    console.log('@@@@', token);
+    
     if (!token) {
       console.error('Token não fornecido');
       return res.status(401).json({ error: 'Token não fornecido' });

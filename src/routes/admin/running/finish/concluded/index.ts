@@ -20,9 +20,9 @@ const paramsSchema = z.object({
     serviceIds: z.string(),
 });
 
-router.get('/concluded', async (req: Request, res: Response) => {
+router.post('/concluded', async (req: Request, res: Response) => {
     try {
-        const { token, employeeId, protocol, observation, serviceIds } = paramsSchema.parse(req.query);
+        const { token, employeeId, protocol, observation, serviceIds } = paramsSchema.parse(req.body);
 
         if (!token || !protocol) {
             console.error('Token ou Protocol não fornecidos');

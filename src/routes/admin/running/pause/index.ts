@@ -20,8 +20,8 @@ router.post('/pause', async (req: Request, res: Response) => {
       protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     });
 
-    const {token, employeeId, protocol } = paramsSchema.parse(req.body);
-    
+    const { token, employeeId, protocol } = paramsSchema.parse(req.body);
+
     if (!protocol) {
       console.error('Protocol não fornecido');
       return res.status(401).json({ error: 'Protocol não fornecido' });

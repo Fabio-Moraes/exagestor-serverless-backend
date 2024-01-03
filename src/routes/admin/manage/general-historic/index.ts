@@ -11,11 +11,11 @@ import { z } from 'zod';
 
 const router = express.Router();
 
-router.get('/manage/general-historic', async (req: Request, res: Response) => {
+router.post('/manage/general-historic', async (req: Request, res: Response) => {
   const paramsSchema = z.object({
     token: z.string().min(1).optional()
   });
-  const { token } = paramsSchema.parse(req.query);
+  const { token } = paramsSchema.parse(req.body);
 
   if (!token) {
     console.error('Token não fornecido');

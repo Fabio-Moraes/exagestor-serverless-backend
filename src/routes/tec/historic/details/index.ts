@@ -9,7 +9,7 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-router.get('/historic/details', async (req: Request, res: Response) => {
+router.post('/historic/details', async (req: Request, res: Response) => {
   try {
   const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
@@ -18,7 +18,7 @@ router.get('/historic/details', async (req: Request, res: Response) => {
     protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     update_count: z.string().min(1).optional(),
   });
-  const { token, protocol, update_count } = paramsSchema.parse(req.query);
+  const { token, protocol, update_count } = paramsSchema.parse(req.body);
 
   if (!token) {
     console.error('Token não fornecido');

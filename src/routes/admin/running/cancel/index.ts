@@ -11,7 +11,7 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-router.get('/cancel', async (req: Request, res: Response) => {
+router.post('/cancel', async (req: Request, res: Response) => {
   try {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
@@ -21,7 +21,7 @@ router.get('/cancel', async (req: Request, res: Response) => {
       protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
     });
 
-    const { token, employeeId, protocol } = paramsSchema.parse(req.query);
+    const { token, employeeId, protocol } = paramsSchema.parse(req.body);
 
     if (!protocol) {
         console.error('Protocol não fornecido');

@@ -16,9 +16,9 @@ router.post('/historic/details', async (req: Request, res: Response) => {
   const paramsSchema = z.object({
     token: z.string().min(1).optional(),
     protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
-    update_count: z.string().min(1).optional(),
+    updateCount: z.string().min(1).optional(),
   });
-  const { token, protocol, update_count } = paramsSchema.parse(req.body);
+  const { token, protocol, updateCount } = paramsSchema.parse(req.body);
 
   if (!token) {
     console.error('Token não fornecido');
@@ -39,7 +39,8 @@ router.post('/historic/details', async (req: Request, res: Response) => {
     const { user } = decoded as Decoded;
     const sql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
 
-    const rows = await executeQuery(sql, [user.id, protocol, update_count]);
+    
+    const rows = await executeQuery(sql, [user.id, protocol, updateCount]);
     res.json(rows);
   });
 } catch (error) {

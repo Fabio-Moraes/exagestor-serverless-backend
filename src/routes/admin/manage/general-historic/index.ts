@@ -43,7 +43,7 @@ router.post('/manage/general-historic', async (req: Request, res: Response) => {
         ON u1.employee_id = tec_user.id 
         LEFT JOIN exa_users admin_user
         ON u1.admin_id = admin_user.id
-        ORDER BY u1.created_at DESC;
+        ORDER BY u1.id DESC;
         `;
 
     const rows = await executeQuery(sql);

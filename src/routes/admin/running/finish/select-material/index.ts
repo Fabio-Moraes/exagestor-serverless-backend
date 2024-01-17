@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-//import type { Decoded } from '../../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeQuery } from '../../../../../database';
@@ -14,7 +13,7 @@ router.post('/select-material', async (req: Request, res: Response) => {
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
-      token: z.string().min(1).optional(),
+      token: z.string(),
       employeeId: z.string().min(1),
       protocol: z.string().refine((data) => customFormatRegex.test(data)).optional()
     });
@@ -42,8 +41,6 @@ router.post('/select-material', async (req: Request, res: Response) => {
             }
         }
         
-        //const { user } = decoded as Decoded;
-
         const status = 'finished';
         const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`;
         const rows = await executeQuery(sql, [employeeId, protocol, status]);

@@ -73,7 +73,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
       await executeQuery(insertSql, values);
       await executeWebsocket({ token, employee_id: row.employee_id, });
-
+z
       res.json({ success: true });
     });
   } catch (error) {

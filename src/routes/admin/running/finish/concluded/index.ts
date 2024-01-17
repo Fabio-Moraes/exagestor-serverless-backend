@@ -37,7 +37,10 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
             //const { user } = decoded as Decoded
 
-            const [row] = await executeQuery('SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC', [employeeId, protocol]);
+            const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
+
+            const [row] = await executeQuery(rowSql, [employeeId, protocol]);
+
 
             if (!row) {
                 console.error('Requisição inválida');
@@ -76,7 +79,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
             await executeQuery(insertSql, values);
             await executeWebsocket({ token, employee_id: row.employee_id });
 
-            res.json({ success: true });
+            res.json(row);
         });
     } catch (error) {
         if (error instanceof ZodError) {

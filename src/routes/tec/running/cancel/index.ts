@@ -85,7 +85,7 @@ router.post('/cancel', async (req: Request, res: Response) => {
         ];
 
         const insertSql =
-            'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, used_service_id, used_material_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
+            'INSERT INTO exa_operations (employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, finished_at, list_service, list_material) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)';
 
         await executeQuery(insertSql, values);
         await executeWebsocket({ token, employee_id: rows[0].employee_id });

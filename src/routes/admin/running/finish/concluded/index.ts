@@ -18,11 +18,13 @@ const paramsSchema = z.object({
     protocol: z.string().refine(data => customFormatRegex.test(data)),
     observation: z.string().max(500).optional(),
     serviceIds: z.string(),
+    listService: z.string(),
+    listMaterial: z.string()
 });
 
 router.post('/concluded', async (req: Request, res: Response) => {
     try {
-        const { token, employeeId, protocol, observation, serviceIds } = paramsSchema.parse(req.body);
+        const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema.parse(req.body);
 
         if (!token || !protocol) {
             console.error('Token ou Protocol não fornecidos');
@@ -68,13 +70,13 @@ router.post('/concluded', async (req: Request, res: Response) => {
                 row.update_count + 1,
                 row.created_at,
                 row.modification_at,
-                row.used_service_id,
-                row.used_material_id,
+                listService,
+                listMaterial,
                 observation,
                 formattedDate
             ];
 
-            const insertSql = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const insertSql = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             await executeQuery(insertSql, values);
             await executeWebsocket({ token, employee_id: row.employee_id });

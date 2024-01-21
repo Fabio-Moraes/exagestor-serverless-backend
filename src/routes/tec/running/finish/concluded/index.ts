@@ -63,13 +63,13 @@ router.post('/concluded', async (req: Request, res: Response) => {
         row.update_count + 1,
         row.created_at,
         row.modification_at,
-        row.used_service_id,
-        row.used_material_id,
+        row.list_service,
+        row.list_material,
         observation,
         formattedDate
       ];
 
-      const insertSql = 'INSERT INTO exa_operations ( employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, used_service_id, used_material_id, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      const insertSql = 'INSERT INTO exa_operations ( employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
       await executeQuery(insertSql, values);
       await executeWebsocket({ token, employee_id: row.employee_id, });

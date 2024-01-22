@@ -17,7 +17,6 @@ const paramsSchema = z.object({
     employeeId: z.string().min(1),
     protocol: z.string().refine(data => customFormatRegex.test(data)),
     observation: z.string().max(500).optional(),
-    serviceIds: z.string(),
     listService: z.string(),
     listMaterial: z.string()
 });
@@ -36,8 +35,6 @@ router.post('/concluded', async (req: Request, res: Response) => {
                 console.error(error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido');
                 return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
             }
-
-            //const { user } = decoded as Decoded
 
             const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
 
@@ -81,7 +78,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
             await executeQuery(insertSql, values);
             await executeWebsocket({ token, employee_id: row.employee_id });
 
-            res.json(row);
+            res.json({ success: true });
         });
     } catch (error) {
         if (error instanceof ZodError) {

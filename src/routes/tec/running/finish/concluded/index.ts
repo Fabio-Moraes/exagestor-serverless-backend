@@ -16,12 +16,13 @@ const paramsSchema = z.object({
   token: z.string().min(1),
   protocol: z.string().refine(data => customFormatRegex.test(data)),
   observation: z.string().max(500).optional(),
-  serviceIds: z.string(),
+  listService: z.string(),
+  listMaterial: z.string()
 });
 
 router.post('/concluded', async (req: Request, res: Response) => {
   try {
-    const { token, protocol, observation, serviceIds } = paramsSchema.parse(req.body);
+    const { token, protocol, observation, listMaterial, listService } = paramsSchema.parse(req.body);
 
     if (!token || !protocol) {
       console.error('Token ou Protocol não fornecidos');
@@ -63,8 +64,8 @@ router.post('/concluded', async (req: Request, res: Response) => {
         row.update_count + 1,
         row.created_at,
         row.modification_at,
-        row.list_service,
-        row.list_material,
+        listService,
+        listMaterial,
         observation,
         formattedDate
       ];

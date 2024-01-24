@@ -4,10 +4,11 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
+import routesFinish from './finish';
 import routesCancel from './cancel';
 import routesPause from './pause';
 import routesStart from './start';
-import routesFinish from './finish';
+import routesCheck from './check';
 
 import { z, ZodError } from 'zod';
 
@@ -75,5 +76,6 @@ router.use(routesFinish);
 router.use(routesCancel);
 router.use(routesPause);
 router.use(routesStart);
+router.use(routesCheck);
 
 export default router;

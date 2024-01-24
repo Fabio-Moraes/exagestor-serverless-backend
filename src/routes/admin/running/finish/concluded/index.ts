@@ -40,7 +40,6 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
             const [row] = await executeQuery(rowSql, [employeeId, protocol]);
 
-
             if (!row) {
                 console.error('Requisição inválida');
                 return res.status(400).json({ error: 'Requisição inválida' });

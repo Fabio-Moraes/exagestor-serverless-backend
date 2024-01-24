@@ -43,7 +43,7 @@ router.post('/select-material', async (req: Request, res: Response) => {
 
         const status = 'finished';
         const { user } = decoded as Decoded;
-        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ?`;
+        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
         const rows = await executeQuery(sql, [user.id, protocol, status]);
         res.json(rows);
     });

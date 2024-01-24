@@ -45,7 +45,7 @@ router.post('/select-service', async (req: Request, res: Response) => {
         //const { user } = decoded as Decoded;
 
         const status = 'finished';
-        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`;
+        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND status <> ? ORDER BY id DESC`;
         const rows = await executeQuery(sql, [employeeId, protocol, status]);
         res.json(rows);
     });

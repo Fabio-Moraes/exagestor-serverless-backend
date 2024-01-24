@@ -48,8 +48,7 @@ router.post('/running', async (req: Request, res: Response) => {
         ON u1.employee_id = tec_user.id 
         LEFT JOIN exa_users admin_user
         ON u1.admin_id = admin_user.id
-        WHERE (u1.status <> ? AND u1.status <> ?)
-        AND u1.employee_id = ?
+        WHERE (u1.status <> ? AND u1.status <> ?) AND u1.employee_id = ?
         AND NOT EXISTS (
           SELECT 1
           FROM exa_operations u2

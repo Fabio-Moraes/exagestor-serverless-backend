@@ -57,7 +57,12 @@ CREATE TABLE `exa_operations` (
   `created_at` timestamp NULL,
   `modification_at` timestamp NULL,
   `finished_at` timestamp NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_employee_id` (`employee_id`),
+  INDEX `idx_admin_id` (`admin_id`),
+  INDEX `idx_protocol` (`protocol`),
+  INDEX `idx_created_at` (`created_at`)
 ) ENGINE InnoDB,
   CHARSET utf8mb4,
   COLLATE utf8mb4_0900_ai_ci;
@@ -71,20 +76,55 @@ CREATE TABLE `exa_users` (
   `identification` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_at` timestamp NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX `idx_identification` (`identification`)
 ) ENGINE InnoDB,
   CHARSET utf8mb4,
   COLLATE utf8mb4_0900_ai_ci;
 */
 
 /*
-INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
-VALUES
-('James Junio', 'admin', '46.557.719/0001-29', '$2a$10$LdGm2KobjPi3my8fhj73VOVQa7HO00UY7Fsp7KjdiTmsmq9oN7Jvm', NOW());
+CREATE TABLE `exa_materials_stock` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_name` varchar(100) NOT NULL,
+  `product_code` varchar(50) NOT NULL,
+  `quantity_value` varchar(30) NOT NULL,
+  `unit_type` varchar(50) NOT NULL,
+  `created_at` timestamp NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_product_code` (`product_code`)
+) ENGINE InnoDB,
+  CHARSET utf8mb4,
+  COLLATE utf8mb4_0900_ai_ci;
+
+INSERT INTO `exa_materials_stock` (`product_name`, `product_code`, `quantity_value`, `unit_type`, `created_at`)
+VALUES ('BRAÇADEIRA DE AÇO 1P', '00000', '10', 'unid.', NOW());
+*/
+
+/*
+CREATE TABLE `exa_materials_employee` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `product_name` varchar(100) NOT NULL,
+  `product_code` varchar(50) NOT NULL,
+  `quantity_value` varchar(30) NOT NULL,
+  `unit_type` varchar(50) NOT NULL,
+  `created_at` timestamp NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_employee_id` (`employee_id`),
+  INDEX `idx_product_code` (`product_code`)
+) ENGINE InnoDB,
+  CHARSET utf8mb4,
+  COLLATE utf8mb4_0900_ai_ci;
+*/
+
+/*
 
 INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
-VALUES
-('Fabio Moraes', 'admin', '415.230.898-22', '$2a$12$WF.1omNnXZ/0DfgEFBjl.eAXYrYcQ6x/gPSMgrDc344dKO50HnDWe', NOW());
+VALUES ('James Junio', 'admin', '46.557.719/0001-29', '$2a$10$LdGm2KobjPi3my8fhj73VOVQa7HO00UY7Fsp7KjdiTmsmq9oN7Jvm', NOW());
+
+INSERT INTO `exa_users` (`name`, `role`, `identification`, `password`, `created_at`)
+VALUES ('Fabio Moraes', 'admin', '415.230.898-22', '$2a$12$WF.1omNnXZ/0DfgEFBjl.eAXYrYcQ6x/gPSMgrDc344dKO50HnDWe', NOW());
 */
 
 //admin

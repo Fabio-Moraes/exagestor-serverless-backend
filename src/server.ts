@@ -7,6 +7,7 @@ import http from 'http';
 import tec from './routes/tec';
 import admin from './routes/admin';
 import auth from './routes/auth';
+import almox from './routes/almox';
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use(express.json());
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);
+app.use('/api/almox', almox);
+
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response) => {

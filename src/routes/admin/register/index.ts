@@ -20,6 +20,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return isCnpj || isCpf;
       }),
       password: z.string().min(1),
+      accountType: z.string().min(1),
       token: z.string()
     });
 
@@ -27,6 +28,7 @@ router.post('/register', async (req: Request, res: Response) => {
       name,
       identification,
       password,
+      accountType,
       token
     } = paramsSchema.parse(req.body);
 
@@ -56,13 +58,13 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-      const { user } = decoded as Decoded;
+      //const { user } = decoded as Decoded;
 
       const hash = bcrypt.hashSync(password, 10)
 
       const values = [
         name,
-        'tec',
+        accountType.toLowerCase(),
         identification,
         hash,
         createdAt,

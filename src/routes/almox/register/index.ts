@@ -13,6 +13,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const paramsSchema = z.object({
       productName: z.string().min(1),
       quantityValue: z.string().min(1),
+      productCode: z.string().min(1),
       unitType: z.string().min(1),
       token: z.string()
     });
@@ -20,6 +21,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const {
       productName,
       quantityValue,
+      productCode,
       unitType,
       token
     } = paramsSchema.parse(req.body);
@@ -54,7 +56,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const values = [
         productName,
-        '00000',
+        productCode,
         quantityValue,
         unitType,
         createdAt,

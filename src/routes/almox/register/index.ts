@@ -12,16 +12,18 @@ router.post('/register', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({
       productName: z.string().min(1),
-      quantityValue: z.string().min(1),
       productCode: z.string().min(1),
+      productBatch: z.string().min(1),
+      quantityValue: z.string().min(1),
       unitType: z.string().min(1),
       token: z.string()
     });
 
     const {
       productName,
-      quantityValue,
       productCode,
+      productBatch,
+      quantityValue,
       unitType,
       token
     } = paramsSchema.parse(req.body);
@@ -57,6 +59,7 @@ router.post('/register', async (req: Request, res: Response) => {
       const values = [
         productName,
         productCode,
+        productBatch,
         quantityValue,
         unitType,
         createdAt,
@@ -72,7 +75,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       } */
 
-      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?)`;
 
       await executeQuery(sqlInsert, values);
 

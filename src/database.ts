@@ -88,6 +88,7 @@ CREATE TABLE `exa_materials_stock` (
   `id` int NOT NULL AUTO_INCREMENT,
   `product_name` varchar(100) NOT NULL,
   `product_code` varchar(50) NOT NULL,
+  `product_batch` varchar(50) NOT NULL,
   `quantity_value` varchar(30) NOT NULL,
   `unit_type` varchar(50) NOT NULL,
   `created_at` timestamp NULL,
@@ -97,8 +98,8 @@ CREATE TABLE `exa_materials_stock` (
   CHARSET utf8mb4,
   COLLATE utf8mb4_0900_ai_ci;
 
-INSERT INTO `exa_materials_stock` (`product_name`, `product_code`, `quantity_value`, `unit_type`, `created_at`)
-VALUES ('BRAÇADEIRA DE AÇO 1P', '00000', '10', 'unid.', NOW());
+INSERT INTO `exa_materials_stock` (`product_name`, `product_code`, `product_batch`, `quantity_value`, `unit_type`, `created_at`)
+VALUES ('BRAÇADEIRA DE AÇO 1P', '00000', 'hf9873', '10', 'unid.', NOW());
 */
 
 /*
@@ -107,6 +108,7 @@ CREATE TABLE `exa_materials_employee` (
   `employee_id` int NOT NULL,
   `product_name` varchar(100) NOT NULL,
   `product_code` varchar(50) NOT NULL,
+  `product_batch` varchar(50) NOT NULL,
   `quantity_value` varchar(30) NOT NULL,
   `unit_type` varchar(50) NOT NULL,
   `created_at` timestamp NULL,

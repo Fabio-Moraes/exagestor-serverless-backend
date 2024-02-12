@@ -75,7 +75,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       } */
 
-      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
 
       await executeQuery(sqlInsert, values);
 

@@ -11,9 +11,9 @@ const router = express.Router();
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({
-      productName: z.string().min(1),
+      productName: z.string().min(1).toLowerCase(),
+      productBatch: z.string().toUpperCase(),
       productCode: z.string().min(1),
-      productBatch: z.string().min(1),
       quantityValue: z.string().min(1),
       unitType: z.string().min(1),
       token: z.string()
@@ -56,24 +56,28 @@ router.post('/register', async (req: Request, res: Response) => {
 
       //const { user } = decoded as Decoded;
 
+      function formatProductBatch(productBatch: string): string | null {
+        return (productBatch === '' || /^[0]+$/.test(productBatch)) ? null : productBatch;
+      }
+
       const values = [
         productName,
         productCode,
-        productBatch,
+        formatProductBatch(productBatch),
         quantityValue,
         unitType,
         createdAt,
       ];
 
-      /* const sqlSelect = 'SELECT * FROM exa_users WHERE identification = ?';
+      const sqlSelect = 'SELECT * FROM exa_materials_stock WHERE product_code = ?';
 
-      const rows = await executeQuery(sqlSelect, [ identification]);
+      const rows = await executeQuery(sqlSelect, [ productCode ]);
 
       if (rows.length > 0) {
         res.json({ status: 'already registered' });
-        console.log('Funcionário(a) não registrado!');
+        console.log('Produto não registrado!');
         return;
-      } */
+      }
 
       const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
 

@@ -65,6 +65,7 @@ router.post('/register', async (req: Request, res: Response) => {
       const values = [
         name,
         accountType.toLowerCase(),
+        '1234',
         identification,
         hash,
         createdAt,
@@ -80,7 +81,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO exa_users ( name, role, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO exa_users ( name, role, team, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
 
       await executeQuery(sqlInsert, values);
 

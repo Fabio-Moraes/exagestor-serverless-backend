@@ -4,6 +4,8 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
+import routesSelectEmployee from './select-employee';
+
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
@@ -44,5 +46,7 @@ router.post('/stock', async (req: Request, res: Response) => {
     }
   }
 });
+
+router.use(routesSelectEmployee);
 
 export default router;

@@ -16,6 +16,7 @@ router.post('/register', async (req: Request, res: Response) => {
       productCode: z.string().min(1),
       quantityValue: z.string().min(1),
       unitType: z.string().min(1),
+      observation: z.string().max(500).nullable(),
       token: z.string()
     });
 
@@ -25,6 +26,7 @@ router.post('/register', async (req: Request, res: Response) => {
       productBatch,
       quantityValue,
       unitType,
+      observation,
       token
     } = paramsSchema.parse(req.body);
 
@@ -66,7 +68,8 @@ router.post('/register', async (req: Request, res: Response) => {
         formatProductBatch(productBatch),
         quantityValue,
         unitType,
-        createdAt,
+        observation,
+        createdAt
       ];
 
       const sqlSelect = 'SELECT * FROM exa_materials_stock WHERE product_code = ?';
@@ -79,7 +82,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
 
       await executeQuery(sqlInsert, values);
 

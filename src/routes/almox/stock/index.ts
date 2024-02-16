@@ -31,7 +31,7 @@ router.post('/stock', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = `SELECT * FROM exa_materials_almox ORDER BY id DESC`;
+      const sql = `SELECT * FROM exa_stock_almox ORDER BY id DESC`;
 
       const rows = await executeQuery(sql);
       res.json(rows);

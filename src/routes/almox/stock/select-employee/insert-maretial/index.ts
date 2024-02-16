@@ -98,8 +98,8 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         );
       });
 
-      const updateQueryMaterialsStock = `
-      INSERT INTO exa_materials_almox 
+      const queryMaterialsStock = `
+      INSERT INTO exa_stock_almox 
         (id, product_name, product_code, product_batch, quantity_value, unit_type, created_at) 
       VALUES 
         ${generatePlaceholders(7)}
@@ -111,17 +111,17 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         quantity_value = quantity_value - VALUES(quantity_value),
         unit_type = VALUES(unit_type),
         created_at = VALUES(created_at);
-    `;
+      `;
 
 
       const queryMaterialsEmployee = `
-      INSERT INTO exa_materials_employee 
+      INSERT INTO exa_stock_employee 
         (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
       VALUES ${generatePlaceholders(8)}
       ON DUPLICATE KEY UPDATE 
         id = VALUES(id),
-        product_name = VALUES(product_name),
         employee_id = VALUES(employee_id),
+        product_name = VALUES(product_name),
         product_code = VALUES(product_code),
         product_batch = VALUES(product_batch),
         quantity_value = quantity_value + VALUES(quantity_value),
@@ -130,7 +130,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       `;
 
       await executeTransaction([
-        { query: updateQueryMaterialsStock, values: updateValuesMaterialsStock },
+        { query: queryMaterialsStock, values: updateValuesMaterialsStock },
         { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee }
       ]);
 

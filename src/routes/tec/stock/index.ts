@@ -32,7 +32,7 @@ router.post('/stock', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM exa_materials_employee WHERE employee_id = ? ORDER BY id DESC';
+      const sql = 'SELECT * FROM exa_stock_employee WHERE employee_id = ? ORDER BY id DESC';
 
 
 

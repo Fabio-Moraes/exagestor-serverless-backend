@@ -37,3 +37,26 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
     }
   }
 }
+
+export async function executeTransaction(queries: Array<{ query: string, values?: any[] }>): Promise<void> {
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await dbPool.getConnection();
+    await connection.beginTransaction();
+
+    for (const { query, values } of queries) {
+      await connection.query(query, values);
+    }
+
+    await connection.commit();
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    throw new Error(`Erro durante a transação: ${error}`);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+}

@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import { JWT_SECRET_KEY } from '../../../../../constants';
-import { executeQuery } from '../../../../../database';
+import { executeTransaction } from '../../../../../database';
 
 import { z, ZodError } from 'zod';
 
@@ -22,11 +22,13 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
 
     const paramsSchema = z.object({
       insert: insertedMaterialSchema,
+      employee_id: z.number(),
       token: z.string(),
     });
 
     const {
       insert,
+      employee_id,
       token
     } = paramsSchema.parse(req.body);
 
@@ -35,7 +37,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')
@@ -46,47 +48,93 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         }
       }
 
-      //const now = new Date();
-      //const year = now.getFullYear();
-      //const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      //const day = now.getDate().toString().padStart(2, '0');
-      //const hours = now.getHours().toString().padStart(2, '0');
-      //const minutes = now.getMinutes().toString().padStart(2, '0');
-      //const seconds = now.getSeconds().toString().padStart(2, '0');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-      //const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      function generatePlaceholders(count: number) {
+        let valueQuery = '';
+        const placeholders = Array(count).fill('?').join(', ');
 
-      //const { user } = decoded as Decoded;
-
-      function formatProductBatch(productBatch: string): string | null {
-        return (productBatch === '' || /^[0]+$/.test(productBatch)) ? null : productBatch;
+        for (let i = 0; i < insert.length; i++) {
+          const valueSql = `(${placeholders})`;
+          valueQuery += valueSql;
+          if (i < insert.length - 1) {
+            valueQuery += ', ';
+          }
+        }
+        return valueQuery;
       }
 
-      //const values = [
-      //  productName,
-      //  productCode,
-      //  formatProductBatch(productBatch),
-      //  quantityValue,
-      //  unitType,
-      //  createdAt,
-      //];
+      const updateValuesMaterialsStock: any[] = [];
+      insert.forEach(item => {
+        updateValuesMaterialsStock.push(
+          item.id,
+          item.product_name,
+          item.product_code,
+          item.product_batch,
+          item.quantity_value,
+          item.unit_type,
+          createdAt,
+        );
+      });
 
-      //const sqlSelect = 'SELECT * FROM exa_materials_stock WHERE product_code = ?';
+      const insertValueMaterialsEmployee: any[] = [];
+      insert.forEach(item => {
+        insertValueMaterialsEmployee.push(
+          `${item.product_code}-${employee_id}`,
+          employee_id,
+          item.product_name,
+          item.product_code,
+          item.product_batch,
+          item.quantity_value,
+          item.unit_type,
+          createdAt
+        );
+      });
 
-      //const rows = await executeQuery(sqlSelect, [ productCode ]);
+      const updateQueryMaterialsStock = `
+      INSERT INTO exa_materials_almox 
+        (id, product_name, product_code, product_batch, quantity_value, unit_type, created_at) 
+      VALUES 
+        ${generatePlaceholders(7)}
+      ON DUPLICATE KEY UPDATE 
+        id = VALUES(id),
+        product_name = VALUES(product_name),
+        product_code = VALUES(product_code),
+        product_batch = VALUES(product_batch),
+        quantity_value = quantity_value - VALUES(quantity_value),
+        unit_type = VALUES(unit_type),
+        created_at = VALUES(created_at);
+    `;
 
-      //if (rows.length > 0) {
-      //  res.json({ status: 'already registered' });
-      //  console.log('Produto não registrado!');
-      //  return;
-      //}
 
-      //const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
-//
-      //await executeQuery(sqlInsert, values);
+      const queryMaterialsEmployee = `
+      INSERT INTO exa_materials_employee 
+        (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
+      VALUES ${generatePlaceholders(8)}
+      ON DUPLICATE KEY UPDATE 
+        id = VALUES(id),
+        product_name = VALUES(product_name),
+        employee_id = VALUES(employee_id),
+        product_code = VALUES(product_code),
+        product_batch = VALUES(product_batch),
+        quantity_value = quantity_value + VALUES(quantity_value),
+        unit_type = VALUES(unit_type),
+        created_at = VALUES(created_at);
+      `;
+
+      await executeTransaction([
+        { query: updateQueryMaterialsStock, values: updateValuesMaterialsStock },
+        { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee }
+      ]);
 
       res.json({ status: 'success' });
-      console.log('Registrado concluído com sucesso!', insert);
     });
   } catch (error) {
     if (error instanceof ZodError) {

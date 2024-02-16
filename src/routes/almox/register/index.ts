@@ -72,9 +72,9 @@ router.post('/register', async (req: Request, res: Response) => {
         createdAt
       ];
 
-      const sqlSelect = 'SELECT * FROM exa_materials_stock WHERE product_code = ?';
+      const sqlSelect = 'SELECT * FROM exa_materials_almox WHERE product_code = ?';
 
-      const rows = await executeQuery(sqlSelect, [ productCode ]);
+      const rows = await executeQuery(sqlSelect, [productCode]);
 
       if (rows.length > 0) {
         res.json({ status: 'already registered' });
@@ -82,7 +82,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO exa_materials_stock ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+      const sqlInsert = `INSERT INTO exa_materials_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
 
       await executeQuery(sqlInsert, values);
 

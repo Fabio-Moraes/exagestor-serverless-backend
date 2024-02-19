@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/stock', async (req: Request, res: Response) => {
   try {
     const paramsSchema = z.object({
-      employee_id: z.number(),
+      employee_id: z.number().min(1),
       token: z.string(),
     });
     const { employee_id, token } = paramsSchema.parse(req.body);
@@ -33,10 +33,8 @@ router.post('/stock', async (req: Request, res: Response) => {
       }
 
       const sql = 'SELECT * FROM exa_stock_employee WHERE employee_id = ? ORDER BY id DESC';
-
-
-
       const rows = await executeQuery(sql, [employee_id]);
+
       res.json(rows);
     });
   } catch (error) {

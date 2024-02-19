@@ -12,15 +12,15 @@ const router = express.Router();
 
 router.post('/register', async (req: Request, res: Response) => {
   try {
+    const noNumbers = /^[^0-9]*$/;
+    const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
+    const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+   
     const paramsSchema = z.object({
-      name: z.string().min(1).regex(/^[^0-9]*$/),
-      identification: z.string().refine(value => {
-        const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
-        const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
-        return isCnpj || isCpf;
-      }),
-      password: z.string().min(1),
-      accountType: z.string().min(1),
+      name: z.string().min(1).regex(noNumbers),
+      identification: z.string().refine(value => isCnpj.test(value) || isCpf.test(value)),
+      password: z.string().min(1).trim(),
+      accountType: z.enum(['TEC', 'DIR', 'ALMOX', 'COP']),
       token: z.string()
     });
 

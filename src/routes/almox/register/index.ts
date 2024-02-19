@@ -8,14 +8,18 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+
 router.post('/register', async (req: Request, res: Response) => {
   try {
+    const onlyNumbers = /^\d+$/;
+    const noSpaces = /^\S*$/;
+    
     const paramsSchema = z.object({
-      productName: z.string().min(1).toLowerCase(),
-      productBatch: z.string().toUpperCase(),
-      productCode: z.string().min(1),
-      quantityValue: z.string().min(1),
-      unitType: z.string().min(1),
+      productName: z.string().min(1).toUpperCase().trim(),
+      productBatch: z.string().toUpperCase().regex(noSpaces).nullable(),
+      productCode: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
+      quantityValue: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
+      unitType: z.enum(['UNID', 'CX', 'METRO']),
       observation: z.string().max(500).nullable(),
       token: z.string()
     });
@@ -58,14 +62,10 @@ router.post('/register', async (req: Request, res: Response) => {
 
       //const { user } = decoded as Decoded;
 
-      function formatProductBatch(productBatch: string): string | null {
-        return (productBatch === '' || /^[0]+$/.test(productBatch)) ? null : productBatch;
-      }
-
       const values = [
         productName,
         productCode,
-        formatProductBatch(productBatch),
+        productBatch,
         quantityValue,
         unitType,
         observation,
@@ -78,7 +78,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
       if (rows.length > 0) {
         res.json({ status: 'already registered' });
-        console.log('Produto não registrado!');
+        console.log('Produto já registrado!');
         return;
       }
 

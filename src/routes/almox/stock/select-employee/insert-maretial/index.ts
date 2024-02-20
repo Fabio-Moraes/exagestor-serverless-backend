@@ -71,7 +71,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         return valueQuery;
       }
 
-      const updateValuesMaterialsStock: any[] = [];
+      const updateValuesMaterialsStock: Array<number | string | null> = [];
       insert.forEach(item => {
         updateValuesMaterialsStock.push(
           item.id,
@@ -84,7 +84,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         );
       });
 
-      const insertValueMaterialsEmployee: any[] = [];
+      const insertValueMaterialsEmployee:  Array<number | string | null>  = [];
       insert.forEach(item => {
         insertValueMaterialsEmployee.push(
           `${item.product_code}-${employee_id}`,
@@ -112,7 +112,6 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         unit_type = VALUES(unit_type),
         created_at = VALUES(created_at);
       `;
-
 
       const queryMaterialsEmployee = `
       INSERT INTO exa_stock_employee 

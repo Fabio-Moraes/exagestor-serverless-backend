@@ -20,6 +20,17 @@ const paramsSchema = z.object({
   listMaterial: z.string()
 });
 
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 function generateQueryListMaterial(arr: string[]) {
   const placeholders = arr.map(() => '?').join(', ');
   return `SELECT * FROM exa_stock_employee WHERE id IN (${placeholders})`;
@@ -30,8 +41,24 @@ function generatePlaceholders(data: Object[]) {
   return placeholders;
 }
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/concluded', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+}
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+      console.error('Já existe uma execução em andamento para este IP');
+      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
   try {
+    executionStatus.set(ip, true);
+
     const { token, protocol, observation, listMaterial, listService } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -59,15 +86,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
         return res.status(409).json({ error: 'Service already concluded' });
       }
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
+      const createdAt = getCurrentDateTime();
       const valuesInsertOperations = [
         row.employee_id,
         row.client_name,
@@ -134,9 +153,14 @@ router.post('/concluded', async (req: Request, res: Response) => {
       ]);
 
       await executeWebsocket({ token, employee_id: row.employee_id, });
+
+      executionStatus.set(ip, false);
+
       res.json({ success: true });
     });
   } catch (error) {
+    executionStatus.set(ip, false);
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

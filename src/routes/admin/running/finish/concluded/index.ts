@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeQuery, executeTransaction } from '../../../../../database';
 
@@ -12,12 +11,12 @@ const router = express.Router();
 const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
 const paramsSchema = z.object({
-    token: z.string().min(1),
-    employeeId: z.string().min(1),
-    protocol: z.string().regex(isProtocol),
-    observation: z.string().max(500).optional(),
-    listService: z.string(),
-    listMaterial: z.string()
+  token: z.string(),
+  employeeId: z.string().min(1),
+  protocol: z.string().regex(isProtocol),
+  observation: z.string().max(500).optional(),
+  listService: z.string(),
+  listMaterial: z.string()
 });
 
 function getCurrentDateTime(): string {
@@ -41,86 +40,99 @@ function generatePlaceholders(data: Object[]) {
   return placeholders;
 }
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/concluded', async (req: Request, res: Response) => {
-    try {
-        const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema.parse(req.body);
+  const ip = req.ip;
 
-        if (!token || !protocol) {
-            console.error('Token ou Protocol não fornecidos');
-            return res.status(401).json({ error: 'Token ou Protocol não fornecidos' });
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+}
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+      console.error('Já existe uma execução em andamento para este IP');
+      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
+  try {
+    executionStatus.set(ip, true);
+
+    const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema.parse(req.body);
+
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
+      if (error) {
+        if (error instanceof TokenExpiredError) {
+          console.log('** verify token expired **')
+          return res.status(403).json({ error: 'Token expirado' });
+        } else {
+          console.log('** verify token inválido **')
+          return res.status(403).json({ error: 'Token inválido' });
         }
+      }
 
-        jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-            if (error) {
-                console.error(error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido');
-                return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
-            }
+      const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
+      const [row] = await executeQuery(rowSql, [employeeId, protocol]);
 
-            const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
-            const [row] = await executeQuery(rowSql, [employeeId, protocol]);
+      if (!row) {
+        console.error('Requisição inválida');
+        return res.status(400).json({ error: 'Requisição inválida' });
+      }
 
-            if (!row) {
-                console.error('Requisição inválida');
-                return res.status(400).json({ error: 'Requisição inválida' });
-            }
+      if (row.status === 'concluded') {
+        console.error('Serviço já concluído');
+        return res.status(409).json({ error: 'Serviço já concluído' });
+      }
 
-            if (row.status === 'concluded') {
-                console.error('Serviço já concluído');
-                return res.status(409).json({ error: 'Serviço já concluído' });
-            }
+      const createdAt = getCurrentDateTime();
+      const valuesInsertOperations = [
+        row.employee_id,
+        row.admin_id,
+        row.client_name,
+        row.city,
+        row.classification,
+        row.nomenclature,
+        row.address,
+        row.protocol,
+        'concluded',
+        row.update_count + 1,
+        row.created_at,
+        row.modification_at,
+        listService,
+        listMaterial,
+        observation,
+        createdAt
+      ];
 
-            const createdAt = getCurrentDateTime();
+      const transaction = [];
 
-            const valuesInsertOperations = [
-                row.employee_id,
-                row.admin_id,
-                row.client_name,
-                row.city,
-                row.classification,
-                row.nomenclature,
-                row.address,
-                row.protocol,
-                'concluded',
-                row.update_count + 1,
-                row.created_at,
-                row.modification_at,
-                listService,
-                listMaterial,
-                observation,
-                createdAt
-            ];
-
-            const queryOperations = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      if (row.status === 'active') {
+        const requestListMaterial = JSON.parse(listMaterial);
+        const listMaterialKeys = Object.keys(requestListMaterial);
+        const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
+        const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
         
-            const transaction = [];
-            
-            if (row.status === 'active') {
-            const requestListMaterial = JSON.parse(listMaterial );
-            const listMaterialKeys = Object.keys(requestListMaterial);
-      
-            const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-            const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
-      
-            const resultQueryListMaterial = selectQueryListMaterial.map(items => {
-              return { ...items, quantity_value: items.quantity_value - requestListMaterial[items.id] }
-            });
+        const resultQueryListMaterial = selectQueryListMaterial.map(items => ({
+          ...items,
+          quantity_value: items.quantity_value - requestListMaterial[items.id]
+        }));
 
-            const updateValueMaterialsEmployee:  Array<number | string | null>  = [];
+        const updateValueMaterialsEmployee: Array<number | string | null> = [];
 
-            resultQueryListMaterial.forEach(item => {
-              updateValueMaterialsEmployee.push(
-                item.id,
-                item.employee_id,
-                item.product_name,
-                item.product_code,
-                item.product_batch,
-                requestListMaterial[item.id],
-                item.unit_type,
-                createdAt
-              );
-            });
-      
-            const queryMaterialsEmployee = `
+        resultQueryListMaterial.forEach(item => {
+          updateValueMaterialsEmployee.push(
+            item.id,
+            item.employee_id,
+            item.product_name,
+            item.product_code,
+            item.product_batch,
+            requestListMaterial[item.id],
+            item.unit_type,
+            createdAt
+          );
+        });
+
+        const queryMaterialsEmployee = `
             INSERT INTO exa_stock_employee 
               (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
             VALUES ${generatePlaceholders(resultQueryListMaterial)}
@@ -135,26 +147,31 @@ router.post('/concluded', async (req: Request, res: Response) => {
               created_at = VALUES(created_at);
             `;
 
-          
-              transaction.push({ query: queryMaterialsEmployee, values: updateValueMaterialsEmployee });
-            }
-            
-            transaction.push({ query: queryOperations, values: valuesInsertOperations });
-            
-            await executeTransaction(transaction);
-            await executeWebsocket({ token, employee_id: row.employee_id });
+        transaction.push({ query: queryMaterialsEmployee, values: updateValueMaterialsEmployee });
+      }
 
-            res.json({ success: true });
-        });
-    } catch (error) {
-        if (error instanceof ZodError) {
-            console.error('Requisição inválida Zod', error.errors);
-            return res.status(400).json({ error: error.errors });
-        } else {
-            console.error(error);
-            return res.status(500).json({ error: 'Internal server error.' });
-        }
+      const queryOperations = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+      transaction.push({ query: queryOperations, values: valuesInsertOperations });
+
+      await executeTransaction(transaction);
+      await executeWebsocket({ token, employee_id: row.employee_id });
+
+      executionStatus.set(ip, false);
+
+      res.json({ success: true });
+    });
+  } catch (error) {
+    executionStatus.set(ip, false);
+
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
     }
+  }
 });
 
 export default router;

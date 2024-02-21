@@ -10,8 +10,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/register', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+  }
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
   try {
+    executionStatus.set(ip, true);
+
     const noNumbers = /^[^0-9]*$/;
     const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
     const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
@@ -85,10 +101,14 @@ router.post('/register', async (req: Request, res: Response) => {
 
       await executeQuery(sqlInsert, values);
 
+      executionStatus.set(ip, false);
+
       res.json({ status: 'success' });
       console.log('Funcionário(a) registrado com sucesso!');
     });
   } catch (error) {
+    executionStatus.set(ip, false);
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

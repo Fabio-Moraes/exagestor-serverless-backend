@@ -10,8 +10,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/start', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+  }
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
   try {
+    executionStatus.set(ip, true);
+
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
@@ -85,12 +101,16 @@ router.post('/start', async (req: Request, res: Response) => {
       const insertSql =
         'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
 
-        await executeQuery(insertSql, values);
-        await executeWebsocket({ token, employee_id: rows[0].employee_id });
+      await executeQuery(insertSql, values);
+      await executeWebsocket({ token, employee_id: rows[0].employee_id });
 
-        res.json({ success: true });
+      executionStatus.set(ip, false);
+
+      res.json({ success: true });
     });
   } catch (error) {
+    executionStatus.set(ip, false);
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

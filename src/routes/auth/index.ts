@@ -6,8 +6,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/signin', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+}
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+      console.error('Já existe uma execução em andamento para este IP');
+      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
   try {
+    executionStatus.set(ip, true);
+
     const paramsSchema = z.object({
       identification: z.string().refine(value => {
         const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
@@ -34,7 +50,9 @@ router.post('/signin', async (req: Request, res: Response) => {
     }
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
-    
+
+      executionStatus.set(ip, false);
+
       res.json( content );  
       console.log('Login bem-sucedido. Token:');
     } else {
@@ -42,6 +60,8 @@ router.post('/signin', async (req: Request, res: Response) => {
     }
 
   } catch (error) {
+    executionStatus.set(ip, false);
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

@@ -10,8 +10,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/cancel', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+}
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+      console.error('Já existe uma execução em andamento para este IP');
+      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
   try {
+    executionStatus.set(ip, true);
+
     const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
     const paramsSchema = z.object({
@@ -90,9 +106,13 @@ router.post('/cancel', async (req: Request, res: Response) => {
         await executeQuery(insertSql, values);
         await executeWebsocket({ token, employee_id: rows[0].employee_id });
 
+        executionStatus.set(ip, false);
+
         res.json({ success: true });
     });
   } catch (error) {
+    executionStatus.set(ip, false);
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

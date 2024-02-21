@@ -13,79 +13,99 @@ const router = express.Router();
 const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
 const paramsSchema = z.object({
-    token: z.string().min(1),
-    employeeId: z.string().min(1),
-    protocol: z.string().refine(data => customFormatRegex.test(data)),
-    observation: z.string().max(500).optional()
+  token: z.string().min(1),
+  employeeId: z.string().min(1),
+  protocol: z.string().refine(data => customFormatRegex.test(data)),
+  observation: z.string().max(500).optional()
 });
 
+const executionStatus: Map<string, boolean> = new Map();
+
 router.post('/checked', async (req: Request, res: Response) => {
-    try {
-        const { token, employeeId, protocol, observation } = paramsSchema.parse(req.body);
+  const ip = req.ip;
 
-        if (!token || !protocol) {
-            console.error('Token ou Protocol não fornecidos');
-            return res.status(401).json({ error: 'Token ou Protocol não fornecidos' });
-        }
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+  }
 
-        jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-            if (error) {
-                console.error(error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido');
-                return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
-            }
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
 
-            const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
+  try {
+    executionStatus.set(ip, true);
 
-            const [row] = await executeQuery(rowSql, [employeeId, protocol]);
+    const { token, employeeId, protocol, observation } = paramsSchema.parse(req.body);
 
-            if (!row) {
-                console.error('Requisição inválida');
-                return res.status(400).json({ error: 'Requisição inválida' });
-            }
-
-            if (row.status === 'concluded') {
-                console.error('Serviço já concluído');
-                return res.status(409).json({ error: 'Serviço já concluído' });
-            }
-
-            const now = new Date();
-            const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
-
-            const values = [
-                row.employee_id,
-                row.admin_id,
-                row.client_name,
-                row.city,
-                row.classification,
-                row.nomenclature,
-                row.address,
-                row.protocol,
-                'concluded',
-                row.update_count + 1,
-                row.created_at,
-                row.modification_at,
-                row.list_service,
-                row.list_material,
-                observation,
-                formattedDate
-            ];
-
-            const insertSql = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-
-            await executeQuery(insertSql, values);
-            await executeWebsocket({ token, employee_id: row.employee_id });
-
-            res.json({ success: true });
-        });
-    } catch (error) {
-        if (error instanceof ZodError) {
-            console.error('Requisição inválida Zod', error.errors);
-            return res.status(400).json({ error: error.errors });
-        } else {
-            console.error(error);
-            return res.status(500).json({ error: 'Internal server error.' });
-        }
+    if (!token || !protocol) {
+      console.error('Token ou Protocol não fornecidos');
+      return res.status(401).json({ error: 'Token ou Protocol não fornecidos' });
     }
+
+    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+      if (error) {
+        console.error(error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido');
+        return res.status(403).json({ error: error instanceof TokenExpiredError ? 'Token expirado' : 'Token inválido' });
+      }
+
+      const rowSql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
+
+      const [row] = await executeQuery(rowSql, [employeeId, protocol]);
+
+      if (!row) {
+        console.error('Requisição inválida');
+        return res.status(400).json({ error: 'Requisição inválida' });
+      }
+
+      if (row.status === 'concluded') {
+        console.error('Serviço já concluído');
+        return res.status(409).json({ error: 'Serviço já concluído' });
+      }
+
+      const now = new Date();
+      const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
+
+      const values = [
+        row.employee_id,
+        row.admin_id,
+        row.client_name,
+        row.city,
+        row.classification,
+        row.nomenclature,
+        row.address,
+        row.protocol,
+        'concluded',
+        row.update_count + 1,
+        row.created_at,
+        row.modification_at,
+        row.list_service,
+        row.list_material,
+        observation,
+        formattedDate
+      ];
+
+      const insertSql = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+      await executeQuery(insertSql, values);
+      await executeWebsocket({ token, employee_id: row.employee_id });
+
+      executionStatus.set(ip, false);
+
+      res.json({ success: true });
+    });
+  } catch (error) {
+    executionStatus.set(ip, false);
+
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
 });
 
 export default router;

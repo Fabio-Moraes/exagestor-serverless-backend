@@ -10,10 +10,12 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
 const paramsSchema = z.object({
   token: z.string(),
   employeeId: z.string().min(1),
-  protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
+  protocol: z.string().regex(customFormatRegex),
   observation: z.string().max(500).optional()
 });
 

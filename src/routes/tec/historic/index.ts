@@ -7,7 +7,6 @@ import { executeQuery } from '../../../database';
 
 import routesDetailsService from './details';
 
-
 import { z, ZodError } from 'zod';
 
 const router = express.Router();

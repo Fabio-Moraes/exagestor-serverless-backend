@@ -85,6 +85,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
       }
 
       const createdAt = getCurrentDateTime();
+      
       const valuesInsertOperations = [
         row.employee_id,
         row.admin_id,

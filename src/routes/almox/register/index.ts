@@ -8,6 +8,30 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const onlyNumbers = /^\d+$/;
+const noSpaces = /^\S*$/;
+
+const paramsSchema = z.object({
+  productName: z.string().min(1).toUpperCase().trim(),
+  productBatch: z.string().toUpperCase().regex(noSpaces).nullable(),
+  productCode: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
+  quantityValue: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
+  unitType: z.enum(['UNID', 'CX', 'METRO']),
+  observation: z.string().max(500).nullable(),
+  token: z.string()
+});
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/register', async (req: Request, res: Response) => {
@@ -25,19 +49,6 @@ router.post('/register', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const onlyNumbers = /^\d+$/;
-    const noSpaces = /^\S*$/;
-    
-    const paramsSchema = z.object({
-      productName: z.string().min(1).toUpperCase().trim(),
-      productBatch: z.string().toUpperCase().regex(noSpaces).nullable(),
-      productCode: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
-      quantityValue: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
-      unitType: z.enum(['UNID', 'CX', 'METRO']),
-      observation: z.string().max(500).nullable(),
-      token: z.string()
-    });
 
     const {
       productName,
@@ -60,18 +71,7 @@ router.post('/register', async (req: Request, res: Response) => {
         }
       }
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-
-      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-      //const { user } = decoded as Decoded;
-
+      const createdAt = getCurrentDateTime();
       const values = [
         productName,
         productCode,
@@ -83,7 +83,6 @@ router.post('/register', async (req: Request, res: Response) => {
       ];
 
       const sqlSelect = 'SELECT * FROM exa_stock_almox WHERE product_code = ?';
-
       const rows = await executeQuery(sqlSelect, [productCode]);
 
       if (rows.length > 0) {

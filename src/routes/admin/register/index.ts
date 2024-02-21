@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import type { Decoded } from '../../../types/jwt'
 import bcrypt from 'bcryptjs';
 
 import { JWT_SECRET_KEY } from '../../../constants';
@@ -9,6 +8,29 @@ import { executeQuery } from '../../../database';
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
+
+const noNumbers = /^[^0-9]*$/;
+const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
+const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+
+const paramsSchema = z.object({
+  name: z.string().min(1).regex(noNumbers),
+  identification: z.string().refine(value => isCnpj.test(value) || isCpf.test(value)),
+  password: z.string().min(1).trim(),
+  accountType: z.enum(['TEC', 'DIR', 'ALMOX', 'COP']),
+  token: z.string()
+});
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -28,18 +50,6 @@ router.post('/register', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
 
-    const noNumbers = /^[^0-9]*$/;
-    const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
-    const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-   
-    const paramsSchema = z.object({
-      name: z.string().min(1).regex(noNumbers),
-      identification: z.string().refine(value => isCnpj.test(value) || isCpf.test(value)),
-      password: z.string().min(1).trim(),
-      accountType: z.enum(['TEC', 'DIR', 'ALMOX', 'COP']),
-      token: z.string()
-    });
-
     const {
       name,
       identification,
@@ -48,7 +58,7 @@ router.post('/register', async (req: Request, res: Response) => {
       token
     } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')
@@ -59,18 +69,7 @@ router.post('/register', async (req: Request, res: Response) => {
         }
       }
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-
-      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-      //const { user } = decoded as Decoded;
-
+      const createdAt = getCurrentDateTime();
       const hash = bcrypt.hashSync(password, 10)
 
       const values = [

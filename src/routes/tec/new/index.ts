@@ -12,6 +12,26 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const paramsSchema = z.object({
+  clientName: z.string().min(1).regex(/^[^0-9]*$/),
+  city: z.string().min(1).regex(/^[^0-9]*$/),
+  classification: z.string().min(1).max(2),
+  nomenclature: z.string().min(1),
+  address: z.string().min(1),
+  token: z.string()
+});
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/new', async (req: Request, res: Response) => {
@@ -29,15 +49,6 @@ router.post('/new', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({
-        clientName: z.string().min(1).regex(/^[^0-9]*$/),
-        city: z.string().min(1).regex(/^[^0-9]*$/),
-        classification: z.string().min(1).max(2),
-        nomenclature: z.string().min(1),
-        address: z.string().min(1),
-        token: z.string()
-    });
 
     const {
         clientName,
@@ -67,7 +78,7 @@ router.post('/new', async (req: Request, res: Response) => {
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
 
-        const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        const createdAt = getCurrentDateTime();
         const protocol = createProtocol();
         const status = 'active';
         const updateCount = 0

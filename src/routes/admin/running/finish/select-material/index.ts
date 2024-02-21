@@ -8,6 +8,14 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
+const paramsSchema = z.object({
+  token: z.string(),
+  employeeId: z.string(),
+  protocol: z.string().regex(isProtocol)
+});
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/select-material', async (req: Request, res: Response) => {
@@ -25,12 +33,6 @@ router.post('/select-material', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({
-      token: z.string(),
-      employeeId: z.string(),
-      protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/)
-    });
 
     const { token, employeeId, protocol } = paramsSchema.parse(req.body);
 

@@ -9,6 +9,14 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
+const paramsSchema = z.object({
+  token: z.string(),
+  protocol: z.string().regex(isProtocol),
+  updateCount: z.string().min(1).optional(),
+});
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/historic/details', async (req: Request, res: Response) => {
@@ -27,11 +35,6 @@ router.post('/historic/details', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
 
-    const paramsSchema = z.object({
-      token: z.string(),
-      protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
-      updateCount: z.string().min(1).optional(),
-    });
     const { token, protocol, updateCount } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -47,7 +50,6 @@ router.post('/historic/details', async (req: Request, res: Response) => {
 
       const { user } = decoded as Decoded;
       const sql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
-
 
       const rows = await executeQuery(sql, [user.id, protocol, updateCount]);
 

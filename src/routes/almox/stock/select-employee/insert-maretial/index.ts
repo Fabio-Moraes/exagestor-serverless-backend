@@ -8,6 +8,33 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const insertedMaterialSchema = z.array(z.object({
+  id: z.number(),
+  product_name: z.string(),
+  unit_type: z.string(),
+  product_code: z.string(),
+  product_batch: z.string().nullable(),
+  quantity_value: z.string(),
+  created_at: z.string(),
+}));
+
+const paramsSchema = z.object({
+  insert: insertedMaterialSchema,
+  employee_id: z.number(),
+  token: z.string(),
+});
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/stock/select-employee/insert-material', async (req: Request, res: Response) => {
@@ -25,28 +52,8 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
 
   try {
     executionStatus.set(ip, true);
-
-    const insertedMaterialSchema = z.array(z.object({
-      id: z.number(),
-      product_name: z.string(),
-      unit_type: z.string(),
-      product_code: z.string(),
-      product_batch: z.string().nullable(),
-      quantity_value: z.string(),
-      created_at: z.string(),
-    }));
-
-    const paramsSchema = z.object({
-      insert: insertedMaterialSchema,
-      employee_id: z.number(),
-      token: z.string(),
-    });
-
-    const {
-      insert,
-      employee_id,
-      token
-    } = paramsSchema.parse(req.body);
+ 
+    const { insert, employee_id, token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
@@ -59,14 +66,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         }
       }
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const createdAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      const createdAt = getCurrentDateTime();
 
       function generatePlaceholders(count: number) {
         let valueQuery = '';

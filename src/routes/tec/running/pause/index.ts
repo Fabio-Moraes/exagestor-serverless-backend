@@ -15,6 +15,13 @@ dotenv.config();
 
 const router = express.Router();
 
+const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+
+const paramsSchema = z.object({
+  token: z.string(),
+  protocol: z.string().regex(isProtocol),
+});
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/pause', async (req: Request, res: Response) => {
@@ -32,11 +39,6 @@ router.post('/pause', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({
-      token: z.string(),
-      protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
-    });
 
     const { token, protocol } = paramsSchema.parse(req.body);
 

@@ -10,14 +10,25 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
 const paramsSchema = z.object({
   token: z.string(),
   employeeId: z.string().min(1),
-  protocol: z.string().regex(customFormatRegex),
+  protocol: z.string().regex(isProtocol),
   observation: z.string().max(500).optional()
 });
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -60,7 +71,7 @@ router.post('/checked', async (req: Request, res: Response) => {
       }
 
       const now = new Date();
-      const formattedDate = now.toISOString().slice(0, 19).replace('T', ' ');
+      const createdAt = getCurrentDateTime();
 
       const values = [
         row.employee_id,
@@ -78,7 +89,7 @@ router.post('/checked', async (req: Request, res: Response) => {
         row.list_service,
         row.list_material,
         observation,
-        formattedDate
+        createdAt
       ];
 
       const insertSql = 'INSERT INTO exa_operations ( employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, observation, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';

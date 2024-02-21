@@ -17,6 +17,17 @@ const paramsSchema = z.object({
   protocol: z.string().regex(isProtocol),
 });
 
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/cancel', async (req: Request, res: Response) => {
@@ -64,15 +75,7 @@ router.post('/cancel', async (req: Request, res: Response) => {
             return res.status(409).json({ error: 'Serviço já pausado' });
         }
 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-
-        const newDateStatus = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        const createdAt = getCurrentDateTime();
         const newStatus = 'canceled';
 
         const values = [
@@ -86,8 +89,8 @@ router.post('/cancel', async (req: Request, res: Response) => {
             newStatus,
             rows[0].update_count + 1,
             rows[0].created_at,
-            newDateStatus,
-            newDateStatus
+            createdAt,
+            createdAt
         ];
 
         const insertSql =

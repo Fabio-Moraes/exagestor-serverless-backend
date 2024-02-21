@@ -11,13 +11,24 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
 
 const paramsSchema = z.object({
   token: z.string(),
   employeeId: z.string(),
-  protocol: z.string().regex(customFormatRegex),
+  protocol: z.string().regex(isProtocol),
 });
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -39,7 +50,7 @@ router.post('/cancel', async (req: Request, res: Response) => {
 
     const { token, employeeId, protocol } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
         if (error) {
             if (error instanceof TokenExpiredError) {
                 console.log('Token expirado')
@@ -49,8 +60,6 @@ router.post('/cancel', async (req: Request, res: Response) => {
                 return res.status(403).json({ error: 'Token inválido' });
             }
         }
-
-        //const { user } = decoded as Decoded;
 
         const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
 
@@ -66,15 +75,7 @@ router.post('/cancel', async (req: Request, res: Response) => {
             return res.status(409).json({ error: 'Serviço já pausado' });
         }
 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-
-        const newDateStatus = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        const createdAt = getCurrentDateTime();
         const newStatus = 'canceled';
 
         const values = [
@@ -89,8 +90,8 @@ router.post('/cancel', async (req: Request, res: Response) => {
           newStatus,
           rows[0].update_count + 1,
           rows[0].created_at,
-            newDateStatus,
-            newDateStatus
+            createdAt,
+            createdAt
         ];
 
         const insertSql =

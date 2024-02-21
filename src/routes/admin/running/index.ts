@@ -22,11 +22,11 @@ router.post('/running', async (req: Request, res: Response) => {
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
@@ -74,7 +74,6 @@ router.post('/running', async (req: Request, res: Response) => {
     ORDER BY u1.created_at DESC;
 `;
 
-
       const statusCanceled = 'canceled';
       const statusCompleted = 'concluded';
 
@@ -87,7 +86,7 @@ router.post('/running', async (req: Request, res: Response) => {
 
   } catch (error) {
     executionStatus.set(ip, false);
-    
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });

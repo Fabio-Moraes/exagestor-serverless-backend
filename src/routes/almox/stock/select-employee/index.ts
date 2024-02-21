@@ -32,7 +32,7 @@ router.post('/stock/select-employee', async (req: Request, res: Response) => {
     const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
         if (error) {
             if (error instanceof TokenExpiredError) {
                 console.log('** verify token expired **')
@@ -42,8 +42,6 @@ router.post('/stock/select-employee', async (req: Request, res: Response) => {
                 return res.status(403).json({ error: 'Token inválido' });
             }
         }
- 
-        //const { user } = decoded as Decoded;
 
         const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role = ? ORDER BY id DESC`;
         const rows = await executeQuery(sql, ['tec']);

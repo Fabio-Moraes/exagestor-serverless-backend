@@ -33,24 +33,12 @@ router.post('/pause', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
 
-    const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
-
     const paramsSchema = z.object({
-      token: z.string().min(1).optional(),
-      protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+      token: z.string(),
+      protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
     });
 
     const { token, protocol } = paramsSchema.parse(req.body);
-
-    if (!protocol) {
-      console.error('Protocol não fornecido');
-      return res.status(401).json({ error: 'Protocol não fornecido' });
-    }
-
-    if (!token) {
-      console.error('Token não fornecido');
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {

@@ -10,12 +10,10 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-const customFormatRegex = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
-
 const paramsSchema = z.object({
-  token: z.string().min(1),
+  token: z.string(),
   employeeId: z.string().min(1),
-  protocol: z.string().refine(data => customFormatRegex.test(data)),
+  protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
   observation: z.string().max(500).optional()
 });
 
@@ -38,11 +36,6 @@ router.post('/checked', async (req: Request, res: Response) => {
     executionStatus.set(ip, true);
 
     const { token, employeeId, protocol, observation } = paramsSchema.parse(req.body);
-
-    if (!token || !protocol) {
-      console.error('Token ou Protocol não fornecidos');
-      return res.status(401).json({ error: 'Token ou Protocol não fornecidos' });
-    }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {

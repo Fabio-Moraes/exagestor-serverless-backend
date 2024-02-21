@@ -30,13 +30,8 @@ router.post('/historic', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
 
-    const paramsSchema = z.object({ token: z.string().min(1).optional() });
+    const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
-
-    if (!token) {
-      console.error('Token não fornecido');
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {

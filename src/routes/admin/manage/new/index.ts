@@ -50,11 +50,6 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       token
     } = paramsSchema.parse(req.body);
 
-    if (!token) {
-      console.error('Token não fornecido');
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
-
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
@@ -104,7 +99,6 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       executionStatus.set(ip, false);
 
       res.json({ success: true });
-      console.log('Usuário registrado com sucesso!');
     });
   } catch (error) {
     executionStatus.set(ip, false);

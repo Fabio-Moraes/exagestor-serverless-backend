@@ -48,12 +48,7 @@ router.post('/register', async (req: Request, res: Response) => {
       observation,
       token
     } = paramsSchema.parse(req.body);
-
-    if (!token) {
-      console.error('Token não fornecido');
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
-
+    
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
         if (error instanceof TokenExpiredError) {

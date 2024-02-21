@@ -33,21 +33,11 @@ router.post('/cancel', async (req: Request, res: Response) => {
 
     const paramsSchema = z.object({
       token: z.string(),
-      employeeId: z.string().min(1),
-      protocol: z.string().refine((data) => customFormatRegex.test(data)).optional(),
+      employeeId: z.string(),
+      protocol: z.string().regex(/^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/),
     });
 
     const { token, employeeId, protocol } = paramsSchema.parse(req.body);
-
-    if (!protocol) {
-        console.error('Protocol não fornecido');
-        return res.status(401).json({ error: 'Protocol não fornecido' });
-    }
-
-    if (!token) {
-        console.error('Token não fornecido');
-        return res.status(401).json({ error: 'Token não fornecido' });
-    }
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
         if (error) {

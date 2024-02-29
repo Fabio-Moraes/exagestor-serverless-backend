@@ -92,10 +92,11 @@ router.post('/cancel', async (req: Request, res: Response) => {
       }
 
       await executeTransaction(executeTransactionArray);
+      
       res.json({ success: true });
+      executionStatus.set(ip, false);
 
       await executeWebsocket({ token, employee_id: row.employee_id });
-      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

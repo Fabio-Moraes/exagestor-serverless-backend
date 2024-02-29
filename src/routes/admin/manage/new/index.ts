@@ -146,9 +146,9 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       ]);
       
       res.json({ success: true });
+      executionStatus.set(ip, false); 
 
       await executeWebsocket({ token, employee_id: String(employeeId) });
-      executionStatus.set(ip, false);    
     });
   } catch (error) {
     executionStatus.set(ip, false);

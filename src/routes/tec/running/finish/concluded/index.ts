@@ -138,8 +138,9 @@ router.post('/concluded', async (req: Request, res: Response) => {
       ]);
 
       res.json({ success: true });
-      await executeWebsocket({ token, employee_id: row.employee_id, });
       executionStatus.set(ip, false);
+      
+      await executeWebsocket({ token, employee_id: row.employee_id, });
     });
   } catch (error) {
     executionStatus.set(ip, false);

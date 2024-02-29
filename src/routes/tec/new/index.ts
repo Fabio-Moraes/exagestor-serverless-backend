@@ -143,8 +143,8 @@ router.post('/new', async (req: Request, res: Response) => {
       ]);
       
       res.json({ success: true });
-
-      executionStatus.set(ip, false);      
+      executionStatus.set(ip, false);     
+       
       await executeWebsocket({ token, employee_id: String(employee.id) });
     });
   } catch (error) {

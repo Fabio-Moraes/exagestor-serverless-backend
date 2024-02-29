@@ -77,21 +77,21 @@ router.post('/pause', async (req: Request, res: Response) => {
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
       const [row]: ServiceData[] = await executeQuery(selectSql, [user.id, protocol, 'active']);
 
-      if (!row) {return res.status(400).json({ error: 'Requisição inválido' })}
+      if (!row) { return res.status(400).json({ error: 'Requisição inválido' }) }
 
       const newStatus = 'paused';
       const updateStateModificationService = await UpdateStateModificationService({ row, newStatus })
       const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
-      
+
       await executeTransaction([
-        updateStateModificationService,
-        createStateModificationHistoryRecord
+        { ...updateStateModificationService },
+        { ...createStateModificationHistoryRecord }
       ]);
 
       res.json({ success: true });
-
-      await executeWebsocket({ token, employee_id: row.employee_id });
       executionStatus.set(ip, false);
+      
+      await executeWebsocket({ token, employee_id: row.employee_id });
     });
   } catch (error) {
     executionStatus.set(ip, false);

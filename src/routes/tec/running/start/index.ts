@@ -3,29 +3,43 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../database';
+import { executeQuery, executeTransaction } from '../../../../database';
+
 import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
 
 import { z, ZodError } from 'zod';
 
-const router = express.Router();
+import dotenv from 'dotenv';
+import { UpdateStateModificationService } from '../../../../models/UpdateStateModificationService';
+import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord';
 
-const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
+dotenv.config();
+
+const router = express.Router();
 
 const paramsSchema = z.object({
   token: z.string(),
-  protocol: z.string().regex(isProtocol),
+  protocol: z.string().max(17),
 });
 
-function getCurrentDateTime(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+interface ServiceData {
+  id: number;
+  client_name: string;
+  employee_id: string;
+  admin_id: string;
+  city: string;
+  address: string;
+  nomenclature: string;
+  classification: string;
+  status: string;
+  update_count: number;
+  created_at: string;
+  modification_at: string;
+  finished_at: string;
+  list_material: string;
+  list_service: string;
+  observation: string;
+  protocol: string;
 }
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -36,16 +50,15 @@ router.post('/start', async (req: Request, res: Response) => {
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
     executionStatus.set(ip, true);
-
     const { token, protocol } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -60,48 +73,24 @@ router.post('/start', async (req: Request, res: Response) => {
       }
 
       const { user } = decoded as Decoded;
+      
+      const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
+      const [row]: ServiceData[] = await executeQuery(selectSql, [user.id, protocol, 'paused']);
 
-      const selectSql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC';
+      if (!row) { return res.status(400).json({ error: 'Requisição inválido' })}
 
-      const rows = await executeQuery(selectSql, [user.id, protocol]);
-
-      if (!rows) {
-        console.log('Requisição inválido')
-        return res.status(400).json({ error: 'Requisição inválido' });
-      }
-
-      if (rows[0].status === 'active') {
-        console.log('Serviço já inicializado')
-        return res.status(409).json({ error: 'Serviço já pausado' });
-      }
-
-      const createdAt = getCurrentDateTime();
       const newStatus = 'active';
+      const updateStateModificationService = await UpdateStateModificationService({ row, newStatus })
+      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
 
-      const values = [
-        rows[0].employee_id,
-        rows[0].admin_id,
-        rows[0].client_name,
-        rows[0].city,
-        rows[0].classification,
-        rows[0].nomenclature,
-        rows[0].address,
-        rows[0].protocol,
-        newStatus,
-        rows[0].update_count + 1,
-        rows[0].created_at,
-        createdAt
-      ];
-
-      const insertSql =
-        'INSERT INTO exa_operations (employee_id, admin_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)';
-
-      await executeQuery(insertSql, values);
-      await executeWebsocket({ token, employee_id: rows[0].employee_id });
-
-      executionStatus.set(ip, false);
+      await executeTransaction([
+        { ...updateStateModificationService },
+        { ...createStateModificationHistoryRecord }
+      ]);
 
       res.json({ success: true });
+      await executeWebsocket({ token, employee_id: row.employee_id });
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

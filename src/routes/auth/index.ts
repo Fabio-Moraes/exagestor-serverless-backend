@@ -6,35 +6,31 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const paramsSchema = z.object({
+  identification: z.string().refine(value => {
+    const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
+    const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
+    return isCnpj || isCpf;
+  }),
+  password: z.string().min(1)
+});
+
 router.post('/signin', async (req: Request, res: Response) => {
   try {
-    const paramsSchema = z.object({
-      identification: z.string().refine(value => {
-        const isCnpj = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
-        const isCpf = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value);
-        return isCnpj || isCpf;
-    }),
-      password: z.string().min(1)
-    });
-
     const { password, identification } = paramsSchema.parse(req.body);
-    const sql = `SELECT * FROM exa_users WHERE identification = ?`;
+    const sql = `SELECT * FROM tbl_user_accounts WHERE identification = ?`;
     const rows = await executeQuery(sql, [identification]);
- 
+
     if (rows.length === 0) {
-     return res.status(401).send('Credenciais inválidas');
+      return res.status(401).send('Credenciais inválidas');
     }
 
     const content = {
-      user: {
-        id: rows[0]?.id,
-        name: rows[0]?.name,
-        role: rows[0]?.role
-      }
+      user: { id: rows[0]?.id, name: rows[0]?.name, role: rows[0]?.role }
     }
 
     if (rows.length === 1 && bcrypt.compareSync(password, rows[0]?.password)) {
-      res.json( content );  
+      res.json(content);
       console.log('Login bem-sucedido. Token:');
     } else {
       res.status(401).send('Invalid credentials');

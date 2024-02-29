@@ -8,6 +8,11 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
+const paramsSchema = z.object({
+  employee_id: z.number().min(1),
+  token: z.string(),
+});
+
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/stock', async (req: Request, res: Response) => {
@@ -25,11 +30,6 @@ router.post('/stock', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({
-      employee_id: z.number().min(1),
-      token: z.string(),
-    });
     const { employee_id, token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error) => {
@@ -43,12 +43,11 @@ router.post('/stock', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM exa_stock_employee WHERE employee_id = ? ORDER BY id DESC';
+      const sql = 'SELECT * FROM tbl_stock_employee WHERE employee_id = ? ORDER BY created_at DESC';
       const rows = await executeQuery(sql, [employee_id]);
 
-      executionStatus.set(ip, false);
-
       res.json(rows);
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

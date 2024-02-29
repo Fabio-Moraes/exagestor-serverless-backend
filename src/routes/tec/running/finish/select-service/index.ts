@@ -9,11 +9,9 @@ import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
-
 const paramsSchema = z.object({
   token: z.string(),
-  protocol: z.string().regex(isProtocol)
+  protocol: z.string().max(17)
 });
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -33,7 +31,6 @@ router.post('/select-service', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
     const { token, protocol } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -47,14 +44,14 @@ router.post('/select-service', async (req: Request, res: Response) => {
             }
         }
 
-        const status = 'finished';
         const { user } = decoded as Decoded;
-        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? ORDER BY id DESC`;
-        const rows = await executeQuery(sql, [user.id, protocol, status]);
-        
-        executionStatus.set(ip, false);
+        const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ? ORDER BY created_at DESC';
+
+        const newStatus = 'active';
+        const rows = await executeQuery(selectSql, [user.id, protocol, newStatus]);
         
         res.json(rows);
+        executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

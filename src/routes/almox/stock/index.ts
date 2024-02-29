@@ -42,13 +42,11 @@ router.post('/stock', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = `SELECT * FROM exa_stock_almox ORDER BY id DESC`;
-
+      const sql = `SELECT * FROM tbl_stock_almox ORDER BY created_at DESC`;
       const rows = await executeQuery(sql);
 
-      executionStatus.set(ip, false);
-
       res.json(rows);
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

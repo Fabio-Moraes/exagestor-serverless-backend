@@ -1,16 +1,12 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-//import type { Decoded } from '../../../../types/jwt'
-
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery } from '../../../../database';
-
 import routesDetailsService from './details';
-
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
-
+const paramsSchema = z.object({ token: z.string() });
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/manage/general-historic', async (req: Request, res: Response) => {
@@ -28,11 +24,9 @@ router.post('/manage/general-historic', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')
@@ -43,15 +37,14 @@ router.post('/manage/general-historic', async (req: Request, res: Response) => {
         }
       }
 
-      //const { user } = decoded as Decoded;
       const sql = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
         admin_user.name AS name_admin
-        FROM exa_operations u1
-        JOIN exa_users tec_user
+        FROM tbl_operations_history u1
+        JOIN tbl_user_accounts tec_user
         ON u1.employee_id = tec_user.id 
-        LEFT JOIN exa_users admin_user
+        LEFT JOIN tbl_user_accounts admin_user
         ON u1.admin_id = admin_user.id
         ORDER BY u1.id DESC;
         `;
@@ -75,7 +68,6 @@ router.post('/manage/general-historic', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Internal server error.' });
     }
   }
-
 });
 
 router.use(routesDetailsService);

@@ -1,17 +1,15 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
-//import type { Decoded } from '../../../types/jwt';
+import jwt, { TokenExpiredError } from 'jsonwebtoken'
 
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery } from '../../../database';
 
 import routesNewService from './new';
-import routerGeneralHistoric from './general-historic'
+import routerGeneralHistoric from './general-historic';
 
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
-
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/manage', async (req: Request, res: Response) => {
@@ -43,14 +41,19 @@ router.post('/manage', async (req: Request, res: Response) => {
                 return res.status(403).json({ error: 'Token inválido' });
             }
         }
- 
-        //const { user } = decoded as Decoded;
 
-        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role <> ? ORDER BY id DESC`;
-        const rows = await executeQuery(sql, ['admin']);
+        const sql = `
+        SELECT 
+          id, 
+          role, 
+          name, 
+          identification, 
+          created_at
+        FROM tbl_user_accounts 
+        WHERE role <> ? AND role <> ? ORDER BY created_at DESC`;
+        const rows = await executeQuery(sql, ['admin', 'almox']);
         
         executionStatus.set(ip, false);
-
         res.json(rows);
     });
   } catch (error) {

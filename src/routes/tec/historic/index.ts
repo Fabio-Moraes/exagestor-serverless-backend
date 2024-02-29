@@ -12,6 +12,7 @@ import { z, ZodError } from 'zod';
 const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
+const paramsSchema = z.object({ token: z.string() });
 
 router.post('/historic', async (req: Request, res: Response) => {
   const ip = req.ip;
@@ -28,8 +29,6 @@ router.post('/historic', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -44,13 +43,11 @@ router.post('/historic', async (req: Request, res: Response) => {
       }
 
       const { user } = decoded as Decoded;
-      const sql = `SELECT * FROM exa_operations WHERE employee_id = ? ORDER BY id DESC`;
-
+      const sql = `SELECT * FROM tbl_operations_history WHERE employee_id = ? ORDER BY created_at DESC`;
       const rows = await executeQuery(sql, [user.id]);
-
-      executionStatus.set(ip, false);
-
+      
       res.json(rows);
+      executionStatus.set(ip, false);
     });
 
   } catch (error) {

@@ -1,21 +1,16 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-//import type { Decoded } from '../../../../../types/jwt'
-
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeQuery } from '../../../../../database';
-
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
-const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
-
 const paramsSchema = z.object({
   token: z.string(),
   employeeId: z.string().min(1),
-  protocol: z.string().regex(isProtocol),
-  updateCount: z.string().min(1).optional(),
+  protocol: z.string().max(17),
+  updateCount: z.string().min(1).transform(item => Number(item)),
 });
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -35,10 +30,9 @@ router.post('/manage/general-historic/details', async (req: Request, res: Respon
 
   try {
     executionStatus.set(ip, true);
-
     const { token, employeeId, protocol, updateCount } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
         if (error instanceof TokenExpiredError) {
           console.log('** verify token expired **')
@@ -49,14 +43,11 @@ router.post('/manage/general-historic/details', async (req: Request, res: Respon
         }
       }
 
-      //const { user } = decoded as Decoded;
-      const sql = 'SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
-
+      const sql = 'SELECT * FROM tbl_operations_history WHERE employee_id = ? AND protocol = ? AND update_count = ?';
       const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
 
-      executionStatus.set(ip, false);
-
       res.json(rows);
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

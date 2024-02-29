@@ -8,7 +8,6 @@ import routesFinish from './finish';
 import routesCancel from './cancel';
 import routesPause from './pause';
 import routesStart from './start';
-import routesCheck from './check';
 
 import { z, ZodError } from 'zod';
 
@@ -47,41 +46,17 @@ router.post('/running', async (req: Request, res: Response) => {
       }
 
       const sql = `
-    -- Selecionar todas as colunas da tabela exa_operations e adicionar informações dos usuários
-    SELECT u1.*, 
-    -- Alias para o nome do técnico associado à operação
-    tec_user.name AS name_tec, 
-    -- Alias para o nome do administrador associado à operação
-    admin_user.name AS name_admin
-    -- Tabela principal sendo referenciada como u1
-    FROM exa_operations u1
-    -- Junção com a tabela exa_users para obter informações do técnico associado à operação
-    JOIN exa_users tec_user
-    ON u1.employee_id = tec_user.id 
-    -- Junção esquerda com a tabela exa_users para obter informações do administrador associado à operação
-    LEFT JOIN exa_users admin_user
-    ON u1.admin_id = admin_user.id
-    -- Condição para excluir operações com determinados status
-    WHERE (u1.status <> ? AND u1.status <> ?)
-    -- Condição para garantir que não exista outra operação com o mesmo protocolo e um ID maior
-    AND NOT EXISTS (
-      SELECT 1
-      FROM exa_operations u2
-      WHERE u2.protocol = u1.protocol
-      AND u2.id > u1.id 
-      )
-    -- Ordenar o resultado com base na data de criação das operações em ordem decrescente
-    ORDER BY u1.created_at DESC;
-`;
+      SELECT u1.*, tec_user.name AS name_tec, admin_user.name AS name_admin
+      FROM tbl_operations u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      LEFT JOIN tbl_user_accounts admin_user ON u1.admin_id = admin_user.id
+      ORDER BY u1.created_at DESC;
+    `;
 
-      const statusCanceled = 'canceled';
-      const statusCompleted = 'concluded';
-
-      const rows = await executeQuery(sql, [statusCanceled, statusCompleted]);
-
-      executionStatus.set(ip, false);
-
+      const rows = await executeQuery(sql);
       res.json(rows);
+      
+      executionStatus.set(ip, false);
     });
 
   } catch (error) {
@@ -101,6 +76,5 @@ router.use(routesFinish);
 router.use(routesCancel);
 router.use(routesPause);
 router.use(routesStart);
-router.use(routesCheck);
 
 export default router;

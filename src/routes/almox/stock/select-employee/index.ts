@@ -43,7 +43,7 @@ router.post('/stock/select-employee', async (req: Request, res: Response) => {
             }
         }
 
-        const sql = `SELECT id, role, name, identification, created_at FROM exa_users WHERE role = ? ORDER BY id DESC`;
+        const sql = `SELECT id, role, name, identification, created_at FROM tbl_user_accounts WHERE role = ? ORDER BY created_at DESC`;
         const rows = await executeQuery(sql, ['tec']);
     
         executionStatus.set(ip, false);

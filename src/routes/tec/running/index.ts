@@ -22,17 +22,16 @@ router.post('/running', async (req: Request, res: Response) => {
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
     executionStatus.set(ip, true);
-
-    const paramsSchema = z.object({ token: z.string()});
+    const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -46,34 +45,20 @@ router.post('/running', async (req: Request, res: Response) => {
         }
       }
 
-      const statusCanceled = 'canceled';
-      const statusCompleted = 'concluded';
       const { user } = decoded as Decoded;
 
       const sql = `
-        SELECT u1.*, 
-        tec_user.name AS name_tec, 
-        admin_user.name AS name_admin
-        FROM exa_operations u1
-        JOIN exa_users tec_user
-        ON u1.employee_id = tec_user.id 
-        LEFT JOIN exa_users admin_user
-        ON u1.admin_id = admin_user.id
-        WHERE (u1.status <> ? AND u1.status <> ?) AND u1.employee_id = ?
-        AND NOT EXISTS (
-          SELECT 1
-          FROM exa_operations u2
-          WHERE u2.protocol = u1.protocol
-          AND u2.id > u1.id
-          )
-          ORDER BY u1.created_at DESC;
-          `;
+      SELECT u1.*, tec_user.name AS name_tec, admin_user.name AS name_admin
+      FROM tbl_operations u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      LEFT JOIN tbl_user_accounts admin_user ON u1.admin_id = admin_user.id
+      WHERE u1.employee_id = ?
+      ORDER BY u1.created_at DESC`;
 
-      const rows = await executeQuery(sql, [statusCanceled, statusCompleted, user.id]);
-      
-      executionStatus.set(ip, false);
-
+      const rows = await executeQuery(sql, [user.id]);
       res.json(rows);
+
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

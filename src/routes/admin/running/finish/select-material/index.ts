@@ -7,24 +7,20 @@ import { executeQuery } from '../../../../../database';
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
-
-const isProtocol = /^[0-9]-\d{4}-\d{4}-\d{4}-\d{4}$/;
-
 const paramsSchema = z.object({
   token: z.string(),
   employeeId: z.string(),
-  protocol: z.string().regex(isProtocol)
+  protocol: z.string().max(17)
 });
 
 const executionStatus: Map<string, boolean> = new Map();
-
 router.post('/select-material', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
       console.error('Já existe uma execução em andamento para este IP');
@@ -33,7 +29,6 @@ router.post('/select-material', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-
     const { token, employeeId, protocol } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
@@ -48,12 +43,11 @@ router.post('/select-material', async (req: Request, res: Response) => {
         }
         
         const status = 'finished';
-        const sql = `SELECT * FROM exa_operations WHERE employee_id = ? AND protocol = ? AND status <> ? ORDER BY id DESC`;
+        const sql = `SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`;
         const rows = await executeQuery(sql, [employeeId, protocol, status]);
         
-        executionStatus.set(ip, false);
-
         res.json(rows);
+        executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

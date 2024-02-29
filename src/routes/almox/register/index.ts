@@ -82,7 +82,7 @@ router.post('/register', async (req: Request, res: Response) => {
         createdAt
       ];
 
-      const sqlSelect = 'SELECT * FROM exa_stock_almox WHERE product_code = ?';
+      const sqlSelect = 'SELECT * FROM tbl_stock_almox WHERE product_code = ?';
       const rows = await executeQuery(sqlSelect, [productCode]);
 
       if (rows.length > 0) {
@@ -91,14 +91,12 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO exa_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+      const sqlInsert = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
 
       await executeQuery(sqlInsert, values);
-
-      executionStatus.set(ip, false);
-
+      
       res.json({ status: 'success' });
-      console.log('Produto registrado com sucesso!');
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

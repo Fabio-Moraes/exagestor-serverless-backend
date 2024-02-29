@@ -110,7 +110,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       });
 
       const queryMaterialsStock = `
-      INSERT INTO exa_stock_almox 
+      INSERT INTO tbl_stock_almox 
         (id, product_name, product_code, product_batch, quantity_value, unit_type, created_at) 
       VALUES 
         ${generatePlaceholders(7)}
@@ -125,7 +125,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       `;
 
       const queryMaterialsEmployee = `
-      INSERT INTO exa_stock_employee 
+      INSERT INTO tbl_stock_employee 
         (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
       VALUES ${generatePlaceholders(8)}
       ON DUPLICATE KEY UPDATE 

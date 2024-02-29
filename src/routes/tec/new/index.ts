@@ -4,7 +4,7 @@ import type { Decoded } from '../../../types/jwt'
 
 import { createProtocol } from '../../../components/CreateProtocol';
 import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { executeQuery, executeTransaction } from '../../../database';
 
 import { executeWebsocket } from '../../../functions/websocket/RUNNING-UPDATE';
 import { z, ZodError } from 'zod';
@@ -70,35 +70,82 @@ router.post('/new', async (req: Request, res: Response) => {
       }
 
       const createdAt = getCurrentDateTime();
-      const protocol = createProtocol();
+      const protocol = createProtocol(17);
       const status = 'active';
       const updateCount = 0
 
       const { user: employee } = decoded as Decoded;
 
       const values = [
+        protocol,
         employee.id,
+        null,     
         clientName,
         city,
         classification,
         nomenclature,
         address,
-        protocol,
         status,
         updateCount,
+        null,
+        null,
+        null,
         createdAt,
+        null,
+        null,
       ];
 
-      const sql =
-        'INSERT INTO exa_operations ( employee_id, client_name, city, classification, nomenclature, address, protocol, status, update_count, created_at, modification_at, list_service, list_material, finished_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)';
+      const queryOperations =  `
+      INSERT INTO tbl_operations (
+          protocol, 
+          employee_id, 
+          admin_id, 
+          client_name, 
+          city, 
+          classification, 
+          nomenclature, 
+          address, 
+          status, 
+          update_count, 
+          list_service, 
+          list_material, 
+          observation, 
+          created_at, 
+          modification_at, 
+          finished_at
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
-      await executeQuery(sql, values);
-      await executeWebsocket({ token, employee_id: String(employee.id) });
+      const queryOperationsHistory =  `
+      INSERT INTO tbl_operations_history (
+          protocol, 
+          employee_id, 
+          admin_id, 
+          client_name, 
+          city, 
+          classification, 
+          nomenclature, 
+          address, 
+          status, 
+          update_count, 
+          list_service, 
+          list_material, 
+          observation, 
+          created_at, 
+          modification_at, 
+          finished_at
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
-      executionStatus.set(ip, false);
-
+      await executeTransaction([
+        { query: queryOperations, values: values },
+        { query: queryOperationsHistory, values: values }
+      ]);
+      
       res.json({ success: true });
-      console.log('Usuário registrado com sucesso!');
+
+      await executeWebsocket({ token, employee_id: String(employee.id) });
+      executionStatus.set(ip, false);      
     });
   } catch (error) {
     executionStatus.set(ip, false);

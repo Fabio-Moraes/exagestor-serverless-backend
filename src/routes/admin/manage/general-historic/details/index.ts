@@ -43,7 +43,7 @@ router.post('/manage/general-historic/details', async (req: Request, res: Respon
         }
       }
 
-      const sql = 'SELECT * FROM tbl_operations_history WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+      const sql = 'SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?';
       const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
 
       res.json(rows);

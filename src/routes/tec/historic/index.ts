@@ -43,7 +43,7 @@ router.post('/historic', async (req: Request, res: Response) => {
       }
 
       const { user } = decoded as Decoded;
-      const sql = `SELECT * FROM tbl_operations_history WHERE employee_id = ? ORDER BY created_at DESC`;
+      const sql = `SELECT * FROM tbl_operations_logs WHERE employee_id = ? ORDER BY created_at DESC`;
       const rows = await executeQuery(sql, [user.id]);
       
       res.json(rows);

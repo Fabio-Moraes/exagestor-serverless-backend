@@ -41,7 +41,7 @@ router.post('/manage/general-historic', async (req: Request, res: Response) => {
         SELECT u1.*, 
         tec_user.name AS name_tec, 
         admin_user.name AS name_admin
-        FROM tbl_operations_history u1
+        FROM tbl_operations_logs u1
         JOIN tbl_user_accounts tec_user
         ON u1.employee_id = tec_user.id 
         LEFT JOIN tbl_user_accounts admin_user

@@ -68,7 +68,7 @@ export async function CreateStateModificationHistoryRecord(props: TypeProps) {
   ];
 
   const queryOperations = `
-  INSERT INTO tbl_operations_history (
+  INSERT INTO tbl_operations_logs (
     protocol, 
     employee_id, 
     admin_id,

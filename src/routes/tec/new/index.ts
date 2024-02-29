@@ -117,7 +117,7 @@ router.post('/new', async (req: Request, res: Response) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const queryOperationsHistory =  `
-      INSERT INTO tbl_operations_history (
+      INSERT INTO tbl_operations_logs (
           protocol, 
           employee_id, 
           admin_id, 
@@ -144,8 +144,8 @@ router.post('/new', async (req: Request, res: Response) => {
       
       res.json({ success: true });
 
-      await executeWebsocket({ token, employee_id: String(employee.id) });
       executionStatus.set(ip, false);      
+      await executeWebsocket({ token, employee_id: String(employee.id) });
     });
   } catch (error) {
     executionStatus.set(ip, false);

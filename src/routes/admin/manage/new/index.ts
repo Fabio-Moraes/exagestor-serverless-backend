@@ -120,7 +120,7 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const queryOperationsHistory =  `
-      INSERT INTO tbl_operations_history (
+      INSERT INTO tbl_operations_logs (
           protocol, 
           employee_id, 
           admin_id, 

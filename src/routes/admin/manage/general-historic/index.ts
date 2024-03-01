@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../database';
+import { executeQuery } from '../../../../config/database';
 import routesDetailsService from './details';
 import { z, ZodError } from 'zod';
 

@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { IncrementStockItemQuantityEmployee } from '../../../../models/IncrementStockItemQuantityEmployee'
-import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord';
-import { executeQuery, executeTransaction } from '../../../../database';
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
+import { increment_item } from '../../../../models/stock_logs'
+import { insert_state_modification } from '../../../../models/operation_logs';
+import { executeQuery, executeTransaction } from '../../../../config/database';
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
@@ -37,7 +37,7 @@ interface ServiceData {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/cancel', async (req: Request, res: Response) => {
+router.post('/running/cancel', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -83,11 +83,11 @@ router.post('/cancel', async (req: Request, res: Response) => {
       executeTransactionArray.push({ query: queryOperations, values: deleteValues });
 
       const newStatus = 'canceled';
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
+      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...createStateModificationHistoryRecord });
 
       if (row.status === 'analysis') {
-        const incrementStockItemQuantityEmployee = await IncrementStockItemQuantityEmployee(row.list_material)
+        const incrementStockItemQuantityEmployee = await increment_item(row.list_material)
         executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
       }
 

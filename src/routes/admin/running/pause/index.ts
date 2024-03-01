@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import { UpdateStateModificationService } from '../../../../models/UpdateStateModificationService'
-import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord'
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
-import { executeQuery, executeTransaction } from '../../../../database';
+import { update_state_modification } from '../../../../models/operations'
+import { insert_state_modification } from '../../../../models/operation_logs'
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
+import { executeQuery, executeTransaction } from '../../../../config/database';
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { z, ZodError } from 'zod';
 
@@ -36,7 +36,7 @@ const paramsSchema = z.object({
 const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
-router.post('/pause', async (req: Request, res: Response) => {
+router.post('/running/pause', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -72,8 +72,8 @@ router.post('/pause', async (req: Request, res: Response) => {
       }
 
       const newStatus = 'paused';
-      const updateStateModificationService = await UpdateStateModificationService({ row, newStatus })
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
+      const updateStateModificationService = await update_state_modification({ row, newStatus })
+      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
 
       await executeTransaction([
         { ...updateStateModificationService },

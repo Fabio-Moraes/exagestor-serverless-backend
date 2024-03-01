@@ -3,12 +3,12 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../../constants';
-import { executeQuery, executeTransaction } from '../../../../../database';
-import { executeWebsocket } from '../../../../../functions/websocket/RUNNING-UPDATE';
+import { executeQuery, executeTransaction } from '../../../../../config/database';
+import { executeWebsocket } from '../../../../../controllers/websocket/running_update';
 
 import { z, ZodError } from 'zod';
-import { DecrementStockItemQuantityEmployee } from '../../../../../models/DecrementStockItemQuantityEmployee';
-import { CreateStateModificationHistoryRecord } from '../../../../../models/CreateStateModificationHistoryRecord';
+import { decrement_item } from '../../../../../models/stock_logs';
+import { insert_state_modification } from '../../../../../models/operation_logs';
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ function getCurrentDateTime(): string {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/concluded', async (req: Request, res: Response) => {
+router.post('/running/finish/concluded', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -125,11 +125,11 @@ router.post('/concluded', async (req: Request, res: Response) => {
           observation = VALUES(observation),
           finished_at = VALUES(finished_at);`;
 
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({
+      const createStateModificationHistoryRecord = await insert_state_modification({
         row, newStatus, listMaterial, listService, observation
       })
 
-      const decrementStockItemQuantityEmployee = await DecrementStockItemQuantityEmployee(listMaterial);
+      const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
 
       await executeTransaction([
         { query: queryOperations, values: valuesInsertOperations },

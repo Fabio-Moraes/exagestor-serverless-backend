@@ -2,14 +2,14 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery, executeTransaction } from '../../../../database';
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
+import { executeQuery, executeTransaction } from '../../../../config/database';
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 
-import { UpdateStateModificationService } from '../../../../models/UpdateStateModificationService';
-import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord';
+import { update_state_modification } from '../../../../models/operations';
+import { insert_state_modification } from '../../../../models/operation_logs';
 
 import { z, ZodError } from 'zod';
-import { IncrementStockItemQuantityEmployee } from '../../../../models/IncrementStockItemQuantityEmployee';
+import { increment_item } from '../../../../models/stock_logs';
 
 const router = express.Router();
 
@@ -41,7 +41,7 @@ interface ServiceData {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/start', async (req: Request, res: Response) => {
+router.post('/running/start', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -75,14 +75,14 @@ router.post('/start', async (req: Request, res: Response) => {
       const executeTransactionArray = [];     
       const newStatus = 'active';
 
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
+      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...createStateModificationHistoryRecord });
       
-      const updateStateModificationService = await UpdateStateModificationService({ row, newStatus })
+      const updateStateModificationService = await update_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...updateStateModificationService });
       
       if (row.status === 'analysis') {
-        const incrementStockItemQuantityEmployee = await IncrementStockItemQuantityEmployee(row.list_material)
+        const incrementStockItemQuantityEmployee = await increment_item(row.list_material)
         executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
       }
 

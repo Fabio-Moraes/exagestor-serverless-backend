@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../../constants';
-import { DecrementStockItemQuantityEmployee } from '../../../../../models/DecrementStockItemQuantityEmployee'
-import { executeQuery, executeTransaction } from '../../../../../database';
+import { decrement_item } from '../../../../../models/stock_logs';
+import { executeQuery, executeTransaction } from '../../../../../config/database';
 
-import { executeWebsocket } from '../../../../../functions/websocket/RUNNING-UPDATE';
+import { executeWebsocket } from '../../../../../controllers/websocket/running_update';
 
 import { z, ZodError } from 'zod';
-import { CreateStateModificationHistoryRecord } from '../../../../../models/CreateStateModificationHistoryRecord';
+import { insert_state_modification } from '../../../../../models/operation_logs';
 
 const router = express.Router();
 
@@ -71,14 +71,14 @@ router.post('/concluded', async (req: Request, res: Response) => {
       executeTransactionArray.push({ query: queryOperations, values: deleteValues });
 
       const newStatus = 'concluded';
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({
+      const createStateModificationHistoryRecord = await insert_state_modification({
         row, newStatus, listMaterial, listService, observation
       })
 
       executeTransactionArray.push(createStateModificationHistoryRecord);
 
       if (row.status !== 'analysis') {
-        const decrementStockItemQuantityEmployee = await DecrementStockItemQuantityEmployee(listMaterial);
+        const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
         executeTransactionArray.push(decrementStockItemQuantityEmployee);
       }
 
@@ -86,7 +86,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
       res.json({ success: true });
       executionStatus.set(ip, false);
-      
+
       await executeWebsocket({ token, employee_id: row.employee_id, });
     });
   } catch (error) {

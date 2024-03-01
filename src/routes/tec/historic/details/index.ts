@@ -3,7 +3,7 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../database';
+import { executeQuery } from '../../../../config/database';
 
 import { z, ZodError } from 'zod';
 
@@ -12,7 +12,7 @@ const router = express.Router();
 const paramsSchema = z.object({
   token: z.string(),
   protocol: z.string().max(17),
-  updateCount: z.string().min(1).optional(),
+  updateCount: z.string().transform(num => Number(num)),
 });
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -46,7 +46,8 @@ router.post('/historic/details', async (req: Request, res: Response) => {
       }
 
       const { user } = decoded as Decoded;
-      const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+      const sql = 'SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+  
       const rows = await executeQuery(sql, [user.id, protocol, updateCount]);
 
       executionStatus.set(ip, false);

@@ -1,6 +1,6 @@
-import { executeQuery } from '../database';
+import { executeQuery } from '../../config/database';
 
-export async function DecrementStockItemQuantityEmployee(materials: string) {
+export async function decrement_item(materials: string) {
   function generateQueryListMaterial(arr: string[]) {
     const placeholders = arr.map(() => '?').join(', ');
     return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;

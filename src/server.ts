@@ -13,7 +13,6 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-
 const frontendOriginBaseURL = process.env.FRONTEND_ORIGIN_BASEURL;
 
 // Middleware
@@ -36,7 +35,6 @@ app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);
 app.use('/api/almox', almox);
-
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response) => {

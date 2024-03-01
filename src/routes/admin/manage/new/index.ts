@@ -2,11 +2,11 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../types/jwt'
 
-import { createProtocol } from '../../../../components/CreateProtocol';
+import { createProtocol } from '../../../../utils/CreateProtocol';
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery, executeTransaction } from '../../../../database';
+import { executeTransaction } from '../../../../config/database';
 
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 
 import { z, ZodError } from 'zod';
 

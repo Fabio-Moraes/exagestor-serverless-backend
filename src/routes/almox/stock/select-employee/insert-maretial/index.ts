@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import { JWT_SECRET_KEY } from '../../../../../constants';
-import { executeTransaction } from '../../../../../database';
+import { executeTransaction } from '../../../../../config/database';
 
 import { z, ZodError } from 'zod';
 

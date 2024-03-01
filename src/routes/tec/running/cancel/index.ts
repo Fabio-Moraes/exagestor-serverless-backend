@@ -3,10 +3,10 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery, executeTransaction } from '../../../../database';
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
+import { executeQuery, executeTransaction } from '../../../../config/database';
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 
-import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord';
+import { insert_state_modification } from '../../../../models/operation_logs';
 
 import { z, ZodError } from 'zod';
 
@@ -18,7 +18,7 @@ const paramsSchema = z.object({
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/cancel', async (req: Request, res: Response) => {
+router.post('/running/cancel', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -57,7 +57,7 @@ router.post('/cancel', async (req: Request, res: Response) => {
       const queryDeleteOperations = 'DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?'
 
       const newStatus = 'canceled';
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
+      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
 
       await executeTransaction([
         { query: queryDeleteOperations, values: valueDeleteOperations },

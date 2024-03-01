@@ -1,5 +1,3 @@
-import { executeQuery } from '../database';
-
 interface ServiceData {
   id: number;
   client_name: string;
@@ -36,7 +34,7 @@ function getCurrentDateTime(): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-export async function UpdateStateModificationService({ row, newStatus }: TypeProps) {
+export async function update_state_modification({ row, newStatus }: TypeProps) {
   const createdAt = getCurrentDateTime();
 
   const values = [

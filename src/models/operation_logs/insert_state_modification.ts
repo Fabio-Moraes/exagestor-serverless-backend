@@ -37,7 +37,7 @@ function getCurrentDateTime(): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-export async function CreateStateModificationHistoryRecord(props: TypeProps) {
+export async function insert_state_modification(props: TypeProps) {
   const createdAt = getCurrentDateTime();
 
   const {

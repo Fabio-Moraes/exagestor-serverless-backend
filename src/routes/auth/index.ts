@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { executeQuery } from '../../database';
+import { executeQuery } from '../../config/database';
 
 import { z, ZodError } from 'zod';
 

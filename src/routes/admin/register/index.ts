@@ -3,7 +3,7 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../database';
+import { executeQuery } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
 

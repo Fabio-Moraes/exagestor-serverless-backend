@@ -3,15 +3,15 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery, executeTransaction } from '../../../../database';
+import { executeQuery, executeTransaction } from '../../../../config/database';
 
-import { executeWebsocket } from '../../../../functions/websocket/RUNNING-UPDATE';
+import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 
 import { z, ZodError } from 'zod';
 
 import dotenv from 'dotenv';
-import { UpdateStateModificationService } from '../../../../models/UpdateStateModificationService';
-import { CreateStateModificationHistoryRecord } from '../../../../models/CreateStateModificationHistoryRecord';
+import { update_state_modification } from '../../../../models/operations';
+import { insert_state_modification } from '../../../../models/operation_logs';
 
 dotenv.config();
 
@@ -44,7 +44,7 @@ interface ServiceData {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/start', async (req: Request, res: Response) => {
+router.post('/running/start', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -80,8 +80,8 @@ router.post('/start', async (req: Request, res: Response) => {
       if (!row) { return res.status(400).json({ error: 'Requisição inválido' })}
 
       const newStatus = 'active';
-      const updateStateModificationService = await UpdateStateModificationService({ row, newStatus })
-      const createStateModificationHistoryRecord = await CreateStateModificationHistoryRecord({ row, newStatus })
+      const updateStateModificationService = await update_state_modification({ row, newStatus })
+      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
 
       await executeTransaction([
         { ...updateStateModificationService },
@@ -90,7 +90,7 @@ router.post('/start', async (req: Request, res: Response) => {
 
       res.json({ success: true });
       executionStatus.set(ip, false);
-      
+        
       await executeWebsocket({ token, employee_id: row.employee_id });
     });
   } catch (error) {

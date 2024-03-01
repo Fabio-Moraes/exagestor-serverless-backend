@@ -1,4 +1,4 @@
-import { websocket } from '../../services/websocket'
+import { websocket } from '../../config/websocket'
 
 interface Props { token: string, employee_id: string }
 

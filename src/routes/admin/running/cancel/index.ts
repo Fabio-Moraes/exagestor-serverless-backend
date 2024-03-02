@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../constants';
-import { increment_item } from '../../../../models/stock_logs'
+import { increment_item } from '../../../../models/stock_employee'
 import { insert_state_modification } from '../../../../models/operation_logs';
 import { executeQuery, executeTransaction } from '../../../../config/database';
 import { executeWebsocket } from '../../../../controllers/websocket/running_update';

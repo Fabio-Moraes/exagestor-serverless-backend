@@ -1,6 +1,6 @@
 import { executeQuery } from '../../config/database';
 
-export async function increment_item(materials: string) {
+export async function increment_item(materials: string) { 
   function generateQueryListMaterial(arr: string[]) {
     const placeholders = arr.map(() => '?').join(', ');
     return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;

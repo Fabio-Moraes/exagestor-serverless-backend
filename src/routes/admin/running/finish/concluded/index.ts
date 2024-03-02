@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../../constants';
-import { decrement_item } from '../../../../../models/stock_logs';
+import { decrement_item } from '../../../../../models/stock_employee';
 import { executeQuery, executeTransaction } from '../../../../../config/database';
 
 import { executeWebsocket } from '../../../../../controllers/websocket/running_update';
@@ -51,7 +51,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
+      const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
       const [row] = await executeQuery(sql, [employeeId, protocol]);
 
       if (!row) {

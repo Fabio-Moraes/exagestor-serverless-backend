@@ -2,7 +2,7 @@ interface ServiceData {
   id: number;
   client_name: string;
   employee_id: string;
-  admin_id: string;
+  admin_id?: string;
   city: string;
   address: string;
   nomenclature: string;
@@ -61,10 +61,10 @@ export async function insert_state_modification(props: TypeProps) {
     row.update_count + 1,
     row.created_at,
     newStatus === 'concluded' ? row.modification_at : createdAt,
-    newStatus === 'concluded' ? listService : null,
-    newStatus === 'concluded' ? listMaterial : null,
-    newStatus === 'concluded' ? observation : null,
-    newStatus === 'concluded' ? createdAt : null
+    listService,
+    listMaterial,
+    observation,
+    createdAt
   ];
 
   const queryOperations = `
@@ -83,10 +83,10 @@ export async function insert_state_modification(props: TypeProps) {
     modification_at, 
     list_service, 
     list_material,
-    observation, 
+    observation,  
     finished_at
 ) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  return { query: queryOperations, values: values };
+  
+return { query: queryOperations, values: values };
 }

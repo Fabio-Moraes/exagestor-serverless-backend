@@ -9,7 +9,7 @@ import { update_state_modification } from '../../../../models/operations';
 import { insert_state_modification } from '../../../../models/operation_logs';
 
 import { z, ZodError } from 'zod';
-import { increment_item } from '../../../../models/stock_logs';
+import { increment_item } from '../../../../models/stock_employee';
 
 const router = express.Router();
 

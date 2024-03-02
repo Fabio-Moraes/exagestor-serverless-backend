@@ -7,7 +7,7 @@ import { executeQuery, executeTransaction } from '../../../../../config/database
 import { executeWebsocket } from '../../../../../controllers/websocket/running_update';
 
 import { z, ZodError } from 'zod';
-import { decrement_item } from '../../../../../models/stock_logs';
+import { decrement_item } from '../../../../../models/stock_employee';
 import { insert_state_modification } from '../../../../../models/operation_logs';
 
 const router = express.Router();
@@ -77,6 +77,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       const valuesInsertOperations = [
         row.protocol,
         row.employee_id,
+        null,
         row.client_name,
         row.city,
         row.classification,
@@ -96,6 +97,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
+          admin_id,
           client_name, 
           city, 
           classification, 
@@ -107,11 +109,14 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
           modification_at, 
           list_service, 
           list_material,
-          observation, 
-          finished_at'active'
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+          observation,  
+          finished_at
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
       ON DUPLICATE KEY UPDATE 
+          protocol = VALUES(protocol),
           employee_id = VALUES(employee_id),
+          admin_id = VALUES(admin_id),
           client_name = VALUES(client_name),
           city = VALUES(city),
           classification = VALUES(classification),

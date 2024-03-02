@@ -4,6 +4,8 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeTransaction } from '../../../../../config/database';
 
+import { material_transfer } from '../../../../../models/stock_logs/material_transfer';
+
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
@@ -43,16 +45,16 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
     executionStatus.set(ip, true);
- 
+
     const { insert, employee_id, token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error) => {
@@ -95,7 +97,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         );
       });
 
-      const insertValueMaterialsEmployee:  Array<number | string | null>  = [];
+      const insertValueMaterialsEmployee: Array<number | string | null> = [];
       insert.forEach(item => {
         insertValueMaterialsEmployee.push(
           `${item.product_code}-${employee_id}`,
@@ -139,14 +141,19 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         created_at = VALUES(created_at);
       `;
 
+      const queryMaterialsStockTransferLog = await material_transfer({
+        insert, employeeId: employee_id, transferType: 'sent'
+      })
+
       await executeTransaction([
         { query: queryMaterialsStock, values: updateValuesMaterialsStock },
-        { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee }
+        { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
+        { ...queryMaterialsStockTransferLog }
       ]);
 
-      executionStatus.set(ip, false);
-
+      
       res.json({ status: 'success' });
+      executionStatus.set(ip, false);
     });
   } catch (error) {
     executionStatus.set(ip, false);

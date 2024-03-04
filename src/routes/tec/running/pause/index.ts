@@ -88,10 +88,10 @@ router.post('/running/pause', async (req: Request, res: Response) => {
         { ...createStateModificationHistoryRecord }
       ]);
 
+      await executeWebsocket({ token, employee_id: row.employee_id });
+      
       res.json({ success: true });
       executionStatus.set(ip, false);
-      
-      await executeWebsocket({ token, employee_id: row.employee_id });
     });
   } catch (error) {
     executionStatus.set(ip, false);

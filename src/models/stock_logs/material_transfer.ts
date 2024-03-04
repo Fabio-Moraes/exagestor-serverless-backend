@@ -11,7 +11,6 @@ function getCurrentDateTime(): string {
 
 
 interface InsertItem {
-  id: number;
   product_name: string;
   unit_type: string;
   product_code: string;
@@ -27,7 +26,6 @@ interface PropsTypes {
 }
 
 export async function material_transfer({ insert, employeeId, transferType }: PropsTypes) {
-  console.log('insert-log: ', insert, '    !!!!!   ', employeeId)
   function generatePlaceholders(count: number) {
     let valueQuery = '';
     const placeholders = Array(count).fill('?').join(', ');

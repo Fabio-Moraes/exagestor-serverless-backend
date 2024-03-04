@@ -38,7 +38,8 @@ router.post('/historic', async (req: Request, res: Response) => {
 
       const sql = `
         SELECT u1.*, 
-        tec_user.name AS name_tec
+        tec_user.name AS name_tec,
+        tec_user.role AS name_role
         FROM tbl_stock_logs u1
         JOIN tbl_user_accounts tec_user
         ON u1.employee_id = tec_user.id 

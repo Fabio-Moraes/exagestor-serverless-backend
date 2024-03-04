@@ -1,10 +1,13 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
+import { material_transfer } from '../../../models/stock_logs/material_transfer';
+
 import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../config/database';
+import { executeQuery, executeTransaction } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
+import { Decoded } from '../../../types/jwt';
 
 const router = express.Router();
 
@@ -91,9 +94,29 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+      const obj = {
+        product_name: productName,
+        unit_type: unitType,
+        product_code: productCode,
+        product_batch: productBatch,
+        quantity_value: quantityValue,
+        created_at: createdAt,
+      }
 
-      await executeQuery(sqlInsert, values);
+      const { user: employee } = decoded as Decoded;
+
+      const queryMaterialsStockTransferLog = await material_transfer({
+        insert: [obj], employeeId: employee.id, transferType: 'sent'
+      })
+
+      const queryMaterialsStockTransfer = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+
+      await executeTransaction([
+        { query: queryMaterialsStockTransfer, values: values },
+        { ...queryMaterialsStockTransferLog }
+      ]);
+
+      await executeQuery(queryMaterialsStockTransfer, values);
       
       res.json({ status: 'success' });
       executionStatus.set(ip, false);

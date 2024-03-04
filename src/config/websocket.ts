@@ -17,4 +17,3 @@ export function websocket(token: string) {
     },
   });
 }
-

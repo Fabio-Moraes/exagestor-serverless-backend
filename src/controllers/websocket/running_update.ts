@@ -8,18 +8,12 @@ export async function executeWebsocket(props: Props) {
   let socket = websocket(token);
 
   const connectSocket = async () => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       socket = websocket(token);
-
-      socket.once('connect', () => {
+      socket.on('connect', () => {
         console.log('Connected to WebSocket server');
         resolve();
       });
-
-      socket.once('connect_error', (error: any) => {
-        reject(new Error(`WebSocket connection error: ${error.message}`));
-      });
-
       socket.emit('RUNNING_UPDATE', JSON.stringify({ employee_id }));
     });
   };

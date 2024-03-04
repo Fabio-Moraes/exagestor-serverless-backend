@@ -55,6 +55,7 @@ router.post('/running/pause', async (req: Request, res: Response) => {
 
     jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
+        executionStatus.set(ip, false);
         if (error instanceof TokenExpiredError) {
           console.log('Token expirado')
           return res.status(403).json({ error: 'Token expirado' });
@@ -68,6 +69,7 @@ router.post('/running/pause', async (req: Request, res: Response) => {
       const [row]: ServiceData[] = await executeQuery(selectSql, [employeeId, protocol, 'active']);
 
       if (!row) {
+        executionStatus.set(ip, false);
         return res.status(400).json({ error: 'Requisição inválido' });
       }
 

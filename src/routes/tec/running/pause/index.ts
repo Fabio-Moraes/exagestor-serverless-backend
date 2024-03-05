@@ -87,16 +87,11 @@ router.post('/running/pause', async (req: Request, res: Response) => {
         { ...updateStateModificationService },
         { ...createStateModificationHistoryRecord }
       ]);
-      
-      executionStatus.set(ip, false);
-      await Promise.all([
-        executeWebsocket({ token, employee_id: row.employee_id }),
-        res.json({ success: true })
-      ]);
+
+      await executeWebsocket({ token, employee_id: row.employee_id }),
+      res.json({ success: true })
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -104,6 +99,8 @@ router.post('/running/pause', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

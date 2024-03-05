@@ -73,11 +73,11 @@ router.post('/running/start', async (req: Request, res: Response) => {
       }
 
       const { user } = decoded as Decoded;
-      
+
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
       const [row]: ServiceData[] = await executeQuery(selectSql, [user.id, protocol, 'paused']);
 
-      if (!row) { return res.status(400).json({ error: 'Requisição inválido' })}
+      if (!row) { return res.status(400).json({ error: 'Requisição inválido' }) }
 
       const newStatus = 'active';
       const updateStateModificationService = await update_state_modification({ row, newStatus })
@@ -88,15 +88,10 @@ router.post('/running/start', async (req: Request, res: Response) => {
         { ...createStateModificationHistoryRecord }
       ]);
 
-      executionStatus.set(ip, false);  
-      await Promise.all([
-        executeWebsocket({ token, employee_id: row.employee_id }),
-        res.json({ success: true })
-      ]);
+      await executeWebsocket({ token, employee_id: row.employee_id }),
+      res.json({ success: true })
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -104,6 +99,8 @@ router.post('/running/start', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

@@ -72,32 +72,26 @@ router.post('/running/start', async (req: Request, res: Response) => {
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
       const [row]: ServiceData[] = await executeQuery(selectSql, [employeeId, protocol]);
 
-      const executeTransactionArray = [];     
+      const executeTransactionArray = [];
       const newStatus = 'active';
 
       const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...createStateModificationHistoryRecord });
-      
+
       const updateStateModificationService = await update_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...updateStateModificationService });
-      
+
       if (row.status === 'analysis') {
         const incrementStockItemQuantityEmployee = await increment_item(row.list_material)
         executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
       }
 
       await executeTransaction(executeTransactionArray);
+      
       await executeWebsocket({ token, employee_id: row.employee_id });
-
-      executionStatus.set(ip, false);
-      await Promise.all([
-        executeWebsocket({ token, employee_id: row.employee_id }),
-        res.json({ success: true })
-      ]);
+      res.json({ success: true })
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -105,6 +99,8 @@ router.post('/running/start', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

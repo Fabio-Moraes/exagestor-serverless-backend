@@ -89,8 +89,11 @@ router.post('/running/start', async (req: Request, res: Response) => {
       await executeTransaction(executeTransactionArray);
       await executeWebsocket({ token, employee_id: row.employee_id });
 
-      res.json({ success: true });
       executionStatus.set(ip, false);
+      await Promise.all([
+        executeWebsocket({ token, employee_id: row.employee_id }),
+        res.json({ success: true })
+      ]);
     });
   } catch (error) {
     executionStatus.set(ip, false);

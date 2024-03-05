@@ -44,14 +44,11 @@ router.post('/stock/select-employee', async (req: Request, res: Response) => {
         }
 
         const sql = `SELECT id, role, name, identification, created_at FROM tbl_user_accounts WHERE role = ? ORDER BY created_at DESC`;
+
         const rows = await executeQuery(sql, ['tec']);
-    
         res.json(rows);
-        executionStatus.set(ip, false);
     });
-  } catch (error) {
-    executionStatus.set(ip, false);
-    
+  } catch (error) {    
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -59,6 +56,8 @@ router.post('/stock/select-employee', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

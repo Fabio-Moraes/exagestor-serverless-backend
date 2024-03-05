@@ -150,14 +150,10 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
         { ...queryMaterialsStockTransferLog }
       ]);
-
       
       res.json({ status: 'success' });
-      executionStatus.set(ip, false);
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -165,6 +161,8 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

@@ -3,13 +3,14 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery, executeTransaction } from '../../../../config/database';
-import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 
 import { update_state_modification } from '../../../../models/operations';
 import { insert_state_modification } from '../../../../models/operation_logs';
 
 import { z, ZodError } from 'zod';
 import { increment_item } from '../../../../models/stock_employee';
+import { websocket } from '../../../../config/websocket';
+import { Socket } from 'socket.io-client';
 
 const router = express.Router();
 
@@ -87,8 +88,9 @@ router.post('/running/start', async (req: Request, res: Response) => {
       }
 
       await executeTransaction(executeTransactionArray);
-      
-      await executeWebsocket({ token, employee_id: row.employee_id });
+
+      const socket = await websocket(token) as Socket;
+      socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true })
     });
   } catch (error) {

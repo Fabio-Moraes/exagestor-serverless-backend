@@ -4,10 +4,10 @@ import { JWT_SECRET_KEY } from '../../../../../constants';
 import { decrement_item } from '../../../../../models/stock_employee';
 import { executeQuery, executeTransaction } from '../../../../../config/database';
 
-import { executeWebsocket } from '../../../../../controllers/websocket/running_update';
-
 import { z, ZodError } from 'zod';
 import { insert_state_modification } from '../../../../../models/operation_logs';
+import { Socket } from 'socket.io-client';
+import { websocket } from '../../../../../config/websocket';
 
 const router = express.Router();
 
@@ -83,15 +83,11 @@ router.post('/concluded', async (req: Request, res: Response) => {
       }
 
       await executeTransaction(executeTransactionArray);
-
+      const socket = await websocket(token) as Socket;
+      socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true });
-      executionStatus.set(ip, false);
-
-      await executeWebsocket({ token, employee_id: row.employee_id, });
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -99,6 +95,8 @@ router.post('/concluded', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

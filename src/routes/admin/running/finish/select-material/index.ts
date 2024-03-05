@@ -47,11 +47,8 @@ router.post('/running/finish/select-material', async (req: Request, res: Respons
         const rows = await executeQuery(sql, [employeeId, protocol, status]);
         
         res.json(rows);
-        executionStatus.set(ip, false);
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -59,6 +56,8 @@ router.post('/running/finish/select-material', async (req: Request, res: Respons
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

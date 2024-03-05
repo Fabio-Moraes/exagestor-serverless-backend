@@ -44,14 +44,11 @@ router.post('/running/finish/select-service', async (req: Request, res: Response
 
       const status = 'finished';
       const sql = `SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`; 
-      const rows = await executeQuery(sql, [employeeId, protocol, status]);
 
+      const rows = await executeQuery(sql, [employeeId, protocol, status]);
       res.json(rows);
-      executionStatus.set(ip, false);
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -59,6 +56,8 @@ router.post('/running/finish/select-service', async (req: Request, res: Response
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

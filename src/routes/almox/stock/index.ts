@@ -46,11 +46,8 @@ router.post('/stock', async (req: Request, res: Response) => {
       const rows = await executeQuery(sql);
 
       res.json(rows);
-      executionStatus.set(ip, false);
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -58,6 +55,8 @@ router.post('/stock', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

@@ -5,13 +5,14 @@ import type { Decoded } from '../../../../types/jwt'
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { executeQuery, executeTransaction } from '../../../../config/database';
 
-import { executeWebsocket } from '../../../../controllers/websocket/running_update';
-
 import { z, ZodError } from 'zod';
 
 import dotenv from 'dotenv';
 import { update_state_modification } from '../../../../models/operations';
 import { insert_state_modification } from '../../../../models/operation_logs';
+
+import { websocket } from '../../../../config/websocket';
+import { Socket } from 'socket.io-client';
 
 dotenv.config();
 
@@ -88,7 +89,8 @@ router.post('/running/pause', async (req: Request, res: Response) => {
         { ...createStateModificationHistoryRecord }
       ]);
 
-      await executeWebsocket({ token, employee_id: row.employee_id }),
+      const socket = await websocket(token) as Socket;
+      socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true })
     });
   } catch (error) {

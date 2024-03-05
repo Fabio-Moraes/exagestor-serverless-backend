@@ -92,14 +92,10 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const sqlInsert = `INSERT INTO tbl_user_accounts ( name, role, team, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
 
-      await executeQuery(sqlInsert, values);
-      
+      await executeQuery(sqlInsert, values);      
       res.json({ status: 'success' });
-      executionStatus.set(ip, false);
     });
   } catch (error) {
-    executionStatus.set(ip, false);
-
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
@@ -107,6 +103,8 @@ router.post('/register', async (req: Request, res: Response) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error.' });
     }
+  } finally {
+    executionStatus.set(ip, false);
   }
 });
 

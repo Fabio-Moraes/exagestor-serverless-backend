@@ -2,10 +2,12 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { update_state_modification } from '../../../../models/operations'
 import { insert_state_modification } from '../../../../models/operation_logs'
-import { executeWebsocket } from '../../../../controllers/websocket/running_update';
 import { executeQuery, executeTransaction } from '../../../../config/database';
 import { JWT_SECRET_KEY } from '../../../../constants';
 import { z, ZodError } from 'zod';
+
+import { websocket } from '../../../../config/websocket';
+import { Socket } from 'socket.io-client';
 
 interface ServiceData {
   id: number;
@@ -80,8 +82,9 @@ router.post('/running/pause', async (req: Request, res: Response) => {
         { ...updateStateModificationService },
         { ...createStateModificationHistoryRecord }
       ]);
-
-      await executeWebsocket({ token, employee_id: row.employee_id });
+      
+      const socket = await websocket(token) as Socket; 
+      socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true })
     });
   } catch (error) {

@@ -10,6 +10,8 @@ import { z, ZodError } from 'zod';
 import { websocket } from '../../../../config/websocket';
 import { Socket } from 'socket.io-client';
 
+
+
 const router = express.Router();
 
 const paramsSchema = z.object({
@@ -71,7 +73,7 @@ router.post('/manage/new', async (req: Request, res: Response) => {
           return res.status(403).json({ error: 'Token inválido' });
         }
       }
-
+      
       const createdAt = getCurrentDateTime();
       const protocol = createProtocol(17);
       const status = 'active';

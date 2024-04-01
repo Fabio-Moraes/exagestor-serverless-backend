@@ -5,7 +5,9 @@
   "private": true,
   "main": "index.js",
   "scripts": {
+    "_dev": "CLIMEM=1357 tsx watch -r climem src/server.ts",
     "dev": "tsx watch src/server.ts",
+    "climem": "npx climem 1357",
     "test": "vitest"
   },
   "keywords": [],
@@ -17,6 +19,7 @@
     "@types/express": "^4.17.16",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^18.15.11",
+    "climem": "^2.0.0",
     "dotenv": "^16.3.1",
     "tsx": "^3.12.2",
     "typescript": "^4.9.4",

@@ -39,7 +39,7 @@ router.post('/signin', async (req: Request, res: Response) => {
     if (isPasswordValid) {
       console.log('Login bem-sucedido. Token:');
       if (user.status === 'inactive') {
-        return res.sendStatus(403); 
+        return res.status(403).send('forbidden'); 
       }
 
       res.json(content);

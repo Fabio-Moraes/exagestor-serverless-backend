@@ -33,7 +33,7 @@ router.post('/manage', async (req: Request, res: Response) => {
     const paramsSchema = z.object({ token: z.string() });
     const { token } = paramsSchema.parse(req.body);
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
         if (error) {
             if (error instanceof TokenExpiredError) {
                 console.log('** verify token expired **')

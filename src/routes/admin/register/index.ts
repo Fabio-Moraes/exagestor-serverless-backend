@@ -76,6 +76,7 @@ router.post('/register', async (req: Request, res: Response) => {
         name,
         accountType.toLowerCase(),
         '1234',
+        'active',
         identification,
         hash,
         createdAt,
@@ -90,7 +91,7 @@ router.post('/register', async (req: Request, res: Response) => {
         return;
       }
 
-      const sqlInsert = `INSERT INTO tbl_user_accounts ( name, role, team, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?)`;
+      const sqlInsert = `INSERT INTO tbl_user_accounts ( name, role, team, status, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ?)`;
 
       await executeQuery(sqlInsert, values);      
       res.json({ status: 'success' });

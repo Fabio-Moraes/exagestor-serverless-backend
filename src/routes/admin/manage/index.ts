@@ -6,6 +6,8 @@ import { executeQuery } from '../../../config/database';
 
 import routesNewService from './new';
 import routerHistoric from './historic';
+import routerUpdatePasswordEmployee from './update_password_employee';
+import routerUpdateStatusEmployee from './update_status_employee';
 
 import { z, ZodError } from 'zod';
 
@@ -46,7 +48,8 @@ router.post('/manage', async (req: Request, res: Response) => {
         SELECT 
           id, 
           role, 
-          name, 
+          name,
+          status, 
           identification, 
           created_at
         FROM tbl_user_accounts 
@@ -70,5 +73,7 @@ router.post('/manage', async (req: Request, res: Response) => {
 
 router.use(routesNewService);
 router.use(routerHistoric);
+router.use(routerUpdatePasswordEmployee);
+router.use(routerUpdateStatusEmployee);
 
 export default router;

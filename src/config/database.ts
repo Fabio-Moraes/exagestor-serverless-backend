@@ -9,9 +9,9 @@ const dbConfig = {
   password: process.env.MYSQL_PASSWORD,
   database: 'exagestor_itroughlaw',
   port: 3306,
-  connectionLimit: 10
-  // ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
-  // && { ssl: { rejectUnauthorized: true } })
+  connectionLimit: 10,
+  ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
+    && { ssl: { rejectUnauthorized: true } })
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);

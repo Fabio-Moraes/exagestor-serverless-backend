@@ -7,7 +7,7 @@ const dbConfig = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
-  database: 'apps',
+  database: 'exagestor_itroughlaw',
   port: 3306,
   connectionLimit: 10,
   ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))

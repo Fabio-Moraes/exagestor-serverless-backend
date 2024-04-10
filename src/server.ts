@@ -45,5 +45,5 @@ app.use((err: Error, req: Request, res: Response) => {
 const PORT = Number(process.env.PORT);
 
 server.listen(PORT, () => {
-  console.log(`Server running at port ${PORT}`);
+  console.log(`Server running at port: ${PORT} | pid: ${process.pid} \n`);
 });

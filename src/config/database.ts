@@ -15,7 +15,7 @@ const dbConfig = {
       //rejectUnauthorized: true,
       //key: fs.readFileSync('./certs/client-key.pem'),
       //cert: fs.readFileSync('./certs/client-cert.pem'),
-      ca: fs.readFileSync('./certs/ca-cert.pem')
+      ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem')
     } })
 };
 

@@ -8,8 +8,8 @@ const dbConfig = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
-  database: 'exagestor_itroughlaw',
-  port: 3307,
+  database: 'defaultdb',
+  port: 19379,
   ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
     && { ssl: { 
       rejectUnauthorized: true,

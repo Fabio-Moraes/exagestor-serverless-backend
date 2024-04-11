@@ -8,15 +8,14 @@ const dbConfig = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
-  database: 'defaultdb',
-  port: 19379,
-  ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
-    && { ssl: { 
-      //rejectUnauthorized: true,
-      //key: fs.readFileSync('./certs/client-key.pem'),
-      //cert: fs.readFileSync('./certs/client-cert.pem'),
-      ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem')
-    } })
+  database: process.env.MYSQL_DATABASE,
+  port: Number(process.env.MYSQL_PORT),
+  connectionLimit: 10,
+  ...(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
+    ssl: {
+      ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem'),
+    },
+  }),
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);

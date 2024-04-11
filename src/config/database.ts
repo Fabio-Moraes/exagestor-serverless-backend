@@ -1,5 +1,6 @@
 import mysql, { Pool, PoolConnection } from 'mysql2/promise';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -11,7 +12,12 @@ const dbConfig = {
   port: 3307,
   connectionLimit: 10,
   ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
-    && { ssl: { rejectUnauthorized: true } })
+    && { ssl: { 
+      rejectUnauthorized: false,
+      ca: fs.readFileSync('/path/to/server-certificates/root.crt').toString(),
+      key: fs.readFileSync('/path/to/client-key/postgresql.key').toString(),
+      cert: fs.readFileSync('/path/to/client-certificates/postgresql.crt').toString(),
+    } })
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);

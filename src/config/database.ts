@@ -12,7 +12,10 @@ const dbConfig = {
   port: 19379,
   ...(JSON.parse(String(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED))
     && { ssl: { 
-      rejectUnauthorized: true,
+      //rejectUnauthorized: true,
+      //key: fs.readFileSync('./certs/client-key.pem'),
+      //cert: fs.readFileSync('./certs/client-cert.pem'),
+      ca: fs.readFileSync('./certs/ca-cert.pem')
     } })
 };
 

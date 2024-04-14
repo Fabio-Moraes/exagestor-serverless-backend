@@ -1,18 +1,21 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import type { Decoded } from '../../../types/jwt'
 
 import { JWT_SECRET_KEY } from '../../../constants';
-import { executeQuery } from '../../../config/database';
-
-import routesDetailsService from './details';
+import { executeQuery } from '../../../config/database'
+import type { Decoded } from '../../../types/jwt'
+import routesDetails from './details';;
 
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
-const paramsSchema = z.object({ token: z.string() });
+
+const paramsSchema = z.object({
+  initial_id: z.number().nullable().optional(),
+  token: z.string(),
+});
 
 router.post('/historic', async (req: Request, res: Response) => {
   const ip = req.ip;
@@ -29,7 +32,7 @@ router.post('/historic', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
-    const { token } = paramsSchema.parse(req.body);
+    const { initial_id, token } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
@@ -42,11 +45,45 @@ router.post('/historic', async (req: Request, res: Response) => {
         }
       }
 
-      const { user } = decoded as Decoded;
-      const sql = `SELECT * FROM tbl_operations_logs WHERE employee_id = ? ORDER BY created_at DESC`;
+      const selectEmployee = async (initial_id?: number | null, employee_id?: number) => {
+        const sqlFirst = `
+          SELECT u1.*, 
+          tec_user.name AS name_tec, 
+          admin_user.name AS name_admin
+          FROM tbl_operations_logs u1
+          JOIN tbl_user_accounts tec_user
+          ON u1.employee_id = tec_user.id 
+          LEFT JOIN tbl_user_accounts admin_user
+          ON u1.admin_id = admin_user.id
+          WHERE u1.id < (SELECT MAX(id) FROM tbl_operations_logs) + 1
+          AND employee_id = ? 
+          ORDER BY id DESC
+          LIMIT 10;
+          `;
 
-      const rows = await executeQuery(sql, [user.id]); 
-      res.json(rows);
+        const sqlLast = `
+          SELECT u1.*, 
+          tec_user.name AS name_tec, 
+          admin_user.name AS name_admin
+          FROM tbl_operations_logs u1
+          JOIN tbl_user_accounts tec_user
+          ON u1.employee_id = tec_user.id 
+          LEFT JOIN tbl_user_accounts admin_user
+          ON u1.admin_id = admin_user.id
+          WHERE u1.id < ?
+          AND employee_id = ? 
+          ORDER BY id DESC
+          LIMIT 10;
+          `;
+
+        if (!initial_id) return await executeQuery(sqlFirst, [employee_id]);
+        return await executeQuery(sqlLast, [initial_id, employee_id]);
+      }
+
+      const { user: admin } = decoded as Decoded;
+      const resultEmployee = await selectEmployee(initial_id, admin.id);
+
+      res.json(resultEmployee);
     });
 
   } catch (error) {
@@ -62,6 +99,6 @@ router.post('/historic', async (req: Request, res: Response) => {
   }
 });
 
-router.use(routesDetailsService);
+router.use(routesDetails);
 
 export default router;

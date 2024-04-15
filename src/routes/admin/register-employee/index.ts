@@ -34,7 +34,7 @@ function getCurrentDateTime(): string {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register-employee', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {

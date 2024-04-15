@@ -25,7 +25,7 @@ interface PropsTypes {
   transferType: string
 }
 
-export async function material_transfer({ insert, employeeId, transferType }: PropsTypes) {
+export async function material_operation({ insert, employeeId, transferType }: PropsTypes) {
   function generatePlaceholders(count: number) {
     let valueQuery = '';
     const placeholders = Array(count).fill('?').join(', ');

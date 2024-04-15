@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
-import { material_transfer } from '../../../models/stock_logs/material_transfer';
+import { material_operation } from '../../../models/stock_logs/material_operation';
 
 import { JWT_SECRET_KEY } from '../../../constants';
 import { executeQuery, executeTransaction } from '../../../config/database';
@@ -37,7 +37,7 @@ function getCurrentDateTime(): string {
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register-material', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -105,18 +105,17 @@ router.post('/register', async (req: Request, res: Response) => {
 
       const { user: employee } = decoded as Decoded;
 
-      const queryMaterialsStockTransferLog = await material_transfer({
+      const queryMaterialsStockOperationLog = await material_operation({
         insert: [obj], employeeId: employee.id, transferType: 'sent'
       })
 
-      const queryMaterialsStockTransfer = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+      const queryMaterialsStockRegister = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
 
       await executeTransaction([
-        { query: queryMaterialsStockTransfer, values: values },
-        { ...queryMaterialsStockTransferLog }
+        { query: queryMaterialsStockRegister, values: values },
+        { ...queryMaterialsStockOperationLog }
       ]);
-
-      await executeQuery(queryMaterialsStockTransfer, values);      
+ 
       res.json({ status: 'success' });
     });
   } catch (error) {

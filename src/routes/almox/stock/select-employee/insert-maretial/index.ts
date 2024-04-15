@@ -4,7 +4,7 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { JWT_SECRET_KEY } from '../../../../../constants';
 import { executeTransaction } from '../../../../../config/database';
 
-import { material_transfer } from '../../../../../models/stock_logs/material_transfer';
+import { material_operation } from '../../../../../models/stock_logs/material_operation';
 
 import { z, ZodError } from 'zod';
 
@@ -100,7 +100,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
       const insertValueMaterialsEmployee: Array<number | string | null> = [];
       insert.forEach(item => {
         insertValueMaterialsEmployee.push(
-          `${item.product_code}-${employee_id}`,
+          `${item.id}-${employee_id}`,
           employee_id,
           item.product_name,
           item.product_code,
@@ -141,7 +141,7 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         created_at = VALUES(created_at);
       `;
 
-      const queryMaterialsStockTransferLog = await material_transfer({
+      const queryMaterialsStockTransferLog = await material_operation({
         insert, employeeId: employee_id, transferType: 'sent'
       })
 

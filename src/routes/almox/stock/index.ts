@@ -18,18 +18,18 @@ router.post('/stock', async (req: Request, res: Response) => {
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
     executionStatus.set(ip, true);
 
-    const paramsSchema = z.object({ token: z.string().min(1) });
-    const { token } = paramsSchema.parse(req.body);
+    const paramsSchema = z.object({ token: z.string(), productAll: z.boolean(), productCode: z.string() });
+    const { token, productAll, productCode } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error) => {
       if (error) {
@@ -42,8 +42,12 @@ router.post('/stock', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = `SELECT * FROM tbl_stock_almox ORDER BY created_at DESC`;
-      const rows = await executeQuery(sql);
+      const sqlproductAll = `SELECT * FROM tbl_stock_almox ORDER BY created_at DESC`;
+      const sqlProductCode = `SELECT * FROM tbl_stock_almox WHERE product_code = ?`;
+
+      const rows = productAll
+        ? await executeQuery(sqlproductAll)
+        : await executeQuery(sqlProductCode, [productCode]);
 
       res.json(rows);
     });

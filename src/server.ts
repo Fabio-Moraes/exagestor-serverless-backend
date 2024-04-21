@@ -15,7 +15,6 @@ const app = express();
 const server = http.createServer(app);
 const frontendOriginBaseURL = process.env.FRONTEND_ORIGIN_BASEURL;
 
-// Middleware
 app.use(cookieParser());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', frontendOriginBaseURL);
@@ -30,13 +29,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// Routes
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
 app.use('/api/auth', auth);
 app.use('/api/almox', almox);
 
-// Error handling middleware
 app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);
   res.status(500).send('Ocorreu um erro interno.');
@@ -47,3 +44,4 @@ const PORT = Number(process.env.PORT);
 server.listen(PORT, () => {
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} \n`);
 });
+

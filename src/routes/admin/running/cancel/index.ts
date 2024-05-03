@@ -27,6 +27,7 @@ interface ServiceData {
   classification: string;
   status: string;
   update_count: number;
+  start_service_at: string;
   created_at: string;
   modification_at: string;
   finished_at: string;

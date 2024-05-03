@@ -9,6 +9,7 @@ interface ServiceData {
   classification: string;
   status: string;
   update_count: number;
+  start_service_at: string;
   created_at: string;
   modification_at: string;
   finished_at: string;
@@ -59,6 +60,7 @@ export async function insert_state_modification(props: TypeProps) {
     row.address,
     newStatus,
     row.update_count + 1,
+    row.start_service_at,
     row.created_at,
     newStatus === 'concluded' ? row.modification_at : createdAt,
     listService,
@@ -78,7 +80,8 @@ export async function insert_state_modification(props: TypeProps) {
     nomenclature, 
     address, 
     status, 
-    update_count, 
+    update_count,
+    start_service_at, 
     created_at, 
     modification_at, 
     list_service, 
@@ -86,7 +89,7 @@ export async function insert_state_modification(props: TypeProps) {
     observation,  
     finished_at
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   
 return { query: queryOperations, values: values };
 }

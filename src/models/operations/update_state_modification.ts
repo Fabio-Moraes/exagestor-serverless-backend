@@ -9,6 +9,7 @@ interface ServiceData {
   classification: string;
   status: string;
   update_count: number;
+  start_service_at: string;
   created_at: string;
   modification_at: string;
   finished_at: string;
@@ -48,6 +49,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
     row.address,
     newStatus,
     row.update_count,
+    row.start_service_at,
     row.created_at,
     createdAt
   ];
@@ -64,6 +66,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
           address, 
           status, 
           update_count, 
+          start_service_at,
           created_at, 
           modification_at, 
           list_service, 
@@ -71,7 +74,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
           observation,  
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL) 
       ON DUPLICATE KEY UPDATE 
           employee_id = VALUES(employee_id),
           admin_id = VALUES(admin_id),
@@ -82,6 +85,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
           address = VALUES(address),
           status = VALUES(status),
           update_count = update_count + 1,
+          start_service_at = VALUES(start_service_at),
           modification_at = VALUES(modification_at),
           list_service = VALUES(list_service),
           list_material = VALUES(list_material),

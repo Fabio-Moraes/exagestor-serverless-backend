@@ -51,12 +51,12 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
         const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
-          admin_user.name AS name_admin
+          creator_leader_user.name AS name_creator_leader
           FROM tbl_operations_logs u1
           JOIN tbl_user_accounts tec_user
           ON u1.employee_id = tec_user.id 
-          LEFT JOIN tbl_user_accounts admin_user
-          ON u1.admin_id = admin_user.id
+          LEFT JOIN tbl_user_accounts creator_leader_user
+          ON u1.creator_leader_id = creator_leader_user.id
           WHERE u1.id < (SELECT MAX(id) FROM tbl_operations_logs) + 1
           AND employee_id = ? 
           ORDER BY id DESC
@@ -66,12 +66,12 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
         const sqlLast = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
-          admin_user.name AS name_admin
+          creator_leader_user.name AS name_creator_leader
           FROM tbl_operations_logs u1
           JOIN tbl_user_accounts tec_user
           ON u1.employee_id = tec_user.id 
-          LEFT JOIN tbl_user_accounts admin_user
-          ON u1.admin_id = admin_user.id
+          LEFT JOIN tbl_user_accounts creator_leader_user
+          ON u1.creator_leader_id = creator_leader_user.id
           WHERE u1.id < ?
           AND employee_id = ? 
           ORDER BY id DESC
@@ -86,12 +86,12 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
         const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
-        admin_user.name AS name_admin
+        creator_leader_user.name AS name_creator_leader
         FROM tbl_operations_logs u1
         JOIN tbl_user_accounts tec_user
         ON u1.employee_id = tec_user.id 
-        LEFT JOIN tbl_user_accounts admin_user
-        ON u1.admin_id = admin_user.id
+        LEFT JOIN tbl_user_accounts creator_leader_user
+        ON u1.creator_leader_id = creator_leader_user.id
         WHERE u1.id < (SELECT MAX(id) FROM tbl_operations_logs) + 1
         ORDER BY id DESC
         LIMIT 10;
@@ -100,12 +100,12 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
         const sqlLast = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
-        admin_user.name AS name_admin
+        creator_leader_user.name AS name_creator_leader
         FROM tbl_operations_logs u1
         JOIN tbl_user_accounts tec_user
         ON u1.employee_id = tec_user.id 
-        LEFT JOIN tbl_user_accounts admin_user
-        ON u1.admin_id = admin_user.id
+        LEFT JOIN tbl_user_accounts creator_leader_user
+        ON u1.creator_leader_id = creator_leader_user.id
         WHERE u1.id < ?
         ORDER BY id DESC
         LIMIT 10;

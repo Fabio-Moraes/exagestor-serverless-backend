@@ -114,7 +114,7 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
-          admin_id, 
+          creator_leader_id, 
           client_name, 
           city, 
           classification, 
@@ -136,7 +136,7 @@ router.post('/manage/new', async (req: Request, res: Response) => {
       INSERT INTO tbl_operations_logs (
           protocol, 
           employee_id, 
-          admin_id, 
+          creator_leader_id, 
           client_name, 
           city, 
           classification, 

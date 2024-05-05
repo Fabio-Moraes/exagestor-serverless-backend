@@ -2,7 +2,7 @@ interface ServiceData {
   id: number;
   client_name: string;
   employee_id: string;
-  admin_id: string;
+  creator_leader_id: string;
   city: string;
   address: string;
   nomenclature: string;
@@ -41,7 +41,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
   const values = [
     row.protocol,
     row.employee_id,
-    row.admin_id,
+    row.creator_leader_id,
     row.client_name,
     row.city,
     row.classification,
@@ -58,7 +58,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
-          admin_id,
+          creator_leader_id,
           client_name, 
           city, 
           classification, 
@@ -77,7 +77,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL) 
       ON DUPLICATE KEY UPDATE 
           employee_id = VALUES(employee_id),
-          admin_id = VALUES(admin_id),
+          creator_leader_id = VALUES(creator_leader_id),
           client_name = VALUES(client_name),
           city = VALUES(city),
           classification = VALUES(classification),

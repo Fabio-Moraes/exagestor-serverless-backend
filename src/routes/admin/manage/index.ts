@@ -53,9 +53,9 @@ router.post('/manage', async (req: Request, res: Response) => {
           identification, 
           created_at
         FROM tbl_user_accounts 
-        WHERE role <> ? AND role <> ? ORDER BY created_at DESC`;
+        WHERE role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
         
-        const rows = await executeQuery(sql, ['admin', 'almox']);        
+        const rows = await executeQuery(sql, ['admin', 'almox', 'cop']);                
         res.json(rows);
     });
   } catch (error) {

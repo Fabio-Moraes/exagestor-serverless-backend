@@ -2,7 +2,7 @@ interface ServiceData {
   id: number;
   client_name: string;
   employee_id: string;
-  admin_id?: string;
+  creator_leader_id?: string;
   city: string;
   address: string;
   nomenclature: string;
@@ -52,7 +52,7 @@ export async function insert_state_modification(props: TypeProps) {
   const values = [
     row.protocol,
     row.employee_id,
-    row.admin_id,
+    row.creator_leader_id,
     row.client_name,
     row.city,
     row.classification,
@@ -73,7 +73,7 @@ export async function insert_state_modification(props: TypeProps) {
   INSERT INTO tbl_operations_logs (
     protocol, 
     employee_id, 
-    admin_id,
+    creator_leader_id,
     client_name, 
     city, 
     classification, 

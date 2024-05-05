@@ -6,6 +6,7 @@ import http from 'http';
 
 import tec from './routes/tec';
 import admin from './routes/admin';
+import cop from './routes/cop';
 import auth from './routes/auth';
 import almox from './routes/almox';
 
@@ -31,6 +32,7 @@ app.use(express.json());
 
 app.use('/api/tec', tec);
 app.use('/api/admin', admin);
+app.use('/api/cop', cop);
 app.use('/api/auth', auth);
 app.use('/api/almox', almox);
 

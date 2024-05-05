@@ -24,7 +24,7 @@ interface ServiceData {
   id: number;
   client_name: string;
   employee_id: string;
-  admin_id: string;
+  creator_leader_id: string;
   city: string;
   address: string;
   nomenclature: string;

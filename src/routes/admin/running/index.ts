@@ -46,10 +46,13 @@ router.post('/running', async (req: Request, res: Response) => {
       }
 
       const sql = `
-      SELECT u1.*, tec_user.name AS name_tec, admin_user.name AS name_admin
+      SELECT u1.*, 
+      tec_user.name AS name_tec, 
+      creator_leader_user.name AS name_creator_leader, 
+      creator_leader_user.role AS role_creator_leader
       FROM tbl_operations u1
       JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
-      LEFT JOIN tbl_user_accounts admin_user ON u1.admin_id = admin_user.id
+      LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       ORDER BY u1.created_at DESC;
     `;
 

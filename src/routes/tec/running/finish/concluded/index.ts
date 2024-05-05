@@ -98,7 +98,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
-          admin_id,
+          creator_leader_id,
           client_name, 
           city, 
           classification, 
@@ -117,7 +117,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       ON DUPLICATE KEY UPDATE 
           protocol = VALUES(protocol),
           employee_id = VALUES(employee_id),
-          admin_id = VALUES(admin_id),
+          creator_leader_id = VALUES(creator_leader_id),
           client_name = VALUES(client_name),
           city = VALUES(city),
           classification = VALUES(classification),

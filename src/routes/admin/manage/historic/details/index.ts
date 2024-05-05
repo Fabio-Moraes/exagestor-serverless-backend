@@ -43,7 +43,14 @@ router.post('/manage/historic/details', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+      const sql = `
+      SELECT u1.*, tec_user.name AS name_tec, creator_leader_user.name AS name_creator_leader, creator_leader_user.role AS role_creator_leader
+      FROM tbl_operations_logs u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
+      WHERE employee_id = ? AND protocol = ? AND update_count = ?
+      ORDER BY u1.created_at DESC;
+      `;
 
       const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
       res.json(rows);

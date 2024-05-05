@@ -66,7 +66,7 @@ export async function insert_state_modification(props: TypeProps) {
     listService,
     listMaterial,
     observation,
-    createdAt
+    newStatus === 'concluded' ? createdAt : null,
   ];
 
   const queryOperations = `

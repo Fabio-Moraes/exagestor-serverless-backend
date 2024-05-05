@@ -10,19 +10,8 @@ import { z, ZodError } from 'zod';
 import { websocket } from '../../../config/websocket';
 import { Socket } from 'socket.io-client';
 
-const router = express.Router();
-
-const paramsSchema = z.object({
-  clientName: z.string().min(1).regex(/^[^0-9]*$/),
-  city: z.string().min(1).regex(/^[^0-9]*$/),
-  classification: z.string().min(1).max(2),
-  nomenclature: z.string().min(1),
-  address: z.string().min(1),
-  token: z.string()
-});
-
-function getCurrentDateTime(): string {
-  const now = new Date();
+function getCurrentDateTime(date?: string): string {
+  const now = date ? new Date(date) : new Date();
   const year = now.getFullYear();
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const day = now.getDate().toString().padStart(2, '0');
@@ -31,6 +20,26 @@ function getCurrentDateTime(): string {
   const seconds = now.getSeconds().toString().padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
+
+const router = express.Router();
+
+const paramsSchema = z.object({
+  clientName: z.string().min(1).regex(/^[^0-9]*$/),
+  city: z.string().min(1).regex(/^[^0-9]*$/),
+  classification: z.string().min(1).max(2),
+  nomenclature: z.string().min(1),
+  address: z.string().min(1),
+  startServiceAt: z.string().refine((dateString) => {
+    const currentDate = new Date();
+    const inputDate = new Date(dateString);
+    currentDate.setHours(0, 0, 0, 0);
+    inputDate.setHours(0, 0, 0, 0);
+    return inputDate >= currentDate;
+  }, {
+    message: 'A data de início do serviço não pode ser anterior à data atual',
+  }),
+  token: z.string()
+});
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -56,6 +65,7 @@ router.post('/new', async (req: Request, res: Response) => {
       classification,
       nomenclature,
       address,
+      startServiceAt,
       token
     } = paramsSchema.parse(req.body);
   
@@ -71,6 +81,7 @@ router.post('/new', async (req: Request, res: Response) => {
       }
 
       const createdAt = getCurrentDateTime();
+      const getStartServiceAt = getCurrentDateTime(startServiceAt);
       const protocol = createProtocol(17);
       const status = 'active';
       const updateCount = 0
@@ -88,6 +99,7 @@ router.post('/new', async (req: Request, res: Response) => {
         address,
         status,
         updateCount,
+        getStartServiceAt,
         null,
         null,
         null,
@@ -108,6 +120,7 @@ router.post('/new', async (req: Request, res: Response) => {
           address, 
           status, 
           update_count, 
+          start_service_at,
           list_service, 
           list_material, 
           observation, 
@@ -115,7 +128,7 @@ router.post('/new', async (req: Request, res: Response) => {
           modification_at, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const queryOperationsHistory =  `
       INSERT INTO tbl_operations_logs (
@@ -128,7 +141,8 @@ router.post('/new', async (req: Request, res: Response) => {
           nomenclature, 
           address, 
           status, 
-          update_count, 
+          update_count,
+          start_service_at, 
           list_service, 
           list_material, 
           observation, 
@@ -136,7 +150,7 @@ router.post('/new', async (req: Request, res: Response) => {
           modification_at, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       await executeTransaction([
         { query: queryOperations, values: values },

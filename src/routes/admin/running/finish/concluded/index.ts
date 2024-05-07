@@ -17,7 +17,7 @@ const paramsSchema = z.object({
   protocol: z.string().max(17),
   observation: z.string().max(500).optional(),
   listService: z.string(),
-  listMaterial: z.string()
+  listMaterial: z.string().optional()
 });
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -78,7 +78,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
       executeTransactionArray.push(createStateModificationHistoryRecord);
 
-      if (row.status !== 'analysis') {
+      if (row.status !== 'analysis' && listMaterial) {
         const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
         executeTransactionArray.push(decrementStockItemQuantityEmployee);
       }

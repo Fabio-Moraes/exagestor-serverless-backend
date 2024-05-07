@@ -22,7 +22,7 @@ interface ServiceData {
 interface TypeProps {
   row: ServiceData,
   newStatus: 'paused' | 'active' | 'canceled' | 'analysis' | 'concluded';
-  listMaterial?: string;
+  listMaterial?: string | null;
   listService?: string;
   observation?: string;
 }

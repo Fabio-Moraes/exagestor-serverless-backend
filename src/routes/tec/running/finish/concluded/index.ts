@@ -19,7 +19,7 @@ const paramsSchema = z.object({
   protocol: z.string().max(17),
   observation: z.string().max(500).optional(),
   listService: z.string(),
-  listMaterial: z.string()
+  listMaterial: z.string().optional()
 });
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -60,7 +60,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       }
 
       const { user } = decoded as Decoded
-      
+
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
       const [row] = await executeQuery(selectSql, [user.id, protocol, 'active']);
 
@@ -77,15 +77,20 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
         observation
       } as const;
 
+      const executeTransactionArray = []
+      
       const updateStateModificationService = await update_state_modification(modification)
-      const createStateModificationHistoryRecord = await insert_state_modification(modification)
-      const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
+      executeTransactionArray.push(updateStateModificationService);
 
-      await executeTransaction([
-        { ...updateStateModificationService },
-        { ...createStateModificationHistoryRecord },
-        { ...decrementStockItemQuantityEmployee }
-      ]);
+      const createStateModificationHistoryRecord = await insert_state_modification(modification)
+      executeTransactionArray.push(createStateModificationHistoryRecord);
+
+      if(listMaterial) {
+        const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
+        executeTransactionArray.push(decrementStockItemQuantityEmployee);
+      }
+
+      await executeTransaction(executeTransactionArray);
 
       const socket = await websocket(token) as Socket
       socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));

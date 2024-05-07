@@ -20,8 +20,11 @@ interface ServiceData {
 }
 
 interface TypeProps {
-  row: ServiceData,
-  newStatus: 'paused' | 'active'
+  row: ServiceData;
+  newStatus: 'paused' | 'active' | 'analysis';
+  listMaterial?: string;
+  listService?: string;
+  observation?: string;
 }
 
 function getCurrentDateTime(): string {
@@ -35,8 +38,16 @@ function getCurrentDateTime(): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-export async function update_state_modification({ row, newStatus }: TypeProps) {
+export async function update_state_modification(props: TypeProps) {
   const createdAt = getCurrentDateTime();
+
+  const {
+    row,
+    newStatus,
+    listService,
+    listMaterial,
+    observation 
+  } = props;
 
   const values = [
     row.protocol,
@@ -51,7 +62,10 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
     row.update_count,
     row.start_service_at,
     row.created_at,
-    createdAt
+    createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null
   ];
 
   const queryOperations = `
@@ -74,7 +88,7 @@ export async function update_state_modification({ row, newStatus }: TypeProps) {
           observation,  
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL) 
       ON DUPLICATE KEY UPDATE 
           employee_id = VALUES(employee_id),
           creator_leader_id = VALUES(creator_leader_id),

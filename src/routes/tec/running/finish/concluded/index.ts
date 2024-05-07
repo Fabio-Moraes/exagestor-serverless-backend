@@ -8,6 +8,7 @@ import { executeQuery, executeTransaction } from '../../../../../config/database
 import { z, ZodError } from 'zod';
 import { decrement_item } from '../../../../../models/stock_employee';
 import { insert_state_modification } from '../../../../../models/operation_logs';
+import { update_state_modification } from '../../../../../models/operations';
 import { Socket } from 'socket.io-client';
 import { websocket } from '../../../../../config/websocket';
 
@@ -20,17 +21,6 @@ const paramsSchema = z.object({
   listService: z.string(),
   listMaterial: z.string()
 });
-
-function getCurrentDateTime(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -50,7 +40,13 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
   try {
     executionStatus.set(ip, true);
 
-    const { token, protocol, observation, listMaterial, listService } = paramsSchema.parse(req.body);
+    const { 
+      token,
+      protocol, 
+      observation, 
+      listMaterial, 
+      listService 
+    } = paramsSchema.parse(req.body);
 
     jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
       if (error) {
@@ -64,6 +60,7 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
       }
 
       const { user } = decoded as Decoded
+      
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
       const [row] = await executeQuery(selectSql, [user.id, protocol, 'active']);
 
@@ -72,80 +69,27 @@ router.post('/running/finish/concluded', async (req: Request, res: Response) => 
         return res.status(400).json({ error: 'Invalid request' });
       }
 
-      const newStatus = 'analysis';
-
-      const createdAt = getCurrentDateTime();
-      const valuesInsertOperations = [
-        row.protocol,
-        row.employee_id,
-        null,
-        row.client_name,
-        row.city,
-        row.classification,
-        row.nomenclature,
-        row.address,
-        newStatus,
-        row.update_count,
-        row.created_at,
-        row.modification_at,
-        listService,
+      const modification = {
+        row,
+        newStatus: 'analysis',
         listMaterial,
-        observation,
-        createdAt
-      ];
+        listService,
+        observation
+      } as const;
 
-      const queryOperations = `
-      INSERT INTO tbl_operations (
-          protocol, 
-          employee_id, 
-          creator_leader_id,
-          client_name, 
-          city, 
-          classification, 
-          nomenclature, 
-          address, 
-          status, 
-          update_count, 
-          created_at, 
-          modification_at, 
-          list_service, 
-          list_material,
-          observation,  
-          finished_at
-      ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-      ON DUPLICATE KEY UPDATE 
-          protocol = VALUES(protocol),
-          employee_id = VALUES(employee_id),
-          creator_leader_id = VALUES(creator_leader_id),
-          client_name = VALUES(client_name),
-          city = VALUES(city),
-          classification = VALUES(classification),
-          nomenclature = VALUES(nomenclature),
-          address = VALUES(address),
-          status = VALUES(status),
-          update_count = update_count + 1,
-          modification_at = VALUES(modification_at),
-          list_service = VALUES(list_service),
-          list_material = VALUES(list_material),
-          observation = VALUES(observation),
-          finished_at = VALUES(finished_at);`;
-
-      const createStateModificationHistoryRecord = await insert_state_modification({
-        row, newStatus, listMaterial, listService, observation
-      })
-
+      const updateStateModificationService = await update_state_modification(modification)
+      const createStateModificationHistoryRecord = await insert_state_modification(modification)
       const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
 
       await executeTransaction([
-        { query: queryOperations, values: valuesInsertOperations },
+        { ...updateStateModificationService },
         { ...createStateModificationHistoryRecord },
         { ...decrementStockItemQuantityEmployee }
       ]);
 
       const socket = await websocket(token) as Socket
       socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
-      res.json({ success: true });      
+      res.json({ success: true });
     });
   } catch (error) {
     if (error instanceof ZodError) {

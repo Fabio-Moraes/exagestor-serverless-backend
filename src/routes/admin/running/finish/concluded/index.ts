@@ -66,8 +66,9 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
       const executeTransactionArray = []
 
-      const deleteValues = [row.employee_id, row.protocol];
       const queryOperations = 'DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?'
+      const deleteValues = [row.employee_id, row.protocol];
+
       executeTransactionArray.push({ query: queryOperations, values: deleteValues });
 
       const newStatus = 'concluded';

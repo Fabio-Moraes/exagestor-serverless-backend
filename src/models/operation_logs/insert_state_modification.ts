@@ -63,9 +63,9 @@ export async function insert_state_modification(props: TypeProps) {
     row.start_service_at,
     row.created_at,
     newStatus === 'concluded' ? row.modification_at : createdAt,
-    listService,
-    listMaterial,
-    observation,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null,
     newStatus === 'concluded' ? createdAt : null,
   ];
 

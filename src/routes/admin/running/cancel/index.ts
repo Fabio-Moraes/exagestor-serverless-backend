@@ -88,7 +88,7 @@ router.post('/running/cancel', async (req: Request, res: Response) => {
       const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus })
       executeTransactionArray.push({ ...createStateModificationHistoryRecord });
 
-      if (row.status === 'analysis') {
+      if (row.status === 'analysis' && row.list_material) {
         const incrementStockItemQuantityEmployee = await increment_item(row.list_material)
         executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
       }

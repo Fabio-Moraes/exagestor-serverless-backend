@@ -43,7 +43,7 @@ router.post('/manage/historic/details', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = `
+      const sql1 = `
       SELECT u1.*, tec_user.name AS name_tec, creator_leader_user.name AS name_creator_leader, creator_leader_user.role AS role_creator_leader
       FROM tbl_operations_logs u1
       JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
@@ -51,9 +51,12 @@ router.post('/manage/historic/details', async (req: Request, res: Response) => {
       WHERE employee_id = ? AND protocol = ? AND update_count = ?
       ORDER BY u1.created_at DESC;
       `;
+      
+      const sql2 = `SELECT * FROM tbl_service_catalog`; 
 
-      const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
-      res.json(rows);
+      const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
+      const serviceList = await executeQuery(sql2);
+      res.json({currentOperation, serviceList});
     });
   } catch (error) {
     if (error instanceof ZodError) {

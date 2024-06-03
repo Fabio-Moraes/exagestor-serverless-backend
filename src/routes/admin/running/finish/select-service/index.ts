@@ -43,10 +43,13 @@ router.post('/running/finish/select-service', async (req: Request, res: Response
       }
 
       const status = 'finished';
-      const sql = `SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`; 
+      const sql1 = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?'; 
+      const sql2 = 'SELECT * FROM tbl_service_catalog'; 
 
-      const rows = await executeQuery(sql, [employeeId, protocol, status]);
-      res.json(rows);
+      const currentOperation = await executeQuery(sql1, [employeeId, protocol, status]);
+      const serviceList = await executeQuery(sql2);
+
+      res.json({currentOperation, serviceList});
     });
   } catch (error) {
     if (error instanceof ZodError) {

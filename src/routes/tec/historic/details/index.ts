@@ -43,10 +43,14 @@ router.post('/historic/details', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+      const sql1 = 'SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?';
+      
+      const sql2 = `SELECT * FROM tbl_service_catalog`; 
 
-      const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
-      res.json(rows);
+      const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
+      const serviceList = await executeQuery(sql2);
+      
+      res.json({currentOperation, serviceList});
     });
   } catch (error) {
     if (error instanceof ZodError) {

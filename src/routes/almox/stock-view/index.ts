@@ -14,17 +14,17 @@ const paramsSchema = z.object({
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/stock-circulation', async (req: Request, res: Response) => {
+router.post('/stock-view', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
     console.error('IP não fornecido');
     return res.status(409).json({ error: 'IP não fornecido' });
-}
+  }
 
   if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-      console.error('Já existe uma execução em andamento para este IP');
-      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
   }
 
   try {
@@ -42,9 +42,13 @@ router.post('/stock-circulation', async (req: Request, res: Response) => {
         }
       }
 
-      const sql = 'SELECT * FROM tbl_stock_employee ORDER BY created_at DESC';
-      const rows = await executeQuery(sql);
-      res.json(rows);
+      const sqlStockEmployee = 'SELECT * FROM tbl_stock_employee ORDER BY created_at DESC';
+      const rowsStockEmployee = await executeQuery(sqlStockEmployee);
+
+      const sqlStockAlmox = 'SELECT * FROM tbl_stock_almox ORDER BY created_at DESC';
+      const rowsStockAlmox = await executeQuery(sqlStockAlmox);
+
+      res.json({ employee: rowsStockEmployee, almox: rowsStockAlmox });
     });
   } catch (error) {
     if (error instanceof ZodError) {

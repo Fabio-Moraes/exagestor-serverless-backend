@@ -42,10 +42,15 @@ router.post('/stock-view', async (req: Request, res: Response) => {
         }
       }
 
-      const sqlStockEmployee = 'SELECT * FROM tbl_stock_employee ORDER BY created_at DESC';
-      const rowsStockEmployee = await executeQuery(sqlStockEmployee);
+      const sqlStockEmployee = `
+      SELECT u1.*, tec_user.name AS name_tec
+      FROM tbl_stock_employee u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      ORDER BY u1.created_at DESC`;
 
       const sqlStockAlmox = 'SELECT * FROM tbl_stock_almox ORDER BY created_at DESC';
+      
+      const rowsStockEmployee = await executeQuery(sqlStockEmployee);
       const rowsStockAlmox = await executeQuery(sqlStockAlmox);
 
       res.json({ employee: rowsStockEmployee, almox: rowsStockAlmox });

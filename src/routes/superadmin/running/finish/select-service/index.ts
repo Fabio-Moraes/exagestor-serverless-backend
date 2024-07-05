@@ -43,10 +43,12 @@ router.post('/running/finish/select-service', async (req: Request, res: Response
       }
 
       const status = 'finished';
+      
       const sql1 = `SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?`; 
-      const sql2 = `SELECT * FROM tbl_service_catalog`; 
+      const sql2 = `SELECT * FROM tbl_service_catalog WHERE status = ?`;  
+
       const currentOperation = await executeQuery(sql1, [employeeId, protocol, status]);
-      const serviceList = await executeQuery(sql2);
+      const serviceList = await executeQuery(sql2, ['ativo']);
 
       res.json({currentOperation, serviceList});
     });

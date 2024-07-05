@@ -9,6 +9,7 @@ import routerHistoric from './historic';
 import routerUpdatePasswordEmployee from './update_password_employee';
 import routerUpdateStatusEmployee from './update_status_employee';
 import routerViewProduction from './view_production';
+import routerServiceEnablerAndDisabler from './service-enabler-and-disabler';
 
 import { z, ZodError } from 'zod';
 
@@ -77,5 +78,6 @@ router.use(routerHistoric);
 router.use(routerViewProduction);
 router.use(routerUpdatePasswordEmployee);
 router.use(routerUpdateStatusEmployee);
+router.use(routerServiceEnablerAndDisabler);
 
 export default router;

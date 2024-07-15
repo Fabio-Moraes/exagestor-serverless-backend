@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { executeQuery } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
+import { getRedis, setRedis } from '../../../config/redis';
 
 const router = express.Router();
 
@@ -25,12 +26,15 @@ router.post('/signin', async (req: Request, res: Response) => {
       return res.status(401).send('Credenciais inválidas');
     } 
 
+    const company = await getRedis('company'); 
+
     const content = {
       user: { 
         id: user.id, 
         name: user.name, 
         accountStatus: user.status, 
-        role: user.role 
+        role: user.role,
+        company: company
       }
     };
 

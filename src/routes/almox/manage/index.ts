@@ -51,9 +51,10 @@ router.post('/manage', async (req: Request, res: Response) => {
           identification, 
           created_at
         FROM tbl_user_accounts 
-        WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
+        WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
         
-        const rows = await executeQuery(sql, ['superadmin', 'admin', 'almox', 'cop']);        
+        const roles = ['superadmin', 'admin', 'almox', 'cop', 'config'];
+        const rows = await executeQuery(sql, roles);        
         res.json(rows);
     });
   } catch (error) {

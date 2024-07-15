@@ -5,8 +5,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/sever.ts",
+    "dev": "tsx watch src/index.ts",
+    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "test": "vitest"
   },
   "keywords": [],

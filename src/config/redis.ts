@@ -8,7 +8,7 @@ if (isNaN(Number(process.env.REDIS_PORT))) {
   throw new Error('Port is not a valid number');
 }
 
-const redisClient = new Redis({
+/* const redisClient = new Redis({
   host: process.env.REDIS_HOST,
   username: process.env.REDIS_USER,
   password: process.env.REDIS_PASSWORD,
@@ -17,6 +17,18 @@ const redisClient = new Redis({
   ...(process.env.REDIS_TLS_REJECT_UNAUTHORIZED === 'true' && {
     tls: { servername: process.env.REDIS_HOST }
   }),
+}
+); 
+*/
+
+const redisClient = new Redis({
+  username: 'default',
+  host: 'caching-exagestor-exagestor.h.aivencloud.com',
+  password: 'AVNS_GQ4UU9Znkc6NkAMKdEj',
+  port: 19380,
+  tls: {
+    servername: 'caching-exagestor-exagestor.h.aivencloud.com'
+  }
 }
 );
 

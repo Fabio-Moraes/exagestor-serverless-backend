@@ -71,8 +71,7 @@ router.post('/running/start', async (req: Request, res: Response) => {
 
     try {
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
-      const [rowQuery] = await executeQuery(selectSql, [employeeId, protocol]);
-      const row = {...rowQuery} as ServiceData;
+      const [row] = await executeQuery(selectSql, [employeeId, protocol]) as ServiceData[];
 
       const executeTransactionArray = [];
       const newStatus = 'active';

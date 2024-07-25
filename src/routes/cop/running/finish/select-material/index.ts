@@ -40,8 +40,7 @@ router.post('/running/finish/select-material', async (req: Request, res: Respons
           return;
         }
 
-    try {
-                
+    try {            
         const status = 'finished';
         const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?';
         const rows = await executeQuery(sql, [employeeId, protocol, status]);

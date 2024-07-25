@@ -54,7 +54,7 @@ router.post('/manage/update_password_employee', async (req: Request, res: Respon
       const { user: admin } = decoded as Decoded;
 
       const sqlSelect = 'SELECT * FROM tbl_user_accounts WHERE id = ?';
-      const rowsAdmin = await executeQuery(sqlSelect, [admin.id]);
+      const rowsAdmin = await executeQuery(sqlSelect, [admin.id]) as Array<{[key: string]: string}> ;
 
       if (!(rowsAdmin.length === 1 && bcrypt.compareSync(yourPassword, rowsAdmin[0]?.password))) {
         return res.status(401).send('Invalid credentials');

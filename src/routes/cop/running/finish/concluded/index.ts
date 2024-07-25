@@ -9,6 +9,28 @@ import { insert_state_modification } from '../../../../../models/operation_logs'
 import { Socket } from 'socket.io-client';
 import { websocket } from '../../../../../config/websocket';
 
+interface ServiceData {
+  id: number;
+  client_name: string;
+  employee_id: string;
+  creator_leader_id: string;
+  city: string;
+  address: string;
+  nomenclature: string;
+  classification: string;
+  status: string;
+  update_count: number;
+  start_service_at: string;
+  created_at: string;
+  modification_at: string;
+  finished_at: string;
+  list_material: string;
+  list_service: string;
+  observation: string;
+  protocol: string;
+}
+
+
 const router = express.Router();
 
 const paramsSchema = z.object({
@@ -51,7 +73,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
 
     try {
       const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
-      const [row] = await executeQuery(sql, [employeeId, protocol]);
+      const [row] = await executeQuery(sql, [employeeId, protocol]) as Array<ServiceData>;
 
       if (!row) {
         console.error('Requisição inválida');

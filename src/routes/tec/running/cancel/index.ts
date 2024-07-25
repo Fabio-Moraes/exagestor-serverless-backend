@@ -11,6 +11,27 @@ import { z, ZodError } from 'zod';
 import { Socket } from 'socket.io-client';
 import { websocket } from '../../../../config/websocket';
 
+type ServiceData = {
+  id: number;
+  client_name: string;
+  employee_id: string;
+  creator_leader_id?: string;
+  city: string;
+  address: string;
+  nomenclature: string;
+  classification: string;
+  status: string;
+  update_count: number;
+  start_service_at: string;
+  created_at: string;
+  modification_at: string;
+  finished_at: string;
+  list_material: string;
+  list_service: string;
+  observation: string;
+  protocol: string;
+}
+
 const router = express.Router();
 const paramsSchema = z.object({
   token: z.string(),
@@ -48,7 +69,7 @@ router.post('/running/cancel', async (req: Request, res: Response) => {
     try {
       const { user } = decoded as Decoded;
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
-      const [row] = await executeQuery(selectSql, [user.id, protocol]);
+      const [row] = await executeQuery(selectSql, [user.id, protocol]) as ServiceData[];
 
       if (!row) { return res.status(400).json({ error: 'Requisição inválido' }); }
 

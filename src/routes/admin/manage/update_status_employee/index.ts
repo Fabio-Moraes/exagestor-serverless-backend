@@ -54,7 +54,7 @@ router.post('/manage/update_status_employee', async (req: Request, res: Response
       const { user: admin } = decoded as Decoded;
       
       const sqlSelect = 'SELECT * FROM tbl_user_accounts WHERE id = ?';
-      const [user] = await executeQuery(sqlSelect, [admin.id]);
+      const [user] = await executeQuery(sqlSelect, [admin.id]) as Array<{[key: string]: string}>;
 
       if (!user) {
         return res.status(401).send('Credenciais inválidas');

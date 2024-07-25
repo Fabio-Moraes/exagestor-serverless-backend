@@ -40,7 +40,7 @@ const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
 router.post('/running/pause', async (req: Request, res: Response) => {
-const ip = req.ip;
+  const ip = req.ip;
 
   if (!ip) {
     console.error('IP não fornecido');
@@ -66,31 +66,30 @@ const ip = req.ip;
         }
 
         try {
-      if (error) {
-        executionStatus.set(ip, false);
-        
-      }
+          if (error) {
+            executionStatus.set(ip, false);
+          }
 
-      const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
-      const [row]: ServiceData[] = await executeQuery(selectSql, [employeeId, protocol, 'active']);
+          const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?';
+          const [row] = await executeQuery(selectSql, [employeeId, protocol, 'active']) as ServiceData[];
+       
+          if (!row) {
+            return res.status(400).json({ error: 'Requisição inválido' });
+          }
 
-      if (!row) {
-        return res.status(400).json({ error: 'Requisição inválido' });
-      }
+          const newStatus = 'paused';
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
 
-      const newStatus = 'paused';
-      const updateStateModificationService = await update_state_modification({ row, newStatus });
-      const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
+          ]);
 
-      await executeTransaction([
-        { ...updateStateModificationService },
-        { ...createStateModificationHistoryRecord }
-      ]);
-      
-      const socket = await websocket(token) as Socket; 
-      socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
-      res.json({ success: true });
-      resolve(true);
+          const socket = await websocket(token) as Socket;
+          socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
+          res.json({ success: true });
+          resolve(true);
         }
         catch (err) {
           reject(err);

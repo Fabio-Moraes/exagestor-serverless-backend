@@ -46,8 +46,18 @@ app.use((err: Error, req: Request, res: Response) => {
 });
 
 const PORT = Number(process.env.PORT);
+const ASCIIART = `%c 
+       ######   ########   ########   ######
+     ######       ########  #####       ######
+  ######           ########  ##            ######
+######               ########                ######
+######                ########               ######
+  ######            ##  ########           ######
+     ######       #####  ########       ######
+       ######   ########   ########   ######`;
 
 server.listen(PORT, () => {
+  console.log(ASCIIART, 'color: #bada55');
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} \n`);
 });
 

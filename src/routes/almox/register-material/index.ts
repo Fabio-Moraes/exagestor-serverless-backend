@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
 import { material_operation } from '../../../models/stock_logs/material_operation';
 
-import { JWT_SECRET_KEY } from '../../../constants';
+import { getAuthenticationHash } from '../../../functions';
 import { executeQuery, executeTransaction } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
@@ -62,18 +62,16 @@ router.post('/register-material', async (req: Request, res: Response) => {
       observation,
       token
     } = paramsSchema.parse(req.body);
-    
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
-        }
-      }
+        const authenticationHash = await getAuthenticationHash();
 
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
+        }
+
+    try {
       const createdAt = getCurrentDateTime();
       const values = [
         productName,
@@ -101,15 +99,14 @@ router.post('/register-material', async (req: Request, res: Response) => {
         product_batch: productBatch,
         quantity_value: quantityValue,
         created_at: createdAt,
-      }
+      };
 
       const { user: employee } = decoded as Decoded;
-
       const queryMaterialsStockOperationLog = await material_operation({
         insert: [obj], employeeId: employee.id, transferType: 'sent'
-      })
+      });
 
-      const queryMaterialsStockRegister = `INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )`;
+      const queryMaterialsStockRegister = 'INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )';
 
       await executeTransaction([
         { query: queryMaterialsStockRegister, values: values },
@@ -117,15 +114,31 @@ router.post('/register-material', async (req: Request, res: Response) => {
       ]);
  
       res.json({ status: 'success' });
+      resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

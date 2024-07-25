@@ -1,4 +1,4 @@
-interface ServiceData {
+type ServiceData = {
   id: number;
   client_name: string;
   employee_id: string;
@@ -19,7 +19,7 @@ interface ServiceData {
   protocol: string;
 }
 
-interface TypeProps {
+type TypeProps = {
   row: ServiceData,
   newStatus: 'paused' | 'active' | 'canceled' | 'analysis' | 'concluded';
   listMaterial?: string | null;

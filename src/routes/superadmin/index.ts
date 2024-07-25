@@ -5,7 +5,6 @@ import routesRunningService from './running';
 import routesRegisterEmployee from './register-employee';
 import routesRegisterService from './register-service';
 
-
 const router = express.Router();
 
 router.use(routesManageService);

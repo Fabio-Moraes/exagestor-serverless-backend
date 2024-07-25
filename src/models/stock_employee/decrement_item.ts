@@ -1,27 +1,39 @@
 import { executeQuery } from '../../config/database';
 
+type MaterialTypes = {
+  id: number;
+  employee_id: number;
+  product_name: string;
+  unit_type: string;
+  product_code: string;
+  product_batch: string | null;
+  quantity_value: number;
+  created_at: string;
+};
+
 export async function decrement_item(materials: string) {
   function generateQueryListMaterial(arr: string[]) {
     const placeholders = arr.map(() => '?').join(', ');
     return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
   }
-  
-  function generatePlaceholders(data: Object[]) {
+
+  function generatePlaceholders(data: MaterialTypes[]) {
     const placeholders = data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     return placeholders;
   }
-  
+
   const requestListMaterial = JSON.parse(materials);
 
   if (!requestListMaterial) {
     throw new Error('Lista de materiais não foi fornecida');
   }
 
+ 
   const listMaterialKeys = Object.keys(requestListMaterial);
   const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys) as MaterialTypes[];
 
-  const resultQueryListMaterial = selectQueryListMaterial.map(items => ({
+  const resultQueryListMaterial = selectQueryListMaterial.map((items: MaterialTypes) => ({
     ...items,
     quantity_value: items.quantity_value - requestListMaterial[items.id]
   }));

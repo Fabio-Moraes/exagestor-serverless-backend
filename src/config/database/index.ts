@@ -15,7 +15,7 @@ const dbConfig = {
     ssl: {
       ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem'),
     },
-  }),
+  })
 };
 
 const dbPool: Pool = mysql.createPool(dbConfig);
@@ -24,12 +24,12 @@ process.on('beforeExit', () => {
   dbPool.end();
 });
 
-export async function executeQuery(query: string, values?: any[]): Promise<any[]> {
+export async function executeQuery<T>(query: string, values?: T): Promise<object[]> {
   let connection: PoolConnection | null = null;
   try {
     connection = await dbPool.getConnection();
     const [results] = await connection.query(query, values);
-    return results as any[];
+    return results as object[];
   } catch (error) {
     if (error) {
       throw new Error(`Erro na consulta: ${error}`);
@@ -42,7 +42,7 @@ export async function executeQuery(query: string, values?: any[]): Promise<any[]
   }
 }
 
-export async function executeTransaction(queries: Array<{ query: string, values?: any[] }>): Promise<void> {
+export async function executeTransaction<T>(queries: Array<{ query: string, values?: T }>): Promise<void> {
   let connection: PoolConnection | null = null;
   try {
     connection = await dbPool.getConnection();

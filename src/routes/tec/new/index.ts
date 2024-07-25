@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import type { Decoded } from '../../../types/jwt'
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+import type { Decoded } from '../../../types/jwt';
 
 import { createProtocol } from '../../../utils/CreateProtocol';
-import { JWT_SECRET_KEY } from '../../../constants';
+import { getAuthenticationHash } from '../../../functions';
 import { executeTransaction } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
@@ -68,23 +68,21 @@ router.post('/new', async (req: Request, res: Response) => {
       startServiceAt,
       token
     } = paramsSchema.parse(req.body);
-  
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
-        }
-      }
+      const authenticationHash = await getAuthenticationHash();
 
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
+        }
+
+    try {
       const createdAt = getCurrentDateTime();
       const getStartServiceAt = getCurrentDateTime(startServiceAt);
       const protocol = createProtocol(17);
       const status = 'active';
-      const updateCount = 0
+      const updateCount = 0;
 
       const { user: employee } = decoded as Decoded;
 
@@ -160,15 +158,31 @@ router.post('/new', async (req: Request, res: Response) => {
       const socket = await websocket(token) as Socket;
       socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: String(employee.id) }));
       res.json({ success: true });       
+      resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

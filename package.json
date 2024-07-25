@@ -5,8 +5,10 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "dev": "node dist/index.js",
+    "dev-local": "tsx watch src/index.ts",
+    "dev-local:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "vercel-build": "tsup src",
     "test": "vitest"
   },
   "keywords": [],
@@ -14,18 +16,26 @@
   "license": "OWNER",
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
+    "@types/cookie": "^0.6.0",
+    "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.16",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "dotenv": "^16.3.1",
-    "tsx": "^3.12.2",
-    "typescript": "^4.9.4",
+    "eslint": "^8.57.0",
+    "eslint-config-love": "^59.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.6.0",
+    "prettier": "^2.4.1",
+    "tsx": "^4.16.2",
+    "typescript": "^4.9.5",
     "vitest": "^0.28.3"
   },
   "dependencies": {
-    "@types/cookie": "^0.6.0",
-    "@types/cookie-parser": "^1.4.6",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cookie": "^0.6.0",
@@ -37,6 +47,11 @@
     "moment": "^2.30.1",
     "mysql2": "^3.6.2",
     "socket.io-client": "^4.7.2",
+    "tsup": "^8.2.3",
     "zod": "^3.21.4"
+  },
+  "resolutions": {
+    "glob": "^9.0.0",
+    "rimraf": "^4.0.0"
   }
 }

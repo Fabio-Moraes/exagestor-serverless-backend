@@ -8,18 +8,18 @@ const runPrimaryProcess = () => {
   console.log(`Forking Server with ${cpus} processes\n`);
 
   for (let index = 0; index < cpus; index++)
-    cluster.fork()
+    cluster.fork();
 
-  cluster.on('exit', (worker, code, signal) => {
+  cluster.on('exit', (worker, code, signal) => { // eslint-disable-line
     if (code !== 0 && !worker.exitedAfterDisconnect) {
       console.log(`Worker ${worker.process.pid} died`);
       cluster.fork();
     }
   });
-}
+};
 
 const runWorkerProcess = async () => {
   await import('./server.js');
-}
+};
 
 cluster.isPrimary ? runPrimaryProcess() : runWorkerProcess();

@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../../../constants';
+import { getAuthenticationHash } from '../../../../../functions';
 import { executeTransaction } from '../../../../../config/database';
 
 import { material_operation } from '../../../../../models/stock_logs/material_operation';
 
-import { z, ZodError } from 'zod';
+import { z, TypeOf, ZodError } from 'zod';
 
 const router = express.Router();
 
@@ -26,6 +26,22 @@ const paramsSchema = z.object({
   token: z.string(),
 });
 
+type InsertedMaterial = TypeOf<typeof insertedMaterialSchema>;
+
+function generatePlaceholders(count: number, insert: InsertedMaterial) {
+  let valueQuery = '';
+  const placeholders = Array(count).fill('?').join(', ');
+  
+  for (let i = 0; i < insert.length; i++) {
+    const valueSql = `(${placeholders})`;
+    valueQuery += valueSql;
+    if (i < insert.length - 1) {
+      valueQuery += ', ';
+    }
+  }
+  return valueQuery;
+}
+
 function getCurrentDateTime(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -38,7 +54,6 @@ function getCurrentDateTime(): string {
 }
 
 const executionStatus: Map<string, boolean> = new Map();
-
 router.post('/stock/select-employee/insert-material', async (req: Request, res: Response) => {
   const ip = req.ip;
 
@@ -56,66 +71,50 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
     executionStatus.set(ip, true);
 
     const { insert, employee_id, token } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
         }
-      }
 
-      const createdAt = getCurrentDateTime();
+        try {
+          const createdAt = getCurrentDateTime();
 
-      function generatePlaceholders(count: number) {
-        let valueQuery = '';
-        const placeholders = Array(count).fill('?').join(', ');
+          const updateValuesMaterialsStock: Array<number | string | null> = [];
+          insert.forEach(item => {
+            updateValuesMaterialsStock.push(
+              item.id,
+              item.product_name,
+              item.product_code,
+              item.product_batch,
+              item.quantity_value,
+              item.unit_type,
+              createdAt,
+            );
+          });
 
-        for (let i = 0; i < insert.length; i++) {
-          const valueSql = `(${placeholders})`;
-          valueQuery += valueSql;
-          if (i < insert.length - 1) {
-            valueQuery += ', ';
-          }
-        }
-        return valueQuery;
-      }
+          const insertValueMaterialsEmployee: Array<number | string | null> = [];
+          insert.forEach(item => {
+            insertValueMaterialsEmployee.push(
+              `${item.id}-${employee_id}`,
+              employee_id,
+              item.product_name,
+              item.product_code,
+              item.product_batch,
+              item.quantity_value,
+              item.unit_type,
+              createdAt
+            );
+          });
 
-      const updateValuesMaterialsStock: Array<number | string | null> = [];
-      insert.forEach(item => {
-        updateValuesMaterialsStock.push(
-          item.id,
-          item.product_name,
-          item.product_code,
-          item.product_batch,
-          item.quantity_value,
-          item.unit_type,
-          createdAt,
-        );
-      });
-
-      const insertValueMaterialsEmployee: Array<number | string | null> = [];
-      insert.forEach(item => {
-        insertValueMaterialsEmployee.push(
-          `${item.id}-${employee_id}`,
-          employee_id,
-          item.product_name,
-          item.product_code,
-          item.product_batch,
-          item.quantity_value,
-          item.unit_type,
-          createdAt
-        );
-      });
-
-      const queryMaterialsStock = `
+          const queryMaterialsStock = `
       INSERT INTO tbl_stock_almox 
         (id, product_name, product_code, product_batch, quantity_value, unit_type, created_at) 
       VALUES 
-        ${generatePlaceholders(7)}
+        ${generatePlaceholders(7, insert)}
       ON DUPLICATE KEY UPDATE 
         id = VALUES(id),
         product_name = VALUES(product_name),
@@ -126,10 +125,10 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         created_at = VALUES(created_at);
       `;
 
-      const queryMaterialsEmployee = `
+          const queryMaterialsEmployee = `
       INSERT INTO tbl_stock_employee 
         (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
-      VALUES ${generatePlaceholders(8)}
+      VALUES ${generatePlaceholders(8, insert)}
       ON DUPLICATE KEY UPDATE 
         id = VALUES(id),
         employee_id = VALUES(employee_id),
@@ -141,26 +140,42 @@ router.post('/stock/select-employee/insert-material', async (req: Request, res: 
         created_at = VALUES(created_at);
       `;
 
-      const queryMaterialsStockTransferLog = await material_operation({
-        insert, employeeId: employee_id, transferType: 'sent'
-      })
+          const queryMaterialsStockTransferLog = await material_operation({
+            insert, employeeId: employee_id, transferType: 'sent'
+          });
 
-      await executeTransaction([
-        { query: queryMaterialsStock, values: updateValuesMaterialsStock },
-        { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
-        { ...queryMaterialsStockTransferLog }
-      ]);
-      
-      res.json({ status: 'success' });
+          await executeTransaction([
+            { query: queryMaterialsStock, values: updateValuesMaterialsStock },
+            { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
+            { ...queryMaterialsStockTransferLog }
+          ]);
+
+          res.json({ status: 'success' });
+          resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

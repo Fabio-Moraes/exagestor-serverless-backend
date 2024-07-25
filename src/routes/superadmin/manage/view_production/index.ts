@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../config/database'
+import { getAuthenticationHash } from '../../../../functions';
+import { executeQuery } from '../../../../config/database';
 
 import { z, ZodError } from 'zod';
 import moment from 'moment';
@@ -34,20 +34,18 @@ router.post('/manage/view_production', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
     const { employee_id, token, selectedFirstDate, selectedLastDate } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
         }
-      }
 
-      console.log('selectedLastDate: ', selectedLastDate)
-      console.log('selectedFirstDate: ', selectedFirstDate)
+    try {
+      console.log('selectedLastDate: ', selectedLastDate);
+      console.log('selectedFirstDate: ', selectedFirstDate);
 
       const firstFormatted = moment(selectedFirstDate)
       .hour(0)   // Define a hora para 00
@@ -71,7 +69,7 @@ router.post('/manage/view_production', async (req: Request, res: Response) => {
       ORDER BY id DESC;
     `;
 
-      const sql2 = `SELECT * FROM tbl_service_catalog`;
+      const sql2 = 'SELECT * FROM tbl_service_catalog';
 
       const values = [employee_id, 'concluded', firstFormatted, lastFormatted];
 
@@ -79,16 +77,31 @@ router.post('/manage/view_production', async (req: Request, res: Response) => {
       const serviceList = await executeQuery(sql2);
       
       res.json({ currentOperation: [...currentOperation], serviceList: serviceList });
+      resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
-
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

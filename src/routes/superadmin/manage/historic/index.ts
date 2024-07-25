@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
-import { JWT_SECRET_KEY } from '../../../../constants';
-import { executeQuery } from '../../../../config/database'
+import { getAuthenticationHash } from '../../../../functions';
+import { executeQuery } from '../../../../config/database';
 
-import routesDetails from './details';;
+import routesDetails from './details';
 
 import { z, ZodError } from 'zod';
 
@@ -34,19 +34,18 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
 
   try {
     executionStatus.set(ip, true);
+
     const { employee_all, employee_id, initial_id, token } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error, decoded) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
         }
-      }
 
+    try {
       const selectEmployee = async (initial_id?: number | null, employee_id?: number) => {
         const sqlFirst = `
           SELECT u1.*, 
@@ -80,7 +79,7 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
 
         if (!initial_id) return await executeQuery(sqlFirst, [employee_id]);
         return await executeQuery(sqlLast, [initial_id, employee_id]);
-      }
+      };
 
       const selectEmployeeAll = async (initial_id?: number | null) => {
         const sqlFirst = `
@@ -113,22 +112,37 @@ router.post('/manage/historic', async (req: Request, res: Response) => {
 
         if (!initial_id) return await executeQuery(sqlFirst);
         return await executeQuery(sqlLast, [initial_id]);
-      }
+      };
 
       const resultEmployeeAll = await selectEmployeeAll(initial_id);
       const resultEmployee = await selectEmployee(initial_id, employee_id);
 
       res.json(employee_all ? resultEmployeeAll : resultEmployee);
+      resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
-
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

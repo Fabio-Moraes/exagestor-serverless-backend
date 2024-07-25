@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import jwt, { TokenExpiredError } from 'jsonwebtoken';
-import { JWT_SECRET_KEY } from '../../../../../constants';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+import { getAuthenticationHash } from '../../../../../functions';
 import { decrement_item } from '../../../../../models/stock_employee';
 import { executeQuery, executeTransaction } from '../../../../../config/database';
 
@@ -39,18 +39,16 @@ router.post('/concluded', async (req: Request, res: Response) => {
     executionStatus.set(ip, true);
 
     const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
 
-    jwt.verify(token, JWT_SECRET_KEY, async (error) => {
-      if (error) {
-        if (error instanceof TokenExpiredError) {
-          console.log('** verify token expired **')
-          return res.status(403).json({ error: 'Token expirado' });
-        } else {
-          console.log('** verify token inválido **')
-          return res.status(403).json({ error: 'Token inválido' });
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
         }
-      }
 
+    try {
       const sql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
       const [row] = await executeQuery(sql, [employeeId, protocol]);
 
@@ -64,9 +62,9 @@ router.post('/concluded', async (req: Request, res: Response) => {
         return res.status(409).json({ error: 'Serviço já concluído' });
       }
 
-      const executeTransactionArray = []
+      const executeTransactionArray = [];
 
-      const queryOperations = 'DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?'
+      const queryOperations = 'DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
       const deleteValues = [row.employee_id, row.protocol];
 
       executeTransactionArray.push({ query: queryOperations, values: deleteValues });
@@ -74,7 +72,7 @@ router.post('/concluded', async (req: Request, res: Response) => {
       const newStatus = 'concluded';
       const createStateModificationHistoryRecord = await insert_state_modification({
         row, newStatus, listMaterial, listService, observation
-      })
+      });
 
       executeTransactionArray.push(createStateModificationHistoryRecord);
 
@@ -87,15 +85,31 @@ router.post('/concluded', async (req: Request, res: Response) => {
       const socket = await websocket(token) as Socket;
       socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true });
+        resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);
       return res.status(400).json({ error: error.errors });
-    } else {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
     }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   } finally {
     executionStatus.set(ip, false);
   }

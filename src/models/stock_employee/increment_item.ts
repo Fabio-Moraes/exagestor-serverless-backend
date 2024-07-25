@@ -1,12 +1,23 @@
 import { executeQuery } from '../../config/database';
 
+type MaterialTypes = {
+  id: number;
+  employee_id: number;
+  product_name: string;
+  unit_type: string;
+  product_code: string;
+  product_batch: string | null;
+  quantity_value: number;
+  created_at: string;
+};
+
 export async function increment_item(materials: string) { 
   function generateQueryListMaterial(arr: string[]) {
     const placeholders = arr.map(() => '?').join(', ');
     return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
   }
   
-  function generatePlaceholders(data: Object[]) {
+  function generatePlaceholders(data: MaterialTypes[]) {
     const placeholders = data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     return placeholders;
   }
@@ -19,7 +30,7 @@ export async function increment_item(materials: string) {
 
   const listMaterialKeys = Object.keys(requestListMaterial);
   const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys) as MaterialTypes[];
 
   const resultQueryListMaterial = selectQueryListMaterial.map(items => ({
     ...items,

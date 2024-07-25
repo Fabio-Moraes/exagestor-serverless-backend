@@ -4,7 +4,7 @@ import routesStock from './stock';
 import routesManageEmployee from './manage';
 import routesRegisterMaterial from './register-material';
 import routerhistoric from './historic';
-import routesStockView from './stock-view'
+import routesStockView from './stock-view';
 
 const router = express.Router();
 

@@ -1,9 +1,9 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { executeQuery } from '../../../config/database';
 
 import { z, ZodError } from 'zod';
-import { getRedis, setRedis } from '../../../config/redis';
+import { getRedis } from '../../../config/redis';
 
 const router = express.Router();
 
@@ -19,23 +19,25 @@ const paramsSchema = z.object({
 router.post('/signin', async (req: Request, res: Response) => {
   try {
     const { password, identification } = paramsSchema.parse(req.body);
-    const sql = `SELECT * FROM tbl_user_accounts WHERE identification = ?`;
+    const sql = 'SELECT * FROM tbl_user_accounts WHERE identification = ?';
     const [user] = await executeQuery(sql, [identification]);
 
     if (!user) {
       return res.status(401).send('Credenciais inválidas');
-    } 
+    }
 
-    const company = await getRedis('company'); 
+    const company = await getRedis('company') ?? 'exatelecom';
+    const ssid = await getRedis('_session_ssid') ?? '00000';
 
     const content = {
-      user: { 
-        id: user.id, 
-        name: user.name, 
-        accountStatus: user.status, 
+      user: {
+        id: user.id,
+        name: user.name,
+        accountStatus: user.status,
         role: user.role,
-        company: company
-      }
+        company
+      },
+      ssid
     };
 
     const isPasswordValid = bcrypt.compareSync(password, user.password);
@@ -43,14 +45,13 @@ router.post('/signin', async (req: Request, res: Response) => {
     if (isPasswordValid) {
       console.log('Login bem-sucedido. Token:');
       if (user.status === 'inactive') {
-        return res.status(403).send('forbidden'); 
+        return res.status(403).send('forbidden');
       }
 
       res.json(content);
     } else {
       return res.status(401).send('Credenciais inválidas');
     }
-
   } catch (error) {
     if (error instanceof ZodError) {
       console.error('Requisição inválida Zod', error.errors);

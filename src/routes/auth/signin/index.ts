@@ -16,12 +16,22 @@ const paramsSchema = z.object({
   password: z.string().min(1)
 });
 
+interface UserType {
+  id: string;
+  name: string;
+  status: string;
+  role: string;
+  password: string
+}
+
+
 router.post('/signin', async (req: Request, res: Response) => {
   try {
     const { password, identification } = paramsSchema.parse(req.body);
     const sql = 'SELECT * FROM tbl_user_accounts WHERE identification = ?';
-    const [user] = await executeQuery(sql, [identification]);
-
+    const [userQuery]= await executeQuery(sql, [identification]);
+    const user = { ...userQuery } as UserType;
+    
     if (!user) {
       return res.status(401).send('Credenciais inválidas');
     }

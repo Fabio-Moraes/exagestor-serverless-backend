@@ -29,7 +29,7 @@ export async function executeQuery<T>(query: string, values?: T): Promise<object
   try {
     connection = await dbPool.getConnection();
     const [results] = await connection.query(query, values);
-    return results as object[];
+    return results as any;
   } catch (error) {
     if (error) {
       throw new Error(`Erro na consulta: ${error}`);

@@ -67,7 +67,8 @@ router.post('/running/cancel', async (req: Request, res: Response) => {
 
     try {
       const selectSql = 'SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
-      const [row]: ServiceData[] = await executeQuery(selectSql, [employeeId, protocol]);
+      const [rowQuery] = await executeQuery(selectSql, [employeeId, protocol]);
+      const row = {...rowQuery} as ServiceData;
 
       if (!row) {
         return res.status(400).json({ error: 'Requisição inválido' });

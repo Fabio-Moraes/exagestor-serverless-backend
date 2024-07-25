@@ -1,0 +1,1178 @@
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// node_modules/dotenv/package.json
+var require_package = __commonJS({
+  "node_modules/dotenv/package.json"(exports2, module2) {
+    module2.exports = {
+      name: "dotenv",
+      version: "16.4.5",
+      description: "Loads environment variables from .env file",
+      main: "lib/main.js",
+      types: "lib/main.d.ts",
+      exports: {
+        ".": {
+          types: "./lib/main.d.ts",
+          require: "./lib/main.js",
+          default: "./lib/main.js"
+        },
+        "./config": "./config.js",
+        "./config.js": "./config.js",
+        "./lib/env-options": "./lib/env-options.js",
+        "./lib/env-options.js": "./lib/env-options.js",
+        "./lib/cli-options": "./lib/cli-options.js",
+        "./lib/cli-options.js": "./lib/cli-options.js",
+        "./package.json": "./package.json"
+      },
+      scripts: {
+        "dts-check": "tsc --project tests/types/tsconfig.json",
+        lint: "standard",
+        "lint-readme": "standard-markdown",
+        pretest: "npm run lint && npm run dts-check",
+        test: "tap tests/*.js --100 -Rspec",
+        "test:coverage": "tap --coverage-report=lcov",
+        prerelease: "npm test",
+        release: "standard-version"
+      },
+      repository: {
+        type: "git",
+        url: "git://github.com/motdotla/dotenv.git"
+      },
+      funding: "https://dotenvx.com",
+      keywords: [
+        "dotenv",
+        "env",
+        ".env",
+        "environment",
+        "variables",
+        "config",
+        "settings"
+      ],
+      readmeFilename: "README.md",
+      license: "BSD-2-Clause",
+      devDependencies: {
+        "@definitelytyped/dtslint": "^0.0.133",
+        "@types/node": "^18.11.3",
+        decache: "^4.6.1",
+        sinon: "^14.0.1",
+        standard: "^17.0.0",
+        "standard-markdown": "^7.1.0",
+        "standard-version": "^9.5.0",
+        tap: "^16.3.0",
+        tar: "^6.1.11",
+        typescript: "^4.8.4"
+      },
+      engines: {
+        node: ">=12"
+      },
+      browser: {
+        fs: false
+      }
+    };
+  }
+});
+
+// node_modules/dotenv/lib/main.js
+var require_main = __commonJS({
+  "node_modules/dotenv/lib/main.js"(exports2, module2) {
+    "use strict";
+    var fs2 = require("fs");
+    var path = require("path");
+    var os = require("os");
+    var crypto = require("crypto");
+    var packageJson = require_package();
+    var version = packageJson.version;
+    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+    function parse(src) {
+      const obj = {};
+      let lines = src.toString();
+      lines = lines.replace(/\r\n?/mg, "\n");
+      let match;
+      while ((match = LINE.exec(lines)) != null) {
+        const key = match[1];
+        let value = match[2] || "";
+        value = value.trim();
+        const maybeQuote = value[0];
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
+        if (maybeQuote === '"') {
+          value = value.replace(/\\n/g, "\n");
+          value = value.replace(/\\r/g, "\r");
+        }
+        obj[key] = value;
+      }
+      return obj;
+    }
+    function _parseVault(options) {
+      const vaultPath = _vaultPath(options);
+      const result = DotenvModule.configDotenv({ path: vaultPath });
+      if (!result.parsed) {
+        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
+        err.code = "MISSING_DATA";
+        throw err;
+      }
+      const keys = _dotenvKey(options).split(",");
+      const length = keys.length;
+      let decrypted;
+      for (let i = 0; i < length; i++) {
+        try {
+          const key = keys[i].trim();
+          const attrs = _instructions(result, key);
+          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+          break;
+        } catch (error) {
+          if (i + 1 >= length) {
+            throw error;
+          }
+        }
+      }
+      return DotenvModule.parse(decrypted);
+    }
+    function _log(message) {
+      console.log(`[dotenv@${version}][INFO] ${message}`);
+    }
+    function _warn(message) {
+      console.log(`[dotenv@${version}][WARN] ${message}`);
+    }
+    function _debug(message) {
+      console.log(`[dotenv@${version}][DEBUG] ${message}`);
+    }
+    function _dotenvKey(options) {
+      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
+        return options.DOTENV_KEY;
+      }
+      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
+        return process.env.DOTENV_KEY;
+      }
+      return "";
+    }
+    function _instructions(result, dotenvKey) {
+      let uri;
+      try {
+        uri = new URL(dotenvKey);
+      } catch (error) {
+        if (error.code === "ERR_INVALID_URL") {
+          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        }
+        throw error;
+      }
+      const key = uri.password;
+      if (!key) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environment = uri.searchParams.get("environment");
+      if (!environment) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
+      const ciphertext = result.parsed[environmentKey];
+      if (!ciphertext) {
+        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
+        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
+        throw err;
+      }
+      return { ciphertext, key };
+    }
+    function _vaultPath(options) {
+      let possibleVaultPath = null;
+      if (options && options.path && options.path.length > 0) {
+        if (Array.isArray(options.path)) {
+          for (const filepath of options.path) {
+            if (fs2.existsSync(filepath)) {
+              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
+            }
+          }
+        } else {
+          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+        }
+      } else {
+        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
+      }
+      if (fs2.existsSync(possibleVaultPath)) {
+        return possibleVaultPath;
+      }
+      return null;
+    }
+    function _resolveHome(envPath) {
+      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
+    }
+    function _configVault(options) {
+      _log("Loading env from encrypted .env.vault");
+      const parsed = DotenvModule._parseVault(options);
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsed, options);
+      return { parsed };
+    }
+    function configDotenv(options) {
+      const dotenvPath = path.resolve(process.cwd(), ".env");
+      let encoding = "utf8";
+      const debug = Boolean(options && options.debug);
+      if (options && options.encoding) {
+        encoding = options.encoding;
+      } else {
+        if (debug) {
+          _debug("No encoding is specified. UTF-8 is used by default");
+        }
+      }
+      let optionPaths = [dotenvPath];
+      if (options && options.path) {
+        if (!Array.isArray(options.path)) {
+          optionPaths = [_resolveHome(options.path)];
+        } else {
+          optionPaths = [];
+          for (const filepath of options.path) {
+            optionPaths.push(_resolveHome(filepath));
+          }
+        }
+      }
+      let lastError;
+      const parsedAll = {};
+      for (const path2 of optionPaths) {
+        try {
+          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
+          DotenvModule.populate(parsedAll, parsed, options);
+        } catch (e) {
+          if (debug) {
+            _debug(`Failed to load ${path2} ${e.message}`);
+          }
+          lastError = e;
+        }
+      }
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsedAll, options);
+      if (lastError) {
+        return { parsed: parsedAll, error: lastError };
+      } else {
+        return { parsed: parsedAll };
+      }
+    }
+    function config(options) {
+      if (_dotenvKey(options).length === 0) {
+        return DotenvModule.configDotenv(options);
+      }
+      const vaultPath = _vaultPath(options);
+      if (!vaultPath) {
+        _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
+        return DotenvModule.configDotenv(options);
+      }
+      return DotenvModule._configVault(options);
+    }
+    function decrypt(encrypted, keyStr) {
+      const key = Buffer.from(keyStr.slice(-64), "hex");
+      let ciphertext = Buffer.from(encrypted, "base64");
+      const nonce = ciphertext.subarray(0, 12);
+      const authTag = ciphertext.subarray(-16);
+      ciphertext = ciphertext.subarray(12, -16);
+      try {
+        const aesgcm = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+        aesgcm.setAuthTag(authTag);
+        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
+      } catch (error) {
+        const isRange = error instanceof RangeError;
+        const invalidKeyLength = error.message === "Invalid key length";
+        const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
+        if (isRange || invalidKeyLength) {
+          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        } else if (decryptionFailed) {
+          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+          err.code = "DECRYPTION_FAILED";
+          throw err;
+        } else {
+          throw error;
+        }
+      }
+    }
+    function populate(processEnv, parsed, options = {}) {
+      const debug = Boolean(options && options.debug);
+      const override = Boolean(options && options.override);
+      if (typeof parsed !== "object") {
+        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+        err.code = "OBJECT_REQUIRED";
+        throw err;
+      }
+      for (const key of Object.keys(parsed)) {
+        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
+          if (override === true) {
+            processEnv[key] = parsed[key];
+          }
+          if (debug) {
+            if (override === true) {
+              _debug(`"${key}" is already defined and WAS overwritten`);
+            } else {
+              _debug(`"${key}" is already defined and was NOT overwritten`);
+            }
+          }
+        } else {
+          processEnv[key] = parsed[key];
+        }
+      }
+    }
+    var DotenvModule = {
+      configDotenv,
+      _configVault,
+      _parseVault,
+      config,
+      decrypt,
+      parse,
+      populate
+    };
+    module2.exports.configDotenv = DotenvModule.configDotenv;
+    module2.exports._configVault = DotenvModule._configVault;
+    module2.exports._parseVault = DotenvModule._parseVault;
+    module2.exports.config = DotenvModule.config;
+    module2.exports.decrypt = DotenvModule.decrypt;
+    module2.exports.parse = DotenvModule.parse;
+    module2.exports.populate = DotenvModule.populate;
+    module2.exports = DotenvModule;
+  }
+});
+
+// src/routes/admin/manage/index.ts
+var manage_exports = {};
+__export(manage_exports, {
+  default: () => manage_default
+});
+module.exports = __toCommonJS(manage_exports);
+var import_express6 = __toESM(require("express"));
+var import_jsonwebtoken6 = __toESM(require("jsonwebtoken"));
+
+// src/functions/index.ts
+var import_node_crypto = require("crypto");
+var import_dotenv2 = __toESM(require_main());
+
+// src/config/redis.ts
+var import_ioredis = __toESM(require("ioredis"));
+var import_util = require("util");
+var import_dotenv = __toESM(require_main());
+import_dotenv.default.config();
+var {
+  REDIS_HOST,
+  REDIS_PORT,
+  REDIS_USER,
+  REDIS_PASSWORD,
+  REDIS_TLS_REJECT_UNAUTHORIZED
+} = process.env;
+var redisClient = new import_ioredis.default(__spreadValues({
+  username: REDIS_USER,
+  host: REDIS_HOST,
+  password: REDIS_PASSWORD,
+  port: Number(REDIS_PORT),
+  retryStrategy: (times) => Math.min(times * 50, 2e3)
+}, REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
+  tls: { servername: REDIS_HOST }
+}));
+redisClient.on("error", (err) => {
+  console.error("Redis error:", err);
+});
+redisClient.on("connect", () => {
+  console.log("Conectado ao Redis");
+});
+redisClient.on("reconnecting", (delay) => {
+  console.log(`Tentando reconectar ao Redis em ${delay}ms`);
+});
+function getRedis(value) {
+  const sysncRedisGet = (0, import_util.promisify)(redisClient.get).bind(redisClient);
+  return sysncRedisGet(value);
+}
+
+// src/functions/index.ts
+import_dotenv2.default.config();
+function getAuthenticationHash() {
+  return __async(this, null, function* () {
+    var _a;
+    const salt = process.env.SECRET_SALT;
+    const ssid = (_a = yield getRedis("_session_ssid")) != null ? _a : "00000";
+    return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
+  });
+}
+
+// src/config/database/index.ts
+var import_promise = __toESM(require("mysql2/promise"));
+var import_dotenv3 = __toESM(require_main());
+var import_fs = __toESM(require("fs"));
+import_dotenv3.default.config();
+var {
+  MYSQL_HOST,
+  MYSQL_USER,
+  MYSQL_PASSWORD,
+  MYSQL_DATABASE,
+  MYSQL_PORT,
+  MYSQL_SSL_REJECT_UNAUTHORIZED
+} = process.env;
+var dbConfig = __spreadValues({
+  host: MYSQL_HOST,
+  user: MYSQL_USER,
+  password: MYSQL_PASSWORD,
+  database: MYSQL_DATABASE,
+  port: Number(MYSQL_PORT),
+  connectionLimit: 10
+}, MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
+  ssl: {
+    ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+  }
+});
+var dbPool = import_promise.default.createPool(dbConfig);
+process.on("beforeExit", () => {
+  dbPool.end();
+});
+function executeQuery(query, values) {
+  return __async(this, null, function* () {
+    let connection = null;
+    try {
+      connection = yield dbPool.getConnection();
+      const [results] = yield connection.query(query, values);
+      return results;
+    } catch (error) {
+      if (error) {
+        throw new Error(`Erro na consulta: ${error}`);
+      }
+      throw error;
+    } finally {
+      if (connection) {
+        connection.release();
+      }
+    }
+  });
+}
+function executeTransaction(queries) {
+  return __async(this, null, function* () {
+    let connection = null;
+    try {
+      connection = yield dbPool.getConnection();
+      yield connection.beginTransaction();
+      for (const { query, values } of queries) {
+        yield connection.query(query, values);
+      }
+      yield connection.commit();
+    } catch (error) {
+      if (connection) {
+        yield connection.rollback();
+      }
+      throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
+    } finally {
+      if (connection) {
+        connection.release();
+      }
+    }
+  });
+}
+
+// src/routes/admin/manage/new/index.ts
+var import_express = __toESM(require("express"));
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+
+// src/utils/CreateProtocol.ts
+var import_crypto = __toESM(require("crypto"));
+function createProtocol(length) {
+  const randomBuffer = import_crypto.default.randomBytes(length);
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += randomBuffer[i] % 10;
+  }
+  return code;
+}
+
+// src/routes/admin/manage/new/index.ts
+var import_zod = require("zod");
+
+// src/config/websocket.ts
+var import_socket = require("socket.io-client");
+var import_dotenv4 = __toESM(require_main());
+import_dotenv4.default.config();
+function websocket(token) {
+  const cookies = /* @__PURE__ */ new Map();
+  cookies.set("auth_token", token);
+  const socket = (0, import_socket.io)(String(process.env.WEBSOCKET_SERVER_BASEURL), {
+    transports: ["websocket"],
+    withCredentials: true,
+    reconnection: true,
+    // Ativar reconexão automática
+    reconnectionAttempts: 5,
+    // Número máximo de tentativas de reconexão
+    reconnectionDelay: 1e3,
+    // Atraso inicial de reconexão em milissegundos
+    reconnectionDelayMax: 5e3,
+    // Atraso máximo de reconexão em milissegundos
+    extraHeaders: {
+      "Origin": String(process.env.BACKEND_ORIGIN_BASEURL),
+      "Cookie": Array.from(cookies.entries()).map(([key, value]) => `${key}=${value}`).join("; ")
+    }
+  });
+  return new Promise((resolve, reject) => {
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+      resolve(socket);
+    });
+    socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      reject(error);
+    });
+  });
+}
+
+// src/routes/admin/manage/new/index.ts
+function getCurrentDateTime(date) {
+  const now = date ? new Date(date) : /* @__PURE__ */ new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const seconds = now.getSeconds().toString().padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+var router = import_express.default.Router();
+var paramsSchema = import_zod.z.object({
+  employeeId: import_zod.z.number().min(1),
+  clientName: import_zod.z.string().min(1).regex(/^[^0-9]*$/),
+  city: import_zod.z.string().min(1).regex(/^[^0-9]*$/),
+  classification: import_zod.z.string().min(1).max(2),
+  nomenclature: import_zod.z.string().min(1),
+  address: import_zod.z.string().min(1),
+  startServiceAt: import_zod.z.string().refine((dateString) => {
+    const currentDate = /* @__PURE__ */ new Date();
+    const inputDate = new Date(dateString);
+    currentDate.setHours(0, 0, 0, 0);
+    inputDate.setHours(0, 0, 0, 0);
+    return inputDate >= currentDate;
+  }, {
+    message: "A data de in\xEDcio do servi\xE7o n\xE3o pode ser anterior \xE0 data atual"
+  }),
+  token: import_zod.z.string()
+});
+var executionStatus = /* @__PURE__ */ new Map();
+router.post("/manage/new", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus.set(ip, true);
+    const {
+      employeeId,
+      clientName,
+      city,
+      classification,
+      nomenclature,
+      address,
+      startServiceAt,
+      token
+    } = paramsSchema.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const createdAt = getCurrentDateTime();
+          const getStartServiceAt = getCurrentDateTime(startServiceAt);
+          const protocol = createProtocol(17);
+          const status = "active";
+          const updateCount = 0;
+          const { user: admin } = decoded;
+          const values = [
+            protocol,
+            employeeId,
+            admin.id,
+            clientName,
+            city,
+            classification,
+            nomenclature,
+            address,
+            status,
+            updateCount,
+            getStartServiceAt,
+            null,
+            null,
+            null,
+            createdAt,
+            null,
+            null
+          ];
+          const queryOperations = `
+      INSERT INTO tbl_operations (
+          protocol, 
+          employee_id, 
+          creator_leader_id, 
+          client_name, 
+          city, 
+          classification, 
+          nomenclature, 
+          address, 
+          status, 
+          update_count, 
+          start_service_at,
+          list_service, 
+          list_material, 
+          observation, 
+          created_at, 
+          modification_at, 
+          finished_at
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          const queryOperationsHistory = `
+      INSERT INTO tbl_operations_logs (
+          protocol, 
+          employee_id, 
+          creator_leader_id, 
+          client_name, 
+          city, 
+          classification, 
+          nomenclature, 
+          address, 
+          status, 
+          update_count, 
+          start_service_at,
+          list_service, 
+          list_material, 
+          observation, 
+          created_at, 
+          modification_at, 
+          finished_at
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          yield executeTransaction([
+            { query: queryOperations, values },
+            { query: queryOperationsHistory, values }
+          ]);
+          const socket = yield websocket(token);
+          socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: employeeId }));
+          res.json({ success: true });
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus.set(ip, false);
+  }
+}));
+var new_default = router;
+
+// src/routes/admin/manage/historic/index.ts
+var import_express3 = __toESM(require("express"));
+var import_jsonwebtoken3 = __toESM(require("jsonwebtoken"));
+
+// src/routes/admin/manage/historic/details/index.ts
+var import_express2 = __toESM(require("express"));
+var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
+var import_zod2 = require("zod");
+var router2 = import_express2.default.Router();
+var paramsSchema2 = import_zod2.z.object({
+  token: import_zod2.z.string(),
+  employeeId: import_zod2.z.string().min(1),
+  protocol: import_zod2.z.string().max(17),
+  updateCount: import_zod2.z.string().min(1).transform((item) => Number(item))
+});
+var executionStatus2 = /* @__PURE__ */ new Map();
+router2.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus2.has(ip) && executionStatus2.get(ip) === true) {
+    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus2.set(ip, true);
+    const { token, employeeId, protocol, updateCount } = paramsSchema2.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken2.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const sql1 = `
+      SELECT u1.*, tec_user.name AS name_tec, creator_leader_user.name AS name_creator_leader, creator_leader_user.role AS role_creator_leader
+      FROM tbl_operations_logs u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
+      WHERE employee_id = ? AND protocol = ? AND update_count = ?
+      ORDER BY u1.created_at DESC;
+      `;
+          const sql2 = "SELECT * FROM tbl_service_catalog";
+          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, updateCount]);
+          const serviceList = yield executeQuery(sql2);
+          res.json({ currentOperation, serviceList });
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken2.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken2.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod2.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus2.set(ip, false);
+  }
+}));
+var details_default = router2;
+
+// src/routes/admin/manage/historic/index.ts
+var import_zod3 = require("zod");
+var router3 = import_express3.default.Router();
+var executionStatus3 = /* @__PURE__ */ new Map();
+var paramsSchema3 = import_zod3.z.object({
+  employee_all: import_zod3.z.boolean().optional(),
+  employee_id: import_zod3.z.number().optional(),
+  initial_id: import_zod3.z.number().nullable().optional(),
+  token: import_zod3.z.string()
+});
+router3.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus3.has(ip) && executionStatus3.get(ip) === true) {
+    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus3.set(ip, true);
+    const { employee_all, employee_id, initial_id, token } = paramsSchema3.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken3.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+            const sqlFirst = `
+          SELECT u1.*, 
+          tec_user.name AS name_tec, 
+          creator_leader_user.name AS name_creator_leader
+          FROM tbl_operations_logs u1
+          JOIN tbl_user_accounts tec_user
+          ON u1.employee_id = tec_user.id 
+          LEFT JOIN tbl_user_accounts creator_leader_user
+          ON u1.creator_leader_id = creator_leader_user.id
+          WHERE u1.id < (SELECT MAX(id) FROM tbl_operations_logs) + 1
+          AND employee_id = ? 
+          ORDER BY id DESC
+          LIMIT 10;
+          `;
+            const sqlLast = `
+          SELECT u1.*, 
+          tec_user.name AS name_tec, 
+          creator_leader_user.name AS name_creator_leader
+          FROM tbl_operations_logs u1
+          JOIN tbl_user_accounts tec_user
+          ON u1.employee_id = tec_user.id 
+          LEFT JOIN tbl_user_accounts creator_leader_user
+          ON u1.creator_leader_id = creator_leader_user.id
+          WHERE u1.id < ?
+          AND employee_id = ? 
+          ORDER BY id DESC
+          LIMIT 10;
+          `;
+            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
+            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
+          });
+          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            const sqlFirst = `
+        SELECT u1.*, 
+        tec_user.name AS name_tec, 
+        creator_leader_user.name AS name_creator_leader
+        FROM tbl_operations_logs u1
+        JOIN tbl_user_accounts tec_user
+        ON u1.employee_id = tec_user.id 
+        LEFT JOIN tbl_user_accounts creator_leader_user
+        ON u1.creator_leader_id = creator_leader_user.id
+        WHERE u1.id < (SELECT MAX(id) FROM tbl_operations_logs) + 1
+        ORDER BY id DESC
+        LIMIT 10;
+        `;
+            const sqlLast = `
+        SELECT u1.*, 
+        tec_user.name AS name_tec, 
+        creator_leader_user.name AS name_creator_leader
+        FROM tbl_operations_logs u1
+        JOIN tbl_user_accounts tec_user
+        ON u1.employee_id = tec_user.id 
+        LEFT JOIN tbl_user_accounts creator_leader_user
+        ON u1.creator_leader_id = creator_leader_user.id
+        WHERE u1.id < ?
+        ORDER BY id DESC
+        LIMIT 10;
+        `;
+            if (!initial_id2) return yield executeQuery(sqlFirst);
+            return yield executeQuery(sqlLast, [initial_id2]);
+          });
+          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
+          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+          res.json(employee_all ? resultEmployeeAll : resultEmployee);
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken3.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken3.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod3.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus3.set(ip, false);
+  }
+}));
+router3.use(details_default);
+var historic_default = router3;
+
+// src/routes/admin/manage/update_password_employee/index.ts
+var import_express4 = __toESM(require("express"));
+var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
+var import_bcryptjs = __toESM(require("bcryptjs"));
+var import_zod4 = require("zod");
+var router4 = import_express4.default.Router();
+var paramsSchema4 = import_zod4.z.object({
+  employeeId: import_zod4.z.string().min(1),
+  yourPassword: import_zod4.z.string().min(1).trim(),
+  newPasswordEmployee: import_zod4.z.string().min(1).trim(),
+  token: import_zod4.z.string()
+});
+var executionStatus4 = /* @__PURE__ */ new Map();
+router4.post("/manage/update_password_employee", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus4.has(ip) && executionStatus4.get(ip) === true) {
+    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus4.set(ip, true);
+    const {
+      employeeId,
+      yourPassword,
+      newPasswordEmployee,
+      token
+    } = paramsSchema4.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken4.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        var _a;
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const { user: admin } = decoded;
+          const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
+          const rowsAdmin = yield executeQuery(sqlSelect, [admin.id]);
+          if (!(rowsAdmin.length === 1 && import_bcryptjs.default.compareSync(yourPassword, (_a = rowsAdmin[0]) == null ? void 0 : _a.password))) {
+            return res.status(401).send("Invalid credentials");
+          }
+          const hashEmployee = import_bcryptjs.default.hashSync(newPasswordEmployee, 10);
+          const values = [hashEmployee, employeeId];
+          const sqlUpdate = "UPDATE tbl_user_accounts SET password = ? WHERE id = ?";
+          yield executeQuery(sqlUpdate, values);
+          res.json({ status: "success" });
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken4.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken4.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod4.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus4.set(ip, false);
+  }
+}));
+var update_password_employee_default = router4;
+
+// src/routes/admin/manage/update_status_employee/index.ts
+var import_express5 = __toESM(require("express"));
+var import_jsonwebtoken5 = __toESM(require("jsonwebtoken"));
+var import_bcryptjs2 = __toESM(require("bcryptjs"));
+var import_zod5 = require("zod");
+var router5 = import_express5.default.Router();
+var paramsSchema5 = import_zod5.z.object({
+  employeeId: import_zod5.z.string().min(1),
+  yourPassword: import_zod5.z.string().min(1).trim(),
+  accountStatus: import_zod5.z.enum(["inactive", "active"]),
+  token: import_zod5.z.string()
+});
+var executionStatus5 = /* @__PURE__ */ new Map();
+router5.post("/manage/update_status_employee", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus5.has(ip) && executionStatus5.get(ip) === true) {
+    console.error("J\xE1 existe n uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus5.set(ip, true);
+    const {
+      employeeId,
+      yourPassword,
+      accountStatus,
+      token
+    } = paramsSchema5.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken5.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const { user: admin } = decoded;
+          const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
+          const [user] = yield executeQuery(sqlSelect, [admin.id]);
+          if (!user) {
+            return res.status(401).send("Credenciais inv\xE1lidas");
+          }
+          const isPasswordValid = import_bcryptjs2.default.compareSync(yourPassword, user.password);
+          if (!isPasswordValid) {
+            return res.status(401).send("Credenciais inv\xE1lidas");
+          }
+          const values = [accountStatus, employeeId];
+          const sqlUpdate = "UPDATE tbl_user_accounts SET status = ? WHERE id = ?";
+          yield executeQuery(sqlUpdate, values);
+          res.json({ status: "success" });
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken5.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken5.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod5.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus5.set(ip, false);
+  }
+}));
+var update_status_employee_default = router5;
+
+// src/routes/admin/manage/index.ts
+var import_zod6 = require("zod");
+var router6 = import_express6.default.Router();
+var executionStatus6 = /* @__PURE__ */ new Map();
+router6.post("/manage", (req, res) => __async(void 0, null, function* () {
+  const ip = req.ip;
+  if (!ip) {
+    console.error("IP n\xE3o fornecido");
+    return res.status(409).json({ error: "IP n\xE3o fornecido" });
+  }
+  if (executionStatus6.has(ip) && executionStatus6.get(ip) === true) {
+    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
+    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
+  }
+  try {
+    executionStatus6.set(ip, true);
+    const paramsSchema6 = import_zod6.z.object({ token: import_zod6.z.string() });
+    const { token } = paramsSchema6.parse(req.body);
+    const authenticationHash = yield getAuthenticationHash();
+    yield new Promise((resolve, reject) => {
+      import_jsonwebtoken6.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          const sql = `
+        SELECT 
+          id, 
+          role, 
+          name,
+          status, 
+          identification, 
+          created_at
+        FROM tbl_user_accounts 
+        WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
+          const roles = ["superadmin", "admin", "almox", "cop", "config"];
+          const rows = yield executeQuery(sql, roles);
+          res.json(rows);
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      }));
+    });
+  } catch (error) {
+    if (error instanceof import_jsonwebtoken6.TokenExpiredError) {
+      console.log("Token expirado");
+      return res.status(403).json({ error: "Token expirado" });
+    }
+    if (error instanceof import_jsonwebtoken6.JsonWebTokenError) {
+      console.log("Token inv\xE1lido");
+      return res.status(403).json({ error: "Token inv\xE1lido" });
+    }
+    if (error instanceof import_zod6.ZodError) {
+      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error." });
+  } finally {
+    executionStatus6.set(ip, false);
+  }
+}));
+router6.use(new_default);
+router6.use(historic_default);
+router6.use(update_password_employee_default);
+router6.use(update_status_employee_default);
+var manage_default = router6;
+//# sourceMappingURL=index.js.map

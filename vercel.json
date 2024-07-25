@@ -2,21 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/index.ts",
+      "src": "src/server.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/socket.io",
-      "dest": "src/index.ts",
+      "dest": "src/server.ts",
       "headers": {
         "Upgrade": "websocket"
       }
     },
     {
       "src": "(.*)",
-      "dest": "src/index.ts"
+      "dest": "src/server.ts"
     }
   ]
 }

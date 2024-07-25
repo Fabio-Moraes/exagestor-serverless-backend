@@ -24,11 +24,11 @@ interface UserType {
   password: string
 }
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/signin', async (req: Request, res: Response) => {
   try {
     const { password, identification } = paramsSchema.parse(req.body);
     const sql = 'SELECT * FROM tbl_user_accounts WHERE identification = ?';
-    const [userQuery]= await executeQuery(sql, [identification]);
+    const [userQuery] = await executeQuery(sql, [identification]);
     const user = userQuery as UserType;
     
     if (!user) {

@@ -4,23 +4,30 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (isNaN(Number(process.env.REDIS_PORT))) {
-  throw new Error('Port is not a valid number');
+const {
+  REDIS_HOST,
+  REDIS_PORT,
+  REDIS_USER,
+  REDIS_PASSWORD,
+  REDIS_TLS_REJECT_UNAUTHORIZED
+} = process.env;
+
+if (!REDIS_HOST || !REDIS_PORT || isNaN(Number(REDIS_PORT)) || !REDIS_USER || !REDIS_PASSWORD) {
+  throw new Error('As variáveis de ambiente do Redis não estão configuradas corretamente.');
 }
 
-/* const redisClient = new Redis({
-  host: process.env.REDIS_HOST,
-  username: process.env.REDIS_USER,
-  password: process.env.REDIS_PASSWORD,
-  port: Number(process.env.REDIS_PORT),
+const redisClient = new Redis({
+  host: REDIS_HOST,
+  username: REDIS_USER,
+  password: REDIS_PASSWORD,
+  port: Number(REDIS_PORT),
   retryStrategy: (times) => Math.min(times * 50, 2000),
-  ...(process.env.REDIS_TLS_REJECT_UNAUTHORIZED === 'true' && {
-    tls: { servername: process.env.REDIS_HOST }
+  ...(REDIS_TLS_REJECT_UNAUTHORIZED === 'true' && {
+    tls: { servername: REDIS_HOST }
   }),
-}
-); 
-*/
+});
 
+/* 
 const redisClient = new Redis({
   username: 'default',
   host: 'caching-exagestor-exagestor.h.aivencloud.com',
@@ -31,6 +38,7 @@ const redisClient = new Redis({
   }
 }
 );
+*/
 
 redisClient.on('error', (err) => {
   console.error('Redis error:', err);

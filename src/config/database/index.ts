@@ -4,14 +4,23 @@ import fs from 'fs';
 
 dotenv.config();
 
+const {
+  MYSQL_HOST,
+  MYSQL_USER,
+  MYSQL_PASSWORD,
+  MYSQL_DATABASE,
+  MYSQL_PORT,
+  MYSQL_SSL_REJECT_UNAUTHORIZED
+} = process.env;
+
 const dbConfig = {
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  port: Number(process.env.MYSQL_PORT),
+  host: MYSQL_HOST,
+  user: MYSQL_USER,
+  password: MYSQL_PASSWORD,
+  database: MYSQL_DATABASE,
+  port: Number(MYSQL_PORT),
   connectionLimit: 10,
-  ...(process.env.MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
+  ...(MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
     ssl: {
       ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem'),
     },

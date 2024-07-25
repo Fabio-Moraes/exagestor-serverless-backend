@@ -12,13 +12,9 @@ const {
   REDIS_TLS_REJECT_UNAUTHORIZED
 } = process.env;
 
-if (!REDIS_HOST || !REDIS_PORT || isNaN(Number(REDIS_PORT)) || !REDIS_USER || !REDIS_PASSWORD) {
-  throw new Error('As variáveis de ambiente do Redis não estão configuradas corretamente.');
-}
-
 const redisClient = new Redis({
-  host: REDIS_HOST,
   username: REDIS_USER,
+  host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
   retryStrategy: (times) => Math.min(times * 50, 2000),
@@ -26,19 +22,6 @@ const redisClient = new Redis({
     tls: { servername: REDIS_HOST }
   }),
 });
-
-/* 
-const redisClient = new Redis({
-  username: 'default',
-  host: 'caching-exagestor-exagestor.h.aivencloud.com',
-  password: 'AVNS_GQ4UU9Znkc6NkAMKdEj',
-  port: 19380,
-  tls: {
-    servername: 'caching-exagestor-exagestor.h.aivencloud.com'
-  }
-}
-);
-*/
 
 redisClient.on('error', (err) => {
   console.error('Redis error:', err);

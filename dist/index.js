@@ -364,7 +364,7 @@ var require_main = __commonJS({
   }
 });
 
-// src/server.ts
+// src/index.ts
 var import_cors = __toESM(require("cors"));
 var import_dotenv7 = __toESM(require_main());
 var import_express79 = __toESM(require("express"));
@@ -6707,7 +6707,7 @@ router78.use(historic_default6);
 router78.use(stock_view_default);
 var almox_default = router78;
 
-// src/server.ts
+// src/index.ts
 import_dotenv7.default.config();
 var app = (0, import_express79.default)();
 var server = import_http.default.createServer(app);
@@ -6750,4 +6750,4 @@ server.listen(PORT, () => {
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} 
 `);
 });
-//# sourceMappingURL=server.js.map
+//# sourceMappingURL=index.js.map

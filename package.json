@@ -8,7 +8,7 @@
     "start": "node dist/index.js",
     "dev:local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
-    "vercel-build": "npx tsup src",
+    "build": "tsc",
     "test": "vitest"
   },
   "engines": {
@@ -35,6 +35,7 @@
     "eslint-plugin-promise": "^6.6.0",
     "nodemon": "^3.1.4",
     "prettier": "^2.4.1",
+    "tsc": "^2.0.4",
     "tsx": "^4.16.2",
     "typescript": "^4.9.5",
     "vitest": "^0.28.3"

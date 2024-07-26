@@ -3,15 +3,23 @@
     "target": "es2020",
     "module": "commonjs",
     "resolveJsonModule": true,
-    "outDir": "dist",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noImplicitAny": true,
     "skipLibCheck": true,
     "paths": {
       "cheerio": [
-          "./node_modules/cheerio/lib/index.d.ts"
+        "./node_modules/cheerio/lib/index.d.ts"
       ]
-  }
-  }
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
 }

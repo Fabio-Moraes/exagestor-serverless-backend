@@ -105,7 +105,7 @@ var require_package = __commonJS({
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
     "use strict";
-    var fs = require("fs");
+    var fs2 = require("fs");
     var path = require("path");
     var os = require("os");
     var crypto = require("crypto");
@@ -212,7 +212,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs.existsSync(filepath)) {
+            if (fs2.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -222,7 +222,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs.existsSync(possibleVaultPath)) {
+      if (fs2.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -266,7 +266,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e) {
           if (debug) {
@@ -432,14 +432,15 @@ async function getAuthenticationHash() {
 // src/config/database/index.ts
 var import_promise = __toESM(require("mysql2/promise"));
 var import_dotenv3 = __toESM(require_main());
+var import_fs = __toESM(require("fs"));
 import_dotenv3.default.config();
 var {
   MYSQL_HOST,
   MYSQL_USER,
-  MYSQL_PORT,
   MYSQL_PASSWORD,
   MYSQL_DATABASE,
-  MYSQL_SSL_CA_CERT
+  MYSQL_PORT,
+  MYSQL_SSL_REJECT_UNAUTHORIZED
 } = process.env;
 var dbConfig = {
   host: MYSQL_HOST,
@@ -448,8 +449,10 @@ var dbConfig = {
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
   connectionLimit: 10,
-  ...MYSQL_SSL_CA_CERT && {
-    ssl: { ca: MYSQL_SSL_CA_CERT }
+  ...MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
+    ssl: {
+      ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+    }
   }
 };
 var dbPool = import_promise.default.createPool(dbConfig);

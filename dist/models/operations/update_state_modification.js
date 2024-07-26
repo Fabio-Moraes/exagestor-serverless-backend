@@ -1,38 +1,66 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_state_modification = void 0;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/models/operations/update_state_modification.ts
+var update_state_modification_exports = {};
+__export(update_state_modification_exports, {
+  update_state_modification: () => update_state_modification
+});
+module.exports = __toCommonJS(update_state_modification_exports);
 function getCurrentDateTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  const now = /* @__PURE__ */ new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const seconds = now.getSeconds().toString().padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 async function update_state_modification(props) {
-    const createdAt = getCurrentDateTime();
-    const { row, newStatus, listService, listMaterial, observation } = props;
-    const values = [
-        row.protocol,
-        row.employee_id,
-        row.creator_leader_id,
-        row.client_name,
-        row.city,
-        row.classification,
-        row.nomenclature,
-        row.address,
-        newStatus,
-        row.update_count,
-        row.start_service_at,
-        row.created_at,
-        createdAt,
-        listService ?? null,
-        listMaterial ?? null,
-        observation ?? null
-    ];
-    const queryOperations = `
+  const createdAt = getCurrentDateTime();
+  const {
+    row,
+    newStatus,
+    listService,
+    listMaterial,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count,
+    row.start_service_at,
+    row.created_at,
+    createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null
+  ];
+  const queryOperations = `
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
@@ -69,6 +97,10 @@ async function update_state_modification(props) {
           list_material = VALUES(list_material),
           observation = VALUES(observation),
           finished_at = VALUES(finished_at);`;
-    return { query: queryOperations, values: values };
+  return { query: queryOperations, values };
 }
-exports.update_state_modification = update_state_modification;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  update_state_modification
+});
+//# sourceMappingURL=update_state_modification.js.map

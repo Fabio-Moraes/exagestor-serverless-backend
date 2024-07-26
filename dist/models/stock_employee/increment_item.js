@@ -1,32 +1,490 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.increment_item = void 0;
-const database_1 = require("../../config/database");
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// node_modules/dotenv/package.json
+var require_package = __commonJS({
+  "node_modules/dotenv/package.json"(exports2, module2) {
+    module2.exports = {
+      name: "dotenv",
+      version: "16.4.5",
+      description: "Loads environment variables from .env file",
+      main: "lib/main.js",
+      types: "lib/main.d.ts",
+      exports: {
+        ".": {
+          types: "./lib/main.d.ts",
+          require: "./lib/main.js",
+          default: "./lib/main.js"
+        },
+        "./config": "./config.js",
+        "./config.js": "./config.js",
+        "./lib/env-options": "./lib/env-options.js",
+        "./lib/env-options.js": "./lib/env-options.js",
+        "./lib/cli-options": "./lib/cli-options.js",
+        "./lib/cli-options.js": "./lib/cli-options.js",
+        "./package.json": "./package.json"
+      },
+      scripts: {
+        "dts-check": "tsc --project tests/types/tsconfig.json",
+        lint: "standard",
+        "lint-readme": "standard-markdown",
+        pretest: "npm run lint && npm run dts-check",
+        test: "tap tests/*.js --100 -Rspec",
+        "test:coverage": "tap --coverage-report=lcov",
+        prerelease: "npm test",
+        release: "standard-version"
+      },
+      repository: {
+        type: "git",
+        url: "git://github.com/motdotla/dotenv.git"
+      },
+      funding: "https://dotenvx.com",
+      keywords: [
+        "dotenv",
+        "env",
+        ".env",
+        "environment",
+        "variables",
+        "config",
+        "settings"
+      ],
+      readmeFilename: "README.md",
+      license: "BSD-2-Clause",
+      devDependencies: {
+        "@definitelytyped/dtslint": "^0.0.133",
+        "@types/node": "^18.11.3",
+        decache: "^4.6.1",
+        sinon: "^14.0.1",
+        standard: "^17.0.0",
+        "standard-markdown": "^7.1.0",
+        "standard-version": "^9.5.0",
+        tap: "^16.3.0",
+        tar: "^6.1.11",
+        typescript: "^4.8.4"
+      },
+      engines: {
+        node: ">=12"
+      },
+      browser: {
+        fs: false
+      }
+    };
+  }
+});
+
+// node_modules/dotenv/lib/main.js
+var require_main = __commonJS({
+  "node_modules/dotenv/lib/main.js"(exports2, module2) {
+    "use strict";
+    var fs = require("fs");
+    var path = require("path");
+    var os = require("os");
+    var crypto = require("crypto");
+    var packageJson = require_package();
+    var version = packageJson.version;
+    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+    function parse(src) {
+      const obj = {};
+      let lines = src.toString();
+      lines = lines.replace(/\r\n?/mg, "\n");
+      let match;
+      while ((match = LINE.exec(lines)) != null) {
+        const key = match[1];
+        let value = match[2] || "";
+        value = value.trim();
+        const maybeQuote = value[0];
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
+        if (maybeQuote === '"') {
+          value = value.replace(/\\n/g, "\n");
+          value = value.replace(/\\r/g, "\r");
+        }
+        obj[key] = value;
+      }
+      return obj;
+    }
+    function _parseVault(options) {
+      const vaultPath = _vaultPath(options);
+      const result = DotenvModule.configDotenv({ path: vaultPath });
+      if (!result.parsed) {
+        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
+        err.code = "MISSING_DATA";
+        throw err;
+      }
+      const keys = _dotenvKey(options).split(",");
+      const length = keys.length;
+      let decrypted;
+      for (let i = 0; i < length; i++) {
+        try {
+          const key = keys[i].trim();
+          const attrs = _instructions(result, key);
+          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+          break;
+        } catch (error) {
+          if (i + 1 >= length) {
+            throw error;
+          }
+        }
+      }
+      return DotenvModule.parse(decrypted);
+    }
+    function _log(message) {
+      console.log(`[dotenv@${version}][INFO] ${message}`);
+    }
+    function _warn(message) {
+      console.log(`[dotenv@${version}][WARN] ${message}`);
+    }
+    function _debug(message) {
+      console.log(`[dotenv@${version}][DEBUG] ${message}`);
+    }
+    function _dotenvKey(options) {
+      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
+        return options.DOTENV_KEY;
+      }
+      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
+        return process.env.DOTENV_KEY;
+      }
+      return "";
+    }
+    function _instructions(result, dotenvKey) {
+      let uri;
+      try {
+        uri = new URL(dotenvKey);
+      } catch (error) {
+        if (error.code === "ERR_INVALID_URL") {
+          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        }
+        throw error;
+      }
+      const key = uri.password;
+      if (!key) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environment = uri.searchParams.get("environment");
+      if (!environment) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
+      const ciphertext = result.parsed[environmentKey];
+      if (!ciphertext) {
+        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
+        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
+        throw err;
+      }
+      return { ciphertext, key };
+    }
+    function _vaultPath(options) {
+      let possibleVaultPath = null;
+      if (options && options.path && options.path.length > 0) {
+        if (Array.isArray(options.path)) {
+          for (const filepath of options.path) {
+            if (fs.existsSync(filepath)) {
+              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
+            }
+          }
+        } else {
+          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+        }
+      } else {
+        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
+      }
+      if (fs.existsSync(possibleVaultPath)) {
+        return possibleVaultPath;
+      }
+      return null;
+    }
+    function _resolveHome(envPath) {
+      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
+    }
+    function _configVault(options) {
+      _log("Loading env from encrypted .env.vault");
+      const parsed = DotenvModule._parseVault(options);
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsed, options);
+      return { parsed };
+    }
+    function configDotenv(options) {
+      const dotenvPath = path.resolve(process.cwd(), ".env");
+      let encoding = "utf8";
+      const debug = Boolean(options && options.debug);
+      if (options && options.encoding) {
+        encoding = options.encoding;
+      } else {
+        if (debug) {
+          _debug("No encoding is specified. UTF-8 is used by default");
+        }
+      }
+      let optionPaths = [dotenvPath];
+      if (options && options.path) {
+        if (!Array.isArray(options.path)) {
+          optionPaths = [_resolveHome(options.path)];
+        } else {
+          optionPaths = [];
+          for (const filepath of options.path) {
+            optionPaths.push(_resolveHome(filepath));
+          }
+        }
+      }
+      let lastError;
+      const parsedAll = {};
+      for (const path2 of optionPaths) {
+        try {
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
+          DotenvModule.populate(parsedAll, parsed, options);
+        } catch (e) {
+          if (debug) {
+            _debug(`Failed to load ${path2} ${e.message}`);
+          }
+          lastError = e;
+        }
+      }
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsedAll, options);
+      if (lastError) {
+        return { parsed: parsedAll, error: lastError };
+      } else {
+        return { parsed: parsedAll };
+      }
+    }
+    function config(options) {
+      if (_dotenvKey(options).length === 0) {
+        return DotenvModule.configDotenv(options);
+      }
+      const vaultPath = _vaultPath(options);
+      if (!vaultPath) {
+        _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
+        return DotenvModule.configDotenv(options);
+      }
+      return DotenvModule._configVault(options);
+    }
+    function decrypt(encrypted, keyStr) {
+      const key = Buffer.from(keyStr.slice(-64), "hex");
+      let ciphertext = Buffer.from(encrypted, "base64");
+      const nonce = ciphertext.subarray(0, 12);
+      const authTag = ciphertext.subarray(-16);
+      ciphertext = ciphertext.subarray(12, -16);
+      try {
+        const aesgcm = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+        aesgcm.setAuthTag(authTag);
+        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
+      } catch (error) {
+        const isRange = error instanceof RangeError;
+        const invalidKeyLength = error.message === "Invalid key length";
+        const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
+        if (isRange || invalidKeyLength) {
+          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        } else if (decryptionFailed) {
+          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+          err.code = "DECRYPTION_FAILED";
+          throw err;
+        } else {
+          throw error;
+        }
+      }
+    }
+    function populate(processEnv, parsed, options = {}) {
+      const debug = Boolean(options && options.debug);
+      const override = Boolean(options && options.override);
+      if (typeof parsed !== "object") {
+        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+        err.code = "OBJECT_REQUIRED";
+        throw err;
+      }
+      for (const key of Object.keys(parsed)) {
+        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
+          if (override === true) {
+            processEnv[key] = parsed[key];
+          }
+          if (debug) {
+            if (override === true) {
+              _debug(`"${key}" is already defined and WAS overwritten`);
+            } else {
+              _debug(`"${key}" is already defined and was NOT overwritten`);
+            }
+          }
+        } else {
+          processEnv[key] = parsed[key];
+        }
+      }
+    }
+    var DotenvModule = {
+      configDotenv,
+      _configVault,
+      _parseVault,
+      config,
+      decrypt,
+      parse,
+      populate
+    };
+    module2.exports.configDotenv = DotenvModule.configDotenv;
+    module2.exports._configVault = DotenvModule._configVault;
+    module2.exports._parseVault = DotenvModule._parseVault;
+    module2.exports.config = DotenvModule.config;
+    module2.exports.decrypt = DotenvModule.decrypt;
+    module2.exports.parse = DotenvModule.parse;
+    module2.exports.populate = DotenvModule.populate;
+    module2.exports = DotenvModule;
+  }
+});
+
+// src/models/stock_employee/increment_item.ts
+var increment_item_exports = {};
+__export(increment_item_exports, {
+  increment_item: () => increment_item
+});
+module.exports = __toCommonJS(increment_item_exports);
+
+// src/config/database/index.ts
+var import_promise = __toESM(require("mysql2/promise"));
+var import_dotenv = __toESM(require_main());
+import_dotenv.default.config();
+var cert = `
+-----BEGIN CERTIFICATE-----
+MIIEQTCCAqmgAwIBAgIUfjj2w0jSUVf1vcnLv3z0Av5xOZEwDQYJKoZIhvcNAQEM
+BQAwOjE4MDYGA1UEAwwvNjIyNjhiODItNjFiZS00MTJjLThiNmUtNWRmMGRlNTE2
+NDdiIFByb2plY3QgQ0EwHhcNMjQwNDExMTE0OTIzWhcNMzQwNDA5MTE0OTIzWjA6
+MTgwNgYDVQQDDC82MjI2OGI4Mi02MWJlLTQxMmMtOGI2ZS01ZGYwZGU1MTY0N2Ig
+UHJvamVjdCBDQTCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBANWnb3lV
+JZV1reJ8oq4fzlGAlkInw14YsRWF5qn8s83b1qVamphzpmxjhcVAudAYen99WYc5
+S++dvtGRzWYKqxq/2Kp4IddHVaRHaLDk9i+1uKx8jWu0ImRQ04ozWkj5Z7+YrN3+
+Xup46UXGmZf/hE/AQXIMSYLMv+W8hdfTgDZriI+4yra1PwL90oIXNkbuXtfWqcl9
+AqEIeTHPRwyg/JUKdruHtA1cgFR/t1+fIosSIkoy91SzYmZLYCgXmx3Dw8DZj9UY
+bNffIH3XOa6eJXDBnl3xir4Pq+Ifcv0h64/DMQHcAKJU342ANi17XG+MLnBpvd+E
+EAJPx02dtSDSrWb/sjbtvsKxLDx7NKMTVyFgGfYjxJwzt79FKeZeX41ejLA/CuH1
+cb1k3W1kXXWRpyC4SQAvxtmMK/TfIiMZDtf9kn85jUJcMf9hv+qfP7FnEIffLq/r
+ifLDlGepNoui3dnqM51cAffl2/N1sVVzX0LLiN0DuSutHRFqOWX4D4hdXwIDAQAB
+oz8wPTAdBgNVHQ4EFgQUddhDxLk3Te49a3/6gsKIpmzmdQkwDwYDVR0TBAgwBgEB
+/wIBADALBgNVHQ8EBAMCAQYwDQYJKoZIhvcNAQEMBQADggGBAGaKG4v6Hz7qY9MD
++fmMvuxI8dBAe54vOwv+6N0gNPKsYvIeuLUXlqLJi4t28oHwZl26aGVKjhFk75B1
+X+1O+1g3lK/aJzweCwHc5zKa8FBRaytvRUaBkV9mwECfX8g8rPt+OJ3No++6xK49
+AdbHKBUkNW5+kS5ua5KcLhi6Zcr3Pq25tLlz7S2JccyjAW1yh0Zbp6W0dy7DIiJe
+jMvEAboqTYzSXFrJObdZs9+oQs8sOGPZkdzr0Vip8WhoTiHP8Zi7uCvoh/CBqa5P
+3zNzKXffEGXxmRW0YZmdRzGyjEa+u4tRX1NoswKIwoD3XPemsuEAbND2BkGKmOPn
+ud6RdybaTsj9llNmm1OVfc69UzPRcE6Eobbw+obA2tOY/KQSBkuwfNZkD7+GtFP7
+OTy3cA1uy01x3cEOskNpPZ+6poBgs7AyAc1VPyJbupFvce/qPqu5ut/4x1hKb9Ex
+klAEltAivfVZWP+VY8AOm/x6GUSqmZFhFE+vDC4cEkwf+p1gAw==
+-----END CERTIFICATE-----
+`;
+var {
+  MYSQL_HOST,
+  MYSQL_USER,
+  MYSQL_PASSWORD,
+  MYSQL_DATABASE,
+  MYSQL_PORT,
+  MYSQL_SSL_REJECT_UNAUTHORIZED
+} = process.env;
+var dbConfig = {
+  host: MYSQL_HOST,
+  user: MYSQL_USER,
+  password: MYSQL_PASSWORD,
+  database: MYSQL_DATABASE,
+  port: Number(MYSQL_PORT),
+  connectionLimit: 10,
+  ...MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
+    ssl: {
+      ca: cert
+    }
+  }
+};
+var dbPool = import_promise.default.createPool(dbConfig);
+process.on("beforeExit", () => {
+  dbPool.end();
+});
+async function executeQuery(query, values) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    const [results] = await connection.query(query, values);
+    return results;
+  } catch (error) {
+    if (error) {
+      throw new Error(`Erro na consulta: ${error}`);
+    }
+    throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+}
+
+// src/models/stock_employee/increment_item.ts
 async function increment_item(materials) {
-    function generateQueryListMaterial(arr) {
-        const placeholders = arr.map(() => '?').join(', ');
-        return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
-    }
-    function generatePlaceholders(data) {
-        const placeholders = data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
-        return placeholders;
-    }
-    const requestListMaterial = JSON.parse(materials);
-    if (!requestListMaterial) {
-        throw new Error('Lista de materiais não foi fornecida');
-    }
-    const listMaterialKeys = Object.keys(requestListMaterial);
-    const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-    const selectQueryListMaterial = await (0, database_1.executeQuery)(queryListMaterial, listMaterialKeys);
-    const resultQueryListMaterial = selectQueryListMaterial.map(items => ({
-        ...items,
-        quantity_value: items.quantity_value - requestListMaterial[items.id]
-    }));
-    const updateValueMaterialsEmployee = [];
-    resultQueryListMaterial.forEach(item => {
-        updateValueMaterialsEmployee.push(item.id, item.employee_id, item.product_name, item.product_code, item.product_batch, requestListMaterial[item.id], item.unit_type, item.created_at);
-    });
-    const queryMaterialsEmployee = `
+  function generateQueryListMaterial(arr) {
+    const placeholders = arr.map(() => "?").join(", ");
+    return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
+  }
+  function generatePlaceholders(data) {
+    const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
+    return placeholders;
+  }
+  const requestListMaterial = JSON.parse(materials);
+  if (!requestListMaterial) {
+    throw new Error("Lista de materiais n\xE3o foi fornecida");
+  }
+  const listMaterialKeys = Object.keys(requestListMaterial);
+  const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const resultQueryListMaterial = selectQueryListMaterial.map((items) => ({
+    ...items,
+    quantity_value: items.quantity_value - requestListMaterial[items.id]
+  }));
+  const updateValueMaterialsEmployee = [];
+  resultQueryListMaterial.forEach((item) => {
+    updateValueMaterialsEmployee.push(
+      item.id,
+      item.employee_id,
+      item.product_name,
+      item.product_code,
+      item.product_batch,
+      requestListMaterial[item.id],
+      item.unit_type,
+      item.created_at
+    );
+  });
+  const queryMaterialsEmployee = `
   INSERT INTO tbl_stock_employee 
       (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
     VALUES ${generatePlaceholders(resultQueryListMaterial)}
@@ -40,6 +498,10 @@ async function increment_item(materials) {
       unit_type = VALUES(unit_type),
       created_at = VALUES(created_at);
     `;
-    return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
+  return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
 }
-exports.increment_item = increment_item;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  increment_item
+});
+//# sourceMappingURL=increment_item.js.map

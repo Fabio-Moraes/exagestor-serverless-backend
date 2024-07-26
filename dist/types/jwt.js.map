@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../src/types/jwt.ts"],"sourcesContent":["export interface Decoded {\n  user: {\n    id: number;\n    name: string;\n    role: string;\n  };\n}"],"mappings":";;;;;;;;;;;;;;;;AAAA;AAAA;","names":[]}

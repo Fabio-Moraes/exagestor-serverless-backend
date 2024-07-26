@@ -5,10 +5,10 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "dev": "nodemon dist/index.js",
     "dev-local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
-    "build": "npm install",
+    "vercel-build": "npm install",
     "build-local": "tsup src",
     "test": "vitest"
   },
@@ -34,6 +34,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.6.0",
+    "nodemon": "^3.1.4",
     "prettier": "^2.4.1",
     "tsx": "^4.16.2",
     "typescript": "^4.9.5",

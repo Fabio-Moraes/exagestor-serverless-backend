@@ -5,7 +5,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "node dist/server.js"
+    "dev": "echo '✅ Initialized...' && node dist/server.js",
+    "vercel-build": "echo '🔥 Building...' && yarn"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

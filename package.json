@@ -11,7 +11,8 @@
     "clean--": "rimraf dist",
     "build--": "echo '🔥 Building...' && npm run clean && npx tsup src --out-dir dist --format esm,cjs",
     "ts-check--": "tsc --project tsconfig.json --noEmit",
-    "test--": "vitest"
+    "test--": "vitest",
+    "vercel-build": "npm install"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

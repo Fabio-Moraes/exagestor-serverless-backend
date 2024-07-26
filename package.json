@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "description": "back_end",
   "private": true,
-  "main": "dist/index.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "echo '✅ Starting...' && node dist/index.js",
-    "dev-local": "tsx watch src/index.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "start": "echo '✅ Starting...' && node dist/server.js",
+    "dev-local": "tsx watch src/server.ts",
+    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
     "clean": "rm -rf dist",
     "build": "echo '🔥 Building...' && npm run clean && npx tsup src",
     "ts.check": "tsc --project tsconfig.json",
-    "test": "vitest",
-    "vercel-build": "npm run build"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

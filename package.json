@@ -10,9 +10,9 @@
     "dev:env--": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "clean--": "rimraf dist",
     "build--": "echo '🔥 Building...' && npm run clean && npx tsup src --out-dir dist --format esm,cjs",
-    "ts-check--": "tsc --project tsconfig.json --noEmit",
+    "ts-check": "tsc --project tsconfig.json --noEmit",
     "test--": "vitest",
-    "vercel-build": "npx tsup src"
+    "build": "npx tsup src"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

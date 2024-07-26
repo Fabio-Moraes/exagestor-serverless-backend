@@ -9,7 +9,7 @@
     "dev-local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "clean": "rm -rf dist",
-    "build": "echo '🔥 Building...' && tsc",
+    "build": "echo '🔥 Building...' && tsup src",
     "ts.check": "tsc --project tsconfig.json",
     "test": "vitest"
   },

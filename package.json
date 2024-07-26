@@ -5,11 +5,15 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "node dist/server.js",
-    "dev-local": "tsx watch src/server.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
-    "build": "tsup src",
+    "start": "node dist/index.js",
+    "dev-local": "tsx watch src/index.ts",
+    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "build": "npm install",
+    "build-local": "tsup src",
     "test": "vitest"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

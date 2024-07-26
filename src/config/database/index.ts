@@ -1,16 +1,15 @@
 import mysql, { Pool, PoolConnection } from 'mysql2/promise';
 import dotenv from 'dotenv';
-import fs from 'fs';
 
 dotenv.config();
 
 const {
   MYSQL_HOST,
   MYSQL_USER,
+  MYSQL_PORT,
   MYSQL_PASSWORD,
   MYSQL_DATABASE,
-  MYSQL_PORT,
-  MYSQL_SSL_REJECT_UNAUTHORIZED
+  MYSQL_SSL_CA_CERT
 } = process.env;
 
 const dbConfig = {
@@ -20,10 +19,8 @@ const dbConfig = {
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
   connectionLimit: 10,
-  ...(MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
-    ssl: {
-      ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem'),
-    },
+  ...(MYSQL_SSL_CA_CERT && {
+    ssl: { ca: MYSQL_SSL_CA_CERT },
   })
 };
 

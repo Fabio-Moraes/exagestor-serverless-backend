@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "back_end",
   "private": true,
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev-local": "tsx watch src/index.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "dev": "node dist/server.js",
+    "dev-local": "tsx watch src/server.ts",
+    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
     "build": "tsup src",
     "test": "vitest"
   },

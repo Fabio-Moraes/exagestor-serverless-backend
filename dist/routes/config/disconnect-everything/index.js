@@ -1,533 +1,98 @@
 "use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// node_modules/dotenv/package.json
-var require_package = __commonJS({
-  "node_modules/dotenv/package.json"(exports2, module2) {
-    module2.exports = {
-      name: "dotenv",
-      version: "16.4.5",
-      description: "Loads environment variables from .env file",
-      main: "lib/main.js",
-      types: "lib/main.d.ts",
-      exports: {
-        ".": {
-          types: "./lib/main.d.ts",
-          require: "./lib/main.js",
-          default: "./lib/main.js"
-        },
-        "./config": "./config.js",
-        "./config.js": "./config.js",
-        "./lib/env-options": "./lib/env-options.js",
-        "./lib/env-options.js": "./lib/env-options.js",
-        "./lib/cli-options": "./lib/cli-options.js",
-        "./lib/cli-options.js": "./lib/cli-options.js",
-        "./package.json": "./package.json"
-      },
-      scripts: {
-        "dts-check": "tsc --project tests/types/tsconfig.json",
-        lint: "standard",
-        "lint-readme": "standard-markdown",
-        pretest: "npm run lint && npm run dts-check",
-        test: "tap tests/*.js --100 -Rspec",
-        "test:coverage": "tap --coverage-report=lcov",
-        prerelease: "npm test",
-        release: "standard-version"
-      },
-      repository: {
-        type: "git",
-        url: "git://github.com/motdotla/dotenv.git"
-      },
-      funding: "https://dotenvx.com",
-      keywords: [
-        "dotenv",
-        "env",
-        ".env",
-        "environment",
-        "variables",
-        "config",
-        "settings"
-      ],
-      readmeFilename: "README.md",
-      license: "BSD-2-Clause",
-      devDependencies: {
-        "@definitelytyped/dtslint": "^0.0.133",
-        "@types/node": "^18.11.3",
-        decache: "^4.6.1",
-        sinon: "^14.0.1",
-        standard: "^17.0.0",
-        "standard-markdown": "^7.1.0",
-        "standard-version": "^9.5.0",
-        tap: "^16.3.0",
-        tar: "^6.1.11",
-        typescript: "^4.8.4"
-      },
-      engines: {
-        node: ">=12"
-      },
-      browser: {
-        fs: false
-      }
-    };
-  }
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
+const functions_1 = require("../../../functions");
+const redis_1 = require("../../../config/redis");
+const zod_1 = require("zod");
+const websocket_1 = require("../../../config/websocket");
+const router = express_1.default.Router();
+const paramsSchema = zod_1.z.object({
+    token: zod_1.z.string(),
 });
-
-// node_modules/dotenv/lib/main.js
-var require_main = __commonJS({
-  "node_modules/dotenv/lib/main.js"(exports2, module2) {
-    "use strict";
-    var fs = require("fs");
-    var path = require("path");
-    var os = require("os");
-    var crypto = require("crypto");
-    var packageJson = require_package();
-    var version = packageJson.version;
-    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
-    function parse(src) {
-      const obj = {};
-      let lines = src.toString();
-      lines = lines.replace(/\r\n?/mg, "\n");
-      let match;
-      while ((match = LINE.exec(lines)) != null) {
-        const key = match[1];
-        let value = match[2] || "";
-        value = value.trim();
-        const maybeQuote = value[0];
-        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
-        if (maybeQuote === '"') {
-          value = value.replace(/\\n/g, "\n");
-          value = value.replace(/\\r/g, "\r");
-        }
-        obj[key] = value;
-      }
-      return obj;
-    }
-    function _parseVault(options) {
-      const vaultPath = _vaultPath(options);
-      const result = DotenvModule.configDotenv({ path: vaultPath });
-      if (!result.parsed) {
-        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
-        err.code = "MISSING_DATA";
-        throw err;
-      }
-      const keys = _dotenvKey(options).split(",");
-      const length = keys.length;
-      let decrypted;
-      for (let i = 0; i < length; i++) {
-        try {
-          const key = keys[i].trim();
-          const attrs = _instructions(result, key);
-          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
-          break;
-        } catch (error) {
-          if (i + 1 >= length) {
-            throw error;
-          }
-        }
-      }
-      return DotenvModule.parse(decrypted);
-    }
-    function _log(message) {
-      console.log(`[dotenv@${version}][INFO] ${message}`);
-    }
-    function _warn(message) {
-      console.log(`[dotenv@${version}][WARN] ${message}`);
-    }
-    function _debug(message) {
-      console.log(`[dotenv@${version}][DEBUG] ${message}`);
-    }
-    function _dotenvKey(options) {
-      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-        return options.DOTENV_KEY;
-      }
-      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
-        return process.env.DOTENV_KEY;
-      }
-      return "";
-    }
-    function _instructions(result, dotenvKey) {
-      let uri;
-      try {
-        uri = new URL(dotenvKey);
-      } catch (error) {
-        if (error.code === "ERR_INVALID_URL") {
-          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        }
-        throw error;
-      }
-      const key = uri.password;
-      if (!key) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environment = uri.searchParams.get("environment");
-      if (!environment) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-      const ciphertext = result.parsed[environmentKey];
-      if (!ciphertext) {
-        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
-        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
-        throw err;
-      }
-      return { ciphertext, key };
-    }
-    function _vaultPath(options) {
-      let possibleVaultPath = null;
-      if (options && options.path && options.path.length > 0) {
-        if (Array.isArray(options.path)) {
-          for (const filepath of options.path) {
-            if (fs.existsSync(filepath)) {
-              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
-            }
-          }
-        } else {
-          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
-        }
-      } else {
-        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
-      }
-      if (fs.existsSync(possibleVaultPath)) {
-        return possibleVaultPath;
-      }
-      return null;
-    }
-    function _resolveHome(envPath) {
-      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
-    }
-    function _configVault(options) {
-      _log("Loading env from encrypted .env.vault");
-      const parsed = DotenvModule._parseVault(options);
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      DotenvModule.populate(processEnv, parsed, options);
-      return { parsed };
-    }
-    function configDotenv(options) {
-      const dotenvPath = path.resolve(process.cwd(), ".env");
-      let encoding = "utf8";
-      const debug = Boolean(options && options.debug);
-      if (options && options.encoding) {
-        encoding = options.encoding;
-      } else {
-        if (debug) {
-          _debug("No encoding is specified. UTF-8 is used by default");
-        }
-      }
-      let optionPaths = [dotenvPath];
-      if (options && options.path) {
-        if (!Array.isArray(options.path)) {
-          optionPaths = [_resolveHome(options.path)];
-        } else {
-          optionPaths = [];
-          for (const filepath of options.path) {
-            optionPaths.push(_resolveHome(filepath));
-          }
-        }
-      }
-      let lastError;
-      const parsedAll = {};
-      for (const path2 of optionPaths) {
-        try {
-          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
-          DotenvModule.populate(parsedAll, parsed, options);
-        } catch (e) {
-          if (debug) {
-            _debug(`Failed to load ${path2} ${e.message}`);
-          }
-          lastError = e;
-        }
-      }
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      DotenvModule.populate(processEnv, parsedAll, options);
-      if (lastError) {
-        return { parsed: parsedAll, error: lastError };
-      } else {
-        return { parsed: parsedAll };
-      }
-    }
-    function config(options) {
-      if (_dotenvKey(options).length === 0) {
-        return DotenvModule.configDotenv(options);
-      }
-      const vaultPath = _vaultPath(options);
-      if (!vaultPath) {
-        _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
-        return DotenvModule.configDotenv(options);
-      }
-      return DotenvModule._configVault(options);
-    }
-    function decrypt(encrypted, keyStr) {
-      const key = Buffer.from(keyStr.slice(-64), "hex");
-      let ciphertext = Buffer.from(encrypted, "base64");
-      const nonce = ciphertext.subarray(0, 12);
-      const authTag = ciphertext.subarray(-16);
-      ciphertext = ciphertext.subarray(12, -16);
-      try {
-        const aesgcm = crypto.createDecipheriv("aes-256-gcm", key, nonce);
-        aesgcm.setAuthTag(authTag);
-        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-      } catch (error) {
-        const isRange = error instanceof RangeError;
-        const invalidKeyLength = error.message === "Invalid key length";
-        const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
-        if (isRange || invalidKeyLength) {
-          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        } else if (decryptionFailed) {
-          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
-          err.code = "DECRYPTION_FAILED";
-          throw err;
-        } else {
-          throw error;
-        }
-      }
-    }
-    function populate(processEnv, parsed, options = {}) {
-      const debug = Boolean(options && options.debug);
-      const override = Boolean(options && options.override);
-      if (typeof parsed !== "object") {
-        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
-        err.code = "OBJECT_REQUIRED";
-        throw err;
-      }
-      for (const key of Object.keys(parsed)) {
-        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
-          if (override === true) {
-            processEnv[key] = parsed[key];
-          }
-          if (debug) {
-            if (override === true) {
-              _debug(`"${key}" is already defined and WAS overwritten`);
-            } else {
-              _debug(`"${key}" is already defined and was NOT overwritten`);
-            }
-          }
-        } else {
-          processEnv[key] = parsed[key];
-        }
-      }
-    }
-    var DotenvModule = {
-      configDotenv,
-      _configVault,
-      _parseVault,
-      config,
-      decrypt,
-      parse,
-      populate
-    };
-    module2.exports.configDotenv = DotenvModule.configDotenv;
-    module2.exports._configVault = DotenvModule._configVault;
-    module2.exports._parseVault = DotenvModule._parseVault;
-    module2.exports.config = DotenvModule.config;
-    module2.exports.decrypt = DotenvModule.decrypt;
-    module2.exports.parse = DotenvModule.parse;
-    module2.exports.populate = DotenvModule.populate;
-    module2.exports = DotenvModule;
-  }
-});
-
-// src/routes/config/disconnect-everything/index.ts
-var disconnect_everything_exports = {};
-__export(disconnect_everything_exports, {
-  default: () => disconnect_everything_default
-});
-module.exports = __toCommonJS(disconnect_everything_exports);
-var import_express = __toESM(require("express"));
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
-
-// src/functions/index.ts
-var import_node_crypto = require("crypto");
-var import_dotenv2 = __toESM(require_main());
-
-// src/config/redis.ts
-var import_ioredis = __toESM(require("ioredis"));
-var import_util = require("util");
-var import_dotenv = __toESM(require_main());
-import_dotenv.default.config();
-var {
-  REDIS_HOST,
-  REDIS_PORT,
-  REDIS_USER,
-  REDIS_PASSWORD,
-  REDIS_TLS_REJECT_UNAUTHORIZED
-} = process.env;
-var redisClient = new import_ioredis.default({
-  username: REDIS_USER,
-  host: REDIS_HOST,
-  password: REDIS_PASSWORD,
-  port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2e3),
-  ...REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
-    tls: { servername: REDIS_HOST }
-  }
-});
-redisClient.on("error", (err) => {
-  console.error("Redis error:", err);
-});
-redisClient.on("connect", () => {
-  console.log("Conectado ao Redis");
-});
-redisClient.on("reconnecting", (delay) => {
-  console.log(`Tentando reconectar ao Redis em ${delay}ms`);
-});
-function getRedis(value) {
-  const sysncRedisGet = (0, import_util.promisify)(redisClient.get).bind(redisClient);
-  return sysncRedisGet(value);
-}
-function setRedis(key, value) {
-  const sysncRedisSet = (0, import_util.promisify)(redisClient.set).bind(redisClient);
-  return sysncRedisSet(key, value);
-}
-
-// src/functions/index.ts
-import_dotenv2.default.config();
-async function getAuthenticationHash() {
-  const salt = process.env.SECRET_SALT;
-  const ssid = await getRedis("_session_ssid") ?? "00000";
-  return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
-}
-
-// src/routes/config/disconnect-everything/index.ts
-var import_zod = require("zod");
-
-// src/config/websocket.ts
-var import_socket = require("socket.io-client");
-var import_dotenv3 = __toESM(require_main());
-import_dotenv3.default.config();
-function websocket(token) {
-  const cookies = /* @__PURE__ */ new Map();
-  cookies.set("auth_token", token);
-  const socket = (0, import_socket.io)(String(process.env.WEBSOCKET_SERVER_BASEURL), {
-    transports: ["websocket"],
-    withCredentials: true,
-    reconnection: true,
-    // Ativar reconexão automática
-    reconnectionAttempts: 5,
-    // Número máximo de tentativas de reconexão
-    reconnectionDelay: 1e3,
-    // Atraso inicial de reconexão em milissegundos
-    reconnectionDelayMax: 5e3,
-    // Atraso máximo de reconexão em milissegundos
-    extraHeaders: {
-      "Origin": String(process.env.BACKEND_ORIGIN_BASEURL),
-      "Cookie": Array.from(cookies.entries()).map(([key, value]) => `${key}=${value}`).join("; ")
-    }
-  });
-  return new Promise((resolve, reject) => {
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-      resolve(socket);
-    });
-    socket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
-      reject(error);
-    });
-  });
-}
-
-// src/routes/config/disconnect-everything/index.ts
-var router = import_express.default.Router();
-var paramsSchema = import_zod.z.object({
-  token: import_zod.z.string()
-});
-var executionStatus = /* @__PURE__ */ new Map();
+const executionStatus = new Map();
 function getRandomSSID(comprimento = 10) {
-  return Math.random().toString(36).slice(2, comprimento);
+    return Math.random().toString(36).slice(2, comprimento);
 }
-router.post("/disconnect-everything", async (req, res) => {
-  const ip = req.ip;
-  if (!ip) {
-    console.error("IP n\xE3o fornecido");
-    return res.status(409).json({ error: "IP n\xE3o fornecido" });
-  }
-  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
-    console.error("J\xE1 existe uma execu\xE7\xE3o em andamento para este IP");
-    return res.status(409).json({ error: "J\xE1 existe uma execu\xE7\xE3o em andamento para este IP" });
-  }
-  try {
-    executionStatus.set(ip, true);
-    const { token } = paramsSchema.parse(req.body);
-    const authenticationHash = await getAuthenticationHash();
-    await new Promise((resolve, reject) => {
-      import_jsonwebtoken.default.verify(token, authenticationHash, async (error, decoded) => {
-        if (error) {
-          reject(error);
-          return;
+router.post('/disconnect-everything', async (req, res) => {
+    const ip = req.ip;
+    if (!ip) {
+        console.error('IP não fornecido');
+        return res.status(409).json({ error: 'IP não fornecido' });
+    }
+    if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+        console.error('Já existe uma execução em andamento para este IP');
+        return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+    }
+    try {
+        executionStatus.set(ip, true);
+        const { token } = paramsSchema.parse(req.body);
+        const authenticationHash = await (0, functions_1.getAuthenticationHash)();
+        await new Promise((resolve, reject) => {
+            jsonwebtoken_1.default.verify(token, authenticationHash, async (error, decoded) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                try {
+                    const ssid = getRandomSSID();
+                    await (0, redis_1.setRedis)('_session_ssid', ssid);
+                    const socket = await (0, websocket_1.websocket)(token);
+                    socket.emit('ALL_REMOTE_LOGOUT_USER');
+                    res.json({ success: true });
+                    socket.close();
+                    resolve(true);
+                }
+                catch (err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+    catch (error) {
+        if (error instanceof jsonwebtoken_1.TokenExpiredError) {
+            console.log('Token expirado');
+            return res.status(403).json({ error: 'Token expirado' });
         }
-        try {
-          const ssid = getRandomSSID();
-          await setRedis("_session_ssid", ssid);
-          const socket = await websocket(token);
-          socket.emit("ALL_REMOTE_LOGOUT_USER");
-          res.json({ success: true });
-          socket.close();
-          resolve(true);
-        } catch (err) {
-          reject(err);
+        if (error instanceof jsonwebtoken_1.JsonWebTokenError) {
+            console.log('Token inválido');
+            return res.status(403).json({ error: 'Token inválido' });
         }
-      });
-    });
-  } catch (error) {
-    if (error instanceof import_jsonwebtoken.TokenExpiredError) {
-      console.log("Token expirado");
-      return res.status(403).json({ error: "Token expirado" });
+        if (error instanceof zod_1.ZodError) {
+            console.error('Requisição inválida Zod', error.errors);
+            return res.status(400).json({ error: error.errors });
+        }
+        console.error(error);
+        return res.status(500).json({ error: 'Internal server error.' });
     }
-    if (error instanceof import_jsonwebtoken.JsonWebTokenError) {
-      console.log("Token inv\xE1lido");
-      return res.status(403).json({ error: "Token inv\xE1lido" });
+    finally {
+        executionStatus.set(ip, false);
     }
-    if (error instanceof import_zod.ZodError) {
-      console.error("Requisi\xE7\xE3o inv\xE1lida Zod", error.errors);
-      return res.status(400).json({ error: error.errors });
-    }
-    console.error(error);
-    return res.status(500).json({ error: "Internal server error." });
-  } finally {
-    executionStatus.set(ip, false);
-  }
 });
-var disconnect_everything_default = router;
-//# sourceMappingURL=index.js.map
+exports.default = router;

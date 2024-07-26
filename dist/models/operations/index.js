@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/models/operations/index.ts
 var operations_exports = {};
@@ -55,35 +35,34 @@ function getCurrentDateTime() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function update_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime();
-    const {
-      row,
-      newStatus,
-      listService,
-      listMaterial,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count,
-      row.start_service_at,
-      row.created_at,
-      createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null
-    ];
-    const queryOperations = `
+async function update_state_modification(props) {
+  const createdAt = getCurrentDateTime();
+  const {
+    row,
+    newStatus,
+    listService,
+    listMaterial,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count,
+    row.start_service_at,
+    row.created_at,
+    createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null
+  ];
+  const queryOperations = `
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
@@ -120,8 +99,7 @@ function update_state_modification(props) {
           list_material = VALUES(list_material),
           observation = VALUES(observation),
           finished_at = VALUES(finished_at);`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

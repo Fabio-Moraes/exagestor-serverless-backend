@@ -1,27 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -46,26 +29,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // node_modules/dotenv/package.json
 var require_package = __commonJS({
@@ -142,7 +105,7 @@ var require_package = __commonJS({
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
     "use strict";
-    var fs2 = require("fs");
+    var fs = require("fs");
     var path = require("path");
     var os = require("os");
     var crypto = require("crypto");
@@ -249,7 +212,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs2.existsSync(filepath)) {
+            if (fs.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -259,7 +222,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs2.existsSync(possibleVaultPath)) {
+      if (fs.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -303,7 +266,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e) {
           if (debug) {
@@ -431,15 +394,16 @@ var {
   REDIS_PASSWORD,
   REDIS_TLS_REJECT_UNAUTHORIZED
 } = process.env;
-var redisClient = new import_ioredis.default(__spreadValues({
+var redisClient = new import_ioredis.default({
   username: REDIS_USER,
   host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2e3)
-}, REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
-  tls: { servername: REDIS_HOST }
-}));
+  retryStrategy: (times) => Math.min(times * 50, 2e3),
+  ...REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
+    tls: { servername: REDIS_HOST }
+  }
+});
 redisClient.on("error", (err) => {
   console.error("Redis error:", err);
 });
@@ -456,84 +420,75 @@ function getRedis(value) {
 
 // src/functions/index.ts
 import_dotenv2.default.config();
-function getAuthenticationHash() {
-  return __async(this, null, function* () {
-    var _a;
-    const salt = process.env.SECRET_SALT;
-    const ssid = (_a = yield getRedis("_session_ssid")) != null ? _a : "00000";
-    return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
-  });
+async function getAuthenticationHash() {
+  const salt = process.env.SECRET_SALT;
+  const ssid = await getRedis("_session_ssid") ?? "00000";
+  return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
 }
 
 // src/config/database/index.ts
 var import_promise = __toESM(require("mysql2/promise"));
 var import_dotenv3 = __toESM(require_main());
-var import_fs = __toESM(require("fs"));
 import_dotenv3.default.config();
 var {
   MYSQL_HOST,
   MYSQL_USER,
+  MYSQL_PORT,
   MYSQL_PASSWORD,
   MYSQL_DATABASE,
-  MYSQL_PORT,
-  MYSQL_SSL_REJECT_UNAUTHORIZED
+  MYSQL_SSL_CA_CERT
 } = process.env;
-var dbConfig = __spreadValues({
+var dbConfig = {
   host: MYSQL_HOST,
   user: MYSQL_USER,
   password: MYSQL_PASSWORD,
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
-  connectionLimit: 10
-}, MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
-  ssl: {
-    ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+  connectionLimit: 10,
+  ...MYSQL_SSL_CA_CERT && {
+    ssl: { ca: MYSQL_SSL_CA_CERT }
   }
-});
+};
 var dbPool = import_promise.default.createPool(dbConfig);
 process.on("beforeExit", () => {
   dbPool.end();
 });
-function executeQuery(query, values) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      const [results] = yield connection.query(query, values);
-      return results;
-    } catch (error) {
-      if (error) {
-        throw new Error(`Erro na consulta: ${error}`);
-      }
-      throw error;
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeQuery(query, values) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    const [results] = await connection.query(query, values);
+    return results;
+  } catch (error) {
+    if (error) {
+      throw new Error(`Erro na consulta: ${error}`);
     }
-  });
+    throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
-function executeTransaction(queries) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      yield connection.beginTransaction();
-      for (const { query, values } of queries) {
-        yield connection.query(query, values);
-      }
-      yield connection.commit();
-    } catch (error) {
-      if (connection) {
-        yield connection.rollback();
-      }
-      throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeTransaction(queries) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    await connection.beginTransaction();
+    for (const { query, values } of queries) {
+      await connection.query(query, values);
     }
-  });
+    await connection.commit();
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
 
 // src/routes/tec/running/cancel/index.ts
@@ -551,36 +506,35 @@ function getCurrentDateTime() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function insert_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime();
-    const {
-      row,
-      newStatus,
-      listMaterial,
-      listService,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count + 1,
-      row.start_service_at,
-      row.created_at,
-      newStatus === "concluded" ? row.modification_at : createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null,
-      newStatus === "concluded" ? createdAt : null
-    ];
-    const queryOperations = `
+async function insert_state_modification(props) {
+  const createdAt = getCurrentDateTime();
+  const {
+    row,
+    newStatus,
+    listMaterial,
+    listService,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count + 1,
+    row.start_service_at,
+    row.created_at,
+    newStatus === "concluded" ? row.modification_at : createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null,
+    newStatus === "concluded" ? createdAt : null
+  ];
+  const queryOperations = `
   INSERT INTO tbl_operations_logs (
     protocol, 
     employee_id, 
@@ -601,8 +555,7 @@ function insert_state_modification(props) {
     finished_at
 ) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 
 // src/routes/tec/running/cancel/index.ts
@@ -650,7 +603,7 @@ var paramsSchema = import_zod.z.object({
   protocol: import_zod.z.string().max(17)
 });
 var executionStatus = /* @__PURE__ */ new Map();
-router.post("/running/cancel", (req, res) => __async(void 0, null, function* () {
+router.post("/running/cancel", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -663,9 +616,9 @@ router.post("/running/cancel", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus.set(ip, true);
     const { token, protocol } = paramsSchema.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -673,26 +626,26 @@ router.post("/running/cancel", (req, res) => __async(void 0, null, function* () 
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const valueDeleteOperations = [row.employee_id, row.protocol];
           const queryDeleteOperations = "DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
           const newStatus = "canceled";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
             { query: queryDeleteOperations, values: valueDeleteOperations },
-            __spreadValues({}, createStateModificationHistoryRecord)
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken.TokenExpiredError) {
@@ -712,7 +665,7 @@ router.post("/running/cancel", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus.set(ip, false);
   }
-}));
+});
 var cancel_default = router;
 
 // src/routes/tec/running/pause/index.ts
@@ -732,35 +685,34 @@ function getCurrentDateTime2() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function update_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime2();
-    const {
-      row,
-      newStatus,
-      listService,
-      listMaterial,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count,
-      row.start_service_at,
-      row.created_at,
-      createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null
-    ];
-    const queryOperations = `
+async function update_state_modification(props) {
+  const createdAt = getCurrentDateTime2();
+  const {
+    row,
+    newStatus,
+    listService,
+    listMaterial,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count,
+    row.start_service_at,
+    row.created_at,
+    createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null
+  ];
+  const queryOperations = `
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
@@ -797,8 +749,7 @@ function update_state_modification(props) {
           list_material = VALUES(list_material),
           observation = VALUES(observation),
           finished_at = VALUES(finished_at);`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 
 // src/routes/tec/running/pause/index.ts
@@ -809,7 +760,7 @@ var paramsSchema2 = import_zod2.z.object({
   protocol: import_zod2.z.string().max(17)
 });
 var executionStatus2 = /* @__PURE__ */ new Map();
-router2.post("/running/pause", (req, res) => __async(void 0, null, function* () {
+router2.post("/running/pause", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -822,9 +773,9 @@ router2.post("/running/pause", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus2.set(ip, true);
     const { token, protocol } = paramsSchema2.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken2.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken2.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -832,25 +783,25 @@ router2.post("/running/pause", (req, res) => __async(void 0, null, function* () 
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "active"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "paused";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken2.TokenExpiredError) {
@@ -870,7 +821,7 @@ router2.post("/running/pause", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus2.set(ip, false);
   }
-}));
+});
 var pause_default = router2;
 
 // src/routes/tec/running/start/index.ts
@@ -885,7 +836,7 @@ var paramsSchema3 = import_zod3.z.object({
   protocol: import_zod3.z.string().max(17)
 });
 var executionStatus3 = /* @__PURE__ */ new Map();
-router3.post("/running/start", (req, res) => __async(void 0, null, function* () {
+router3.post("/running/start", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -898,9 +849,9 @@ router3.post("/running/start", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus3.set(ip, true);
     const { token, protocol } = paramsSchema3.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken3.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken3.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -908,25 +859,25 @@ router3.post("/running/start", (req, res) => __async(void 0, null, function* () 
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "paused"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "paused"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "active";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken3.TokenExpiredError) {
@@ -946,7 +897,7 @@ router3.post("/running/start", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus3.set(ip, false);
   }
-}));
+});
 var start_default = router3;
 
 // src/routes/tec/running/finish/index.ts
@@ -958,40 +909,40 @@ var import_jsonwebtoken4 = __toESM(require("jsonwebtoken"));
 var import_zod4 = require("zod");
 
 // src/models/stock_employee/decrement_item.ts
-function decrement_item(materials) {
-  return __async(this, null, function* () {
-    function generateQueryListMaterial(arr) {
-      const placeholders = arr.map(() => "?").join(", ");
-      return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
-    }
-    function generatePlaceholders(data) {
-      const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
-      return placeholders;
-    }
-    const requestListMaterial = JSON.parse(materials);
-    if (!requestListMaterial) {
-      throw new Error("Lista de materiais n\xE3o foi fornecida");
-    }
-    const listMaterialKeys = Object.keys(requestListMaterial);
-    const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-    const selectQueryListMaterial = yield executeQuery(queryListMaterial, listMaterialKeys);
-    const resultQueryListMaterial = selectQueryListMaterial.map((items) => __spreadProps(__spreadValues({}, items), {
-      quantity_value: items.quantity_value - requestListMaterial[items.id]
-    }));
-    const updateValueMaterialsEmployee = [];
-    resultQueryListMaterial.forEach((item) => {
-      updateValueMaterialsEmployee.push(
-        item.id,
-        item.employee_id,
-        item.product_name,
-        item.product_code,
-        item.product_batch,
-        requestListMaterial[item.id],
-        item.unit_type,
-        item.created_at
-      );
-    });
-    const queryMaterialsEmployee = `
+async function decrement_item(materials) {
+  function generateQueryListMaterial(arr) {
+    const placeholders = arr.map(() => "?").join(", ");
+    return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
+  }
+  function generatePlaceholders(data) {
+    const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
+    return placeholders;
+  }
+  const requestListMaterial = JSON.parse(materials);
+  if (!requestListMaterial) {
+    throw new Error("Lista de materiais n\xE3o foi fornecida");
+  }
+  const listMaterialKeys = Object.keys(requestListMaterial);
+  const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const resultQueryListMaterial = selectQueryListMaterial.map((items) => ({
+    ...items,
+    quantity_value: items.quantity_value - requestListMaterial[items.id]
+  }));
+  const updateValueMaterialsEmployee = [];
+  resultQueryListMaterial.forEach((item) => {
+    updateValueMaterialsEmployee.push(
+      item.id,
+      item.employee_id,
+      item.product_name,
+      item.product_code,
+      item.product_batch,
+      requestListMaterial[item.id],
+      item.unit_type,
+      item.created_at
+    );
+  });
+  const queryMaterialsEmployee = `
   INSERT INTO tbl_stock_employee 
       (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
     VALUES ${generatePlaceholders(resultQueryListMaterial)}
@@ -1005,8 +956,7 @@ function decrement_item(materials) {
       unit_type = VALUES(unit_type),
       created_at = VALUES(created_at);
     `;
-    return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
-  });
+  return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
 }
 
 // src/routes/tec/running/finish/concluded/index.ts
@@ -1019,7 +969,7 @@ var paramsSchema4 = import_zod4.z.object({
   listMaterial: import_zod4.z.string().optional()
 });
 var executionStatus4 = /* @__PURE__ */ new Map();
-router4.post("/running/finish/concluded", (req, res) => __async(void 0, null, function* () {
+router4.post("/running/finish/concluded", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1038,9 +988,9 @@ router4.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
       listMaterial,
       listService
     } = paramsSchema4.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken4.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken4.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1048,7 +998,7 @@ router4.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "active"]);
           if (!row) {
             console.error("Invalid request");
             return res.status(400).json({ error: "Invalid request" });
@@ -1061,23 +1011,23 @@ router4.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
             observation
           };
           const executeTransactionArray = [];
-          const updateStateModificationService = yield update_state_modification(modification);
+          const updateStateModificationService = await update_state_modification(modification);
           executeTransactionArray.push(updateStateModificationService);
-          const createStateModificationHistoryRecord = yield insert_state_modification(modification);
+          const createStateModificationHistoryRecord = await insert_state_modification(modification);
           executeTransactionArray.push(createStateModificationHistoryRecord);
           if (listMaterial) {
-            const decrementStockItemQuantityEmployee = yield decrement_item(listMaterial);
+            const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
             executeTransactionArray.push(decrementStockItemQuantityEmployee);
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken4.TokenExpiredError) {
@@ -1097,7 +1047,7 @@ router4.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus4.set(ip, false);
   }
-}));
+});
 var concluded_default = router4;
 
 // src/routes/tec/running/finish/select-material/index.ts
@@ -1110,7 +1060,7 @@ var paramsSchema5 = import_zod5.z.object({
   protocol: import_zod5.z.string().max(17)
 });
 var executionStatus5 = /* @__PURE__ */ new Map();
-router5.post("/running/finish/select-material", (req, res) => __async(void 0, null, function* () {
+router5.post("/running/finish/select-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1123,9 +1073,9 @@ router5.post("/running/finish/select-material", (req, res) => __async(void 0, nu
   try {
     executionStatus5.set(ip, true);
     const { token, protocol } = paramsSchema5.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken5.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken5.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1134,13 +1084,13 @@ router5.post("/running/finish/select-material", (req, res) => __async(void 0, nu
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ? ORDER BY created_at DESC";
           const newStatus = "active";
-          const rows = yield executeQuery(selectSql, [user.id, protocol, newStatus]);
+          const rows = await executeQuery(selectSql, [user.id, protocol, newStatus]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken5.TokenExpiredError) {
@@ -1160,7 +1110,7 @@ router5.post("/running/finish/select-material", (req, res) => __async(void 0, nu
   } finally {
     executionStatus5.set(ip, false);
   }
-}));
+});
 var select_material_default = router5;
 
 // src/routes/tec/running/finish/select-service/index.ts
@@ -1173,7 +1123,7 @@ var paramsSchema6 = import_zod6.z.object({
   protocol: import_zod6.z.string().max(17)
 });
 var executionStatus6 = /* @__PURE__ */ new Map();
-router6.post("/running/finish/select-service", (req, res) => __async(void 0, null, function* () {
+router6.post("/running/finish/select-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1186,9 +1136,9 @@ router6.post("/running/finish/select-service", (req, res) => __async(void 0, nul
   try {
     executionStatus6.set(ip, true);
     const { token, protocol } = paramsSchema6.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken6.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken6.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1198,14 +1148,14 @@ router6.post("/running/finish/select-service", (req, res) => __async(void 0, nul
           const sql1 = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ? ORDER BY created_at DESC";
           const sql2 = "SELECT * FROM tbl_service_catalog WHERE status = ?";
           const newStatus = "active";
-          const currentOperation = yield executeQuery(sql1, [user.id, protocol, newStatus]);
-          const serviceList = yield executeQuery(sql2, ["ativo"]);
+          const currentOperation = await executeQuery(sql1, [user.id, protocol, newStatus]);
+          const serviceList = await executeQuery(sql2, ["ativo"]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken6.TokenExpiredError) {
@@ -1225,7 +1175,7 @@ router6.post("/running/finish/select-service", (req, res) => __async(void 0, nul
   } finally {
     executionStatus6.set(ip, false);
   }
-}));
+});
 var select_service_default = router6;
 
 // src/routes/tec/running/finish/index.ts
@@ -1239,7 +1189,7 @@ var finish_default = router7;
 var import_zod7 = require("zod");
 var router8 = import_express8.default.Router();
 var executionStatus7 = /* @__PURE__ */ new Map();
-router8.post("/running", (req, res) => __async(void 0, null, function* () {
+router8.post("/running", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1253,9 +1203,9 @@ router8.post("/running", (req, res) => __async(void 0, null, function* () {
     executionStatus7.set(ip, true);
     const paramsSchema7 = import_zod7.z.object({ token: import_zod7.z.string() });
     const { token } = paramsSchema7.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken7.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken7.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1269,13 +1219,13 @@ router8.post("/running", (req, res) => __async(void 0, null, function* () {
       LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       WHERE u1.employee_id = ?
       ORDER BY u1.created_at DESC`;
-          const rows = yield executeQuery(sql, [user.id]);
+          const rows = await executeQuery(sql, [user.id]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken7.TokenExpiredError) {
@@ -1295,7 +1245,7 @@ router8.post("/running", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus7.set(ip, false);
   }
-}));
+});
 router8.use(finish_default);
 router8.use(cancel_default);
 router8.use(pause_default);

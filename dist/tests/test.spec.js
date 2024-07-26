@@ -1,39 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 var __esm = (fn2, res) => function __init() {
   return fn2 && (res = (0, fn2[__getOwnPropNames(fn2)[0]])(fn2 = 0)), res;
 };
@@ -61,26 +32,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve2, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve2(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // node_modules/pretty-format/node_modules/ansi-styles/index.js
 var require_ansi_styles = __commonJS({
@@ -189,7 +140,7 @@ var require_ansi_styles = __commonJS({
         },
         hexToRgb: {
           value: (hex2) => {
-            const matches = new RegExp("(?<colorString>[a-f\\d]{6}|[a-f\\d]{3})", "i").exec(hex2.toString(16));
+            const matches = /(?<colorString>[a-f\d]{6}|[a-f\d]{3})/i.exec(hex2.toString(16));
             if (!matches) {
               return [0, 0, 0];
             }
@@ -521,7 +472,7 @@ var require_DOMCollection = __commonJS({
         isNamedNodeMap2(collection) ? Array.from(collection).reduce((props, attribute) => {
           props[attribute.name] = attribute.value;
           return props;
-        }, {}) : __spreadValues({}, collection),
+        }, {}) : { ...collection },
         config2,
         indentation,
         depth,
@@ -632,7 +583,7 @@ var require_DOMElement = __commonJS({
     var testHasAttribute2 = (val) => {
       try {
         return typeof val.hasAttribute === "function" && val.hasAttribute("is");
-      } catch (e) {
+      } catch {
         return false;
       }
     };
@@ -6615,7 +6566,7 @@ var init_chunk_magic_string_3a794426 = __esm({
       }
       overwrite(start, end, content, options) {
         options = options || {};
-        return this.update(start, end, content, __spreadProps(__spreadValues({}, options), { overwrite: !options.contentOnly }));
+        return this.update(start, end, content, { ...options, overwrite: !options.contentOnly });
       }
       update(start, end, content, options) {
         if (typeof content !== "string") throw new TypeError("replacement content must be a string");
@@ -7238,23 +7189,24 @@ var PLUGINS = [
   Immutable,
   AsymmetricMatcher
 ];
-function stringify(object2, maxDepth = 10, _a2 = {}) {
-  var _b = _a2, { maxLength } = _b, options = __objRest(_b, ["maxLength"]);
-  const MAX_LENGTH = maxLength != null ? maxLength : 1e4;
+function stringify(object2, maxDepth = 10, { maxLength, ...options } = {}) {
+  const MAX_LENGTH = maxLength ?? 1e4;
   let result;
   try {
-    result = (0, import_pretty_format.format)(object2, __spreadValues({
+    result = (0, import_pretty_format.format)(object2, {
       maxDepth,
       escapeString: false,
-      plugins: PLUGINS
-    }, options));
-  } catch (e) {
-    result = (0, import_pretty_format.format)(object2, __spreadValues({
+      plugins: PLUGINS,
+      ...options
+    });
+  } catch {
+    result = (0, import_pretty_format.format)(object2, {
       callToJSON: false,
       maxDepth,
       escapeString: false,
-      plugins: PLUGINS
-    }, options));
+      plugins: PLUGINS,
+      ...options
+    });
   }
   return result.length >= MAX_LENGTH && maxDepth > 1 ? stringify(object2, Math.floor(maxDepth / 2)) : result;
 }
@@ -7363,7 +7315,7 @@ function createChainable(keys2, fn2) {
     for (const key of keys2) {
       Object.defineProperty(chain2, key, {
         get() {
-          return create(__spreadProps(__spreadValues({}, context), { [key]: true }));
+          return create({ ...context, [key]: true });
         }
       });
     }
@@ -7559,13 +7511,11 @@ function collectTask(task) {
   var _a2;
   (_a2 = collectorContext.currentSuite) == null ? void 0 : _a2.tasks.push(task);
 }
-function runWithSuite(suite2, fn2) {
-  return __async(this, null, function* () {
-    const prev = collectorContext.currentSuite;
-    collectorContext.currentSuite = suite2;
-    yield fn2();
-    collectorContext.currentSuite = prev;
-  });
+async function runWithSuite(suite2, fn2) {
+  const prev = collectorContext.currentSuite;
+  collectorContext.currentSuite = suite2;
+  await fn2();
+  collectorContext.currentSuite = prev;
 }
 function withTimeout(fn2, timeout, isHook = false) {
   if (timeout <= 0 || timeout === Infinity)
@@ -7629,7 +7579,6 @@ function createSuiteCollector(name, factory = () => {
   let suite2;
   initSuite();
   const test22 = createTest(function(name2, fn2 = noop, options = suiteOptions) {
-    var _a2;
     const mode2 = this.only ? "only" : this.skip ? "skip" : this.todo ? "todo" : "run";
     if (typeof options === "number")
       options = { timeout: options };
@@ -7653,7 +7602,7 @@ function createSuiteCollector(name, factory = () => {
     });
     setFn(test3, withTimeout(
       () => fn2(context),
-      (_a2 = options == null ? void 0 : options.timeout) != null ? _a2 : runner.config.testTimeout
+      (options == null ? void 0 : options.timeout) ?? runner.config.testTimeout
     ));
     tasks.push(test3);
   });
@@ -7698,23 +7647,21 @@ function createSuiteCollector(name, factory = () => {
     factoryQueue.length = 0;
     initSuite();
   }
-  function collect(file) {
-    return __async(this, null, function* () {
-      factoryQueue.length = 0;
-      if (factory)
-        yield runWithSuite(collector, () => factory(test22));
-      const allChildren = [];
-      for (const i of [...factoryQueue, ...tasks])
-        allChildren.push(i.type === "collector" ? yield i.collect(file) : i);
-      suite2.file = file;
-      suite2.tasks = allChildren;
-      allChildren.forEach((task) => {
-        task.suite = suite2;
-        if (file)
-          task.file = file;
-      });
-      return suite2;
+  async function collect(file) {
+    factoryQueue.length = 0;
+    if (factory)
+      await runWithSuite(collector, () => factory(test22));
+    const allChildren = [];
+    for (const i of [...factoryQueue, ...tasks])
+      allChildren.push(i.type === "collector" ? await i.collect(file) : i);
+    suite2.file = file;
+    suite2.tasks = allChildren;
+    allChildren.forEach((task) => {
+      task.suite = suite2;
+      if (file)
+        task.file = file;
     });
+    return suite2;
   }
   collectTask(collector);
   return collector;
@@ -7796,10 +7743,10 @@ function getCurrentTest() {
 }
 var now = Date.now;
 var getDefaultHookTimeout = () => getRunner().config.hookTimeout;
-var beforeAll = (fn2, timeout) => getCurrentSuite().on("beforeAll", withTimeout(fn2, timeout != null ? timeout : getDefaultHookTimeout(), true));
-var afterAll = (fn2, timeout) => getCurrentSuite().on("afterAll", withTimeout(fn2, timeout != null ? timeout : getDefaultHookTimeout(), true));
-var beforeEach = (fn2, timeout) => getCurrentSuite().on("beforeEach", withTimeout(fn2, timeout != null ? timeout : getDefaultHookTimeout(), true));
-var afterEach = (fn2, timeout) => getCurrentSuite().on("afterEach", withTimeout(fn2, timeout != null ? timeout : getDefaultHookTimeout(), true));
+var beforeAll = (fn2, timeout) => getCurrentSuite().on("beforeAll", withTimeout(fn2, timeout ?? getDefaultHookTimeout(), true));
+var afterAll = (fn2, timeout) => getCurrentSuite().on("afterAll", withTimeout(fn2, timeout ?? getDefaultHookTimeout(), true));
+var beforeEach = (fn2, timeout) => getCurrentSuite().on("beforeEach", withTimeout(fn2, timeout ?? getDefaultHookTimeout(), true));
+var afterEach = (fn2, timeout) => getCurrentSuite().on("afterEach", withTimeout(fn2, timeout ?? getDefaultHookTimeout(), true));
 var onTestFailed = createTestHook("onTestFailed", (test3, handler) => {
   test3.onFailed || (test3.onFailed = []);
   test3.onFailed.push(handler);
@@ -8720,9 +8667,10 @@ function stringWidth(string2, options = {}) {
   if (typeof string2 !== "string" || string2.length === 0) {
     return 0;
   }
-  options = __spreadValues({
-    ambiguousIsNarrow: true
-  }, options);
+  options = {
+    ambiguousIsNarrow: true,
+    ...options
+  };
   string2 = stripAnsi(string2);
   if (string2.length === 0) {
     return 0;
@@ -8771,11 +8719,12 @@ function getIndexOfNearestSpace(string2, wantedIndex, shouldSearchRight) {
   return wantedIndex;
 }
 function cliTruncate(text, columns, options) {
-  options = __spreadValues({
+  options = {
     position: "end",
     preferTruncationOnSpace: false,
-    truncationCharacter: "\u2026"
-  }, options);
+    truncationCharacter: "\u2026",
+    ...options
+  };
   const { position, space, preferTruncationOnSpace } = options;
   let { truncationCharacter } = options;
   if (typeof text !== "string") {
@@ -8832,7 +8781,7 @@ function cliTruncate(text, columns, options) {
 // node_modules/@vitest/utils/dist/diff.js
 function formatLine(line, outputTruncateLength) {
   var _a2;
-  return cliTruncate(line, (outputTruncateLength != null ? outputTruncateLength : ((_a2 = process.stdout) == null ? void 0 : _a2.columns) || 80) - 4);
+  return cliTruncate(line, (outputTruncateLength ?? (((_a2 = process.stdout) == null ? void 0 : _a2.columns) || 80)) - 4);
 }
 function unifiedDiff(actual, expected, options = {}) {
   if (actual === expected)
@@ -8993,10 +8942,10 @@ function C(t, e, i) {
   let u;
   a ? u = a[n2] : n2 !== "value" ? u = () => t[r] : u = t[r], i || (i = u);
   let p = S(i), A = (m) => {
-    let _a2 = a || {
+    let { value: O, ...h } = a || {
       configurable: true,
       writable: true
-    }, { value: O } = _a2, h = __objRest(_a2, ["value"]);
+    };
     n2 !== "value" && delete h.writable, h[n2] = m, f(t, r, h);
   }, k = () => A(u);
   return p.restore = k, p.getOriginal = () => T ? u() : u, p.willCall = (m) => (p.impl = m, p), A(T ? () => p : p), g.add(p), p;
@@ -9468,16 +9417,18 @@ var AsymmetricMatcher2 = class {
     this.$$typeof = Symbol.for("jest.asymmetricMatcher");
   }
   getMatcherContext(expect2) {
-    return __spreadProps(__spreadValues({}, getState(expect2 || globalThis[GLOBAL_EXPECT])), {
+    return {
+      ...getState(expect2 || globalThis[GLOBAL_EXPECT]),
       equals: equals2,
       isNot: this.inverse,
-      utils: __spreadProps(__spreadValues({}, getMatcherUtils()), {
+      utils: {
+        ...getMatcherUtils(),
         diff: diff2,
         stringify,
         iterableEquality,
         subsetEquality
-      })
-    });
+      }
+    };
   }
 };
 var StringContaining = class extends AsymmetricMatcher2 {
@@ -10263,7 +10214,7 @@ Number of calls: ${c().bold(spy.mock.calls.length)}
         const result = Reflect.get(target, key, receiver);
         if (typeof result !== "function")
           return result instanceof chai3.Assertion ? proxy : result;
-        return (...args) => __async(this, null, function* () {
+        return async (...args) => {
           return obj.then(
             (value) => {
               utils.flag(this, "object", value);
@@ -10273,7 +10224,7 @@ Number of calls: ${c().bold(spy.mock.calls.length)}
               throw new Error(`promise rejected "${String(err)}" instead of resolving`);
             }
           );
-        });
+        };
       }
     });
     return proxy;
@@ -10290,7 +10241,7 @@ Number of calls: ${c().bold(spy.mock.calls.length)}
         const result = Reflect.get(target, key, receiver);
         if (typeof result !== "function")
           return result instanceof chai3.Assertion ? proxy : result;
-        return (...args) => __async(this, null, function* () {
+        return async (...args) => {
           return wrapper.then(
             (value) => {
               throw new Error(`promise resolved "${String(value)}" instead of rejecting`);
@@ -10300,7 +10251,7 @@ Number of calls: ${c().bold(spy.mock.calls.length)}
               return result.call(this, ...args);
             }
           );
-        });
+        };
       }
     });
     return proxy;
@@ -10310,19 +10261,21 @@ var getMatcherState = (assertion, expect2) => {
   const obj = assertion._obj;
   const isNot = util2.flag(assertion, "negate");
   const promise = util2.flag(assertion, "promise") || "";
-  const jestUtils = __spreadProps(__spreadValues({}, getMatcherUtils()), {
+  const jestUtils = {
+    ...getMatcherUtils(),
     diff: diff2,
     stringify,
     iterableEquality,
     subsetEquality
-  });
-  const matcherState = __spreadProps(__spreadValues({}, getState(expect2)), {
+  };
+  const matcherState = {
+    ...getState(expect2),
     isNot,
     utils: jestUtils,
     promise,
     equals: equals2,
     suppressedErrors: []
-  });
+  };
   return {
     state: matcherState,
     isNot,
@@ -10543,23 +10496,21 @@ function waitNextTick() {
   const { setTimeout: setTimeout2 } = getSafeTimers();
   return new Promise((resolve2) => setTimeout2(resolve2, 0));
 }
-function waitForImportsToResolve() {
-  return __async(this, null, function* () {
-    yield waitNextTick();
-    const state = getWorkerState();
-    const promises = [];
-    let resolvingCount = 0;
-    for (const mod of state.moduleCache.values()) {
-      if (mod.promise && !mod.evaluated)
-        promises.push(mod.promise);
-      if (mod.resolving)
-        resolvingCount++;
-    }
-    if (!promises.length && !resolvingCount)
-      return;
-    yield Promise.allSettled(promises);
-    yield waitForImportsToResolve();
-  });
+async function waitForImportsToResolve() {
+  await waitNextTick();
+  const state = getWorkerState();
+  const promises = [];
+  let resolvingCount = 0;
+  for (const mod of state.moduleCache.values()) {
+    if (mod.promise && !mod.evaluated)
+      promises.push(mod.promise);
+    if (mod.resolving)
+      resolvingCount++;
+  }
+  if (!promises.length && !resolvingCount)
+    return;
+  await Promise.allSettled(promises);
+  await waitForImportsToResolve();
 }
 var benchFns = /* @__PURE__ */ new WeakMap();
 var benchOptsMap = /* @__PURE__ */ new WeakMap();
@@ -10796,7 +10747,7 @@ var ansiStyles2 = { exports: {} };
       },
       hexToRgb: {
         value: (hex2) => {
-          const matches = new RegExp("(?<colorString>[a-f\\d]{6}|[a-f\\d]{3})", "i").exec(hex2.toString(16));
+          const matches = /(?<colorString>[a-f\d]{6}|[a-f\d]{3})/i.exec(hex2.toString(16));
           if (!matches) {
             return [0, 0, 0];
           }
@@ -11098,7 +11049,7 @@ var serialize$6 = (collection, config2, indentation, depth, refs, printer2) => {
     isNamedNodeMap(collection) ? Array.from(collection).reduce((props, attribute) => {
       props[attribute.name] = attribute.value;
       return props;
-    }, {}) : __spreadValues({}, collection),
+    }, {}) : { ...collection },
     config2,
     indentation,
     depth,
@@ -11191,7 +11142,7 @@ var ELEMENT_REGEXP = /^((HTML|SVG)\w*)?Element$/;
 var testHasAttribute = (val) => {
   try {
     return typeof val.hasAttribute === "function" && val.hasAttribute("is");
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -12316,7 +12267,7 @@ var getSnapshotData = (content, options) => {
       snapshotContents = content;
       const populate = new Function("exports", snapshotContents);
       populate(data);
-    } catch (e) {
+    } catch {
     }
   }
   const isInvalid = snapshotContents;
@@ -12332,12 +12283,13 @@ var escapeRegex = true;
 var printFunctionName = false;
 function serialize(val, indent = 2, formatOverrides = {}) {
   return normalizeNewlines(
-    format_1(val, __spreadValues({
+    format_1(val, {
       escapeRegex,
       indent,
       plugins: getSerializers(),
-      printFunctionName
-    }, formatOverrides))
+      printFunctionName,
+      ...formatOverrides
+    })
   );
 }
 function escapeBacktickString(str) {
@@ -12346,38 +12298,34 @@ function escapeBacktickString(str) {
 function printBacktickString(str) {
   return `\`${escapeBacktickString(str)}\``;
 }
-function ensureDirectoryExists(filePath) {
-  return __async(this, null, function* () {
-    try {
-      const environment = getSnapshotEnvironment();
-      yield environment.prepareDirectory(join(dirname(filePath)));
-    } catch (e) {
-    }
-  });
+async function ensureDirectoryExists(filePath) {
+  try {
+    const environment = getSnapshotEnvironment();
+    await environment.prepareDirectory(join(dirname(filePath)));
+  } catch {
+  }
 }
 function normalizeNewlines(string2) {
   return string2.replace(/\r\n|\r/g, "\n");
 }
-function saveSnapshotFile(snapshotData, snapshotPath) {
-  return __async(this, null, function* () {
-    const environment = getSnapshotEnvironment();
-    const snapshots = Object.keys(snapshotData).sort(naturalCompare$1.exports).map(
-      (key) => `exports[${printBacktickString(key)}] = ${printBacktickString(normalizeNewlines(snapshotData[key]))};`
-    );
-    const content = `${writeSnapshotVersion()}
+async function saveSnapshotFile(snapshotData, snapshotPath) {
+  const environment = getSnapshotEnvironment();
+  const snapshots = Object.keys(snapshotData).sort(naturalCompare$1.exports).map(
+    (key) => `exports[${printBacktickString(key)}] = ${printBacktickString(normalizeNewlines(snapshotData[key]))};`
+  );
+  const content = `${writeSnapshotVersion()}
 
 ${snapshots.join("\n\n")}
 `;
-    const oldContent = yield environment.readSnapshotFile(snapshotPath);
-    const skipWriting = oldContent && oldContent === content;
-    if (skipWriting)
-      return;
-    yield ensureDirectoryExists(snapshotPath);
-    yield environment.saveSnapshotFile(
-      snapshotPath,
-      content
-    );
-  });
+  const oldContent = await environment.readSnapshotFile(snapshotPath);
+  const skipWriting = oldContent && oldContent === content;
+  if (skipWriting)
+    return;
+  await ensureDirectoryExists(snapshotPath);
+  await environment.saveSnapshotFile(
+    snapshotPath,
+    content
+  );
 }
 function prepareExpected(expected) {
   function findStartIndent() {
@@ -12412,7 +12360,7 @@ function deepMergeArray(target = [], source = []) {
 }
 function deepMergeSnapshot(target, source) {
   if (isObject2(target) && isObject2(source)) {
-    const mergedOutput = __spreadValues({}, target);
+    const mergedOutput = { ...target };
     Object.keys(source).forEach((key) => {
       if (isObject2(source[key]) && !source[key].$$typeof) {
         if (!(key in target))
@@ -12431,24 +12379,22 @@ function deepMergeSnapshot(target, source) {
   }
   return target;
 }
-function saveInlineSnapshots(snapshots) {
-  return __async(this, null, function* () {
-    const environment = getSnapshotEnvironment();
-    const MagicString2 = (yield Promise.resolve().then(() => (init_chunk_magic_string_3a794426(), chunk_magic_string_3a794426_exports))).default;
-    const files = new Set(snapshots.map((i) => i.file));
-    yield Promise.all(Array.from(files).map((file) => __async(this, null, function* () {
-      const snaps = snapshots.filter((i) => i.file === file);
-      const code = yield environment.readSnapshotFile(file);
-      const s = new MagicString2(code);
-      for (const snap of snaps) {
-        const index2 = positionToOffset(code, snap.line, snap.column);
-        replaceInlineSnap(code, s, index2, snap.snapshot);
-      }
-      const transformed = s.toString();
-      if (transformed !== code)
-        yield environment.saveSnapshotFile(file, transformed);
-    })));
-  });
+async function saveInlineSnapshots(snapshots) {
+  const environment = getSnapshotEnvironment();
+  const MagicString2 = (await Promise.resolve().then(() => (init_chunk_magic_string_3a794426(), chunk_magic_string_3a794426_exports))).default;
+  const files = new Set(snapshots.map((i) => i.file));
+  await Promise.all(Array.from(files).map(async (file) => {
+    const snaps = snapshots.filter((i) => i.file === file);
+    const code = await environment.readSnapshotFile(file);
+    const s = new MagicString2(code);
+    for (const snap of snaps) {
+      const index2 = positionToOffset(code, snap.line, snap.column);
+      replaceInlineSnap(code, s, index2, snap.snapshot);
+    }
+    const transformed = s.toString();
+    if (transformed !== code)
+      await environment.saveSnapshotFile(file, transformed);
+  }));
 }
 var startObjectRegex = /(?:toMatchInlineSnapshot|toThrowErrorMatchingInlineSnapshot)\s*\(\s*(?:\/\*[\S\s]*\*\/\s*|\/\/.*\s+)*\s*({)/m;
 function replaceObjectSnap(code, s, index2, newSnap) {
@@ -12545,18 +12491,17 @@ var SnapshotState = class _SnapshotState {
     this.unmatched = 0;
     this._updateSnapshot = options.updateSnapshot;
     this.updated = 0;
-    this._snapshotFormat = __spreadValues({
-      printBasicPrototype: false
-    }, options.snapshotFormat);
+    this._snapshotFormat = {
+      printBasicPrototype: false,
+      ...options.snapshotFormat
+    };
     this._environment = getSnapshotEnvironment();
   }
-  static create(testFilePath, options) {
-    return __async(this, null, function* () {
-      const environment = getSnapshotEnvironment();
-      const snapshotPath = yield environment.resolvePath(testFilePath);
-      const content = yield environment.readSnapshotFile(snapshotPath);
-      return new _SnapshotState(testFilePath, snapshotPath, content, options);
-    });
+  static async create(testFilePath, options) {
+    const environment = getSnapshotEnvironment();
+    const snapshotPath = await environment.resolvePath(testFilePath);
+    const content = await environment.readSnapshotFile(snapshotPath);
+    return new _SnapshotState(testFilePath, snapshotPath, content, options);
   }
   markSnapshotsAsCheckedForTest(testName2) {
     this._uncheckedKeys.forEach((uncheckedKey) => {
@@ -12583,9 +12528,10 @@ ${JSON.stringify(stacks)}`
         );
       }
       stack.column--;
-      this._inlineSnapshots.push(__spreadValues({
-        snapshot: receivedSerialized
-      }, stack));
+      this._inlineSnapshots.push({
+        snapshot: receivedSerialized,
+        ...stack
+      });
     } else {
       this._snapshotData[key] = receivedSerialized;
     }
@@ -12599,32 +12545,30 @@ ${JSON.stringify(stacks)}`
     this.updated = 0;
     this._dirty = false;
   }
-  save() {
-    return __async(this, null, function* () {
-      const hasExternalSnapshots = Object.keys(this._snapshotData).length;
-      const hasInlineSnapshots = this._inlineSnapshots.length;
-      const isEmpty = !hasExternalSnapshots && !hasInlineSnapshots;
-      const status = {
-        deleted: false,
-        saved: false
-      };
-      if ((this._dirty || this._uncheckedKeys.size) && !isEmpty) {
-        if (hasExternalSnapshots) {
-          yield saveSnapshotFile(this._snapshotData, this.snapshotPath);
-          this._fileExists = true;
-        }
-        if (hasInlineSnapshots)
-          yield saveInlineSnapshots(this._inlineSnapshots);
-        status.saved = true;
-      } else if (!hasExternalSnapshots && this._fileExists) {
-        if (this._updateSnapshot === "all") {
-          yield this._environment.removeSnapshotFile(this.snapshotPath);
-          this._fileExists = false;
-        }
-        status.deleted = true;
+  async save() {
+    const hasExternalSnapshots = Object.keys(this._snapshotData).length;
+    const hasInlineSnapshots = this._inlineSnapshots.length;
+    const isEmpty = !hasExternalSnapshots && !hasInlineSnapshots;
+    const status = {
+      deleted: false,
+      saved: false
+    };
+    if ((this._dirty || this._uncheckedKeys.size) && !isEmpty) {
+      if (hasExternalSnapshots) {
+        await saveSnapshotFile(this._snapshotData, this.snapshotPath);
+        this._fileExists = true;
       }
-      return status;
-    });
+      if (hasInlineSnapshots)
+        await saveInlineSnapshots(this._inlineSnapshots);
+      status.saved = true;
+    } else if (!hasExternalSnapshots && this._fileExists) {
+      if (this._updateSnapshot === "all") {
+        await this._environment.removeSnapshotFile(this.snapshotPath);
+        this._fileExists = false;
+      }
+      status.deleted = true;
+    }
+    return status;
   }
   getUncheckedCount() {
     return this._uncheckedKeys.size || 0;
@@ -12706,57 +12650,53 @@ ${JSON.stringify(stacks)}`
       }
     }
   }
-  pack() {
-    return __async(this, null, function* () {
-      const snapshot = {
-        filepath: this.testFilePath,
-        added: 0,
-        fileDeleted: false,
-        matched: 0,
-        unchecked: 0,
-        uncheckedKeys: [],
-        unmatched: 0,
-        updated: 0
-      };
-      const uncheckedCount = this.getUncheckedCount();
-      const uncheckedKeys = this.getUncheckedKeys();
-      if (uncheckedCount)
-        this.removeUncheckedKeys();
-      const status = yield this.save();
-      snapshot.fileDeleted = status.deleted;
-      snapshot.added = this.added;
-      snapshot.matched = this.matched;
-      snapshot.unmatched = this.unmatched;
-      snapshot.updated = this.updated;
-      snapshot.unchecked = !status.deleted ? uncheckedCount : 0;
-      snapshot.uncheckedKeys = Array.from(uncheckedKeys);
-      return snapshot;
-    });
+  async pack() {
+    const snapshot = {
+      filepath: this.testFilePath,
+      added: 0,
+      fileDeleted: false,
+      matched: 0,
+      unchecked: 0,
+      uncheckedKeys: [],
+      unmatched: 0,
+      updated: 0
+    };
+    const uncheckedCount = this.getUncheckedCount();
+    const uncheckedKeys = this.getUncheckedKeys();
+    if (uncheckedCount)
+      this.removeUncheckedKeys();
+    const status = await this.save();
+    snapshot.fileDeleted = status.deleted;
+    snapshot.added = this.added;
+    snapshot.matched = this.matched;
+    snapshot.unmatched = this.unmatched;
+    snapshot.updated = this.updated;
+    snapshot.unchecked = !status.deleted ? uncheckedCount : 0;
+    snapshot.uncheckedKeys = Array.from(uncheckedKeys);
+    return snapshot;
   }
 };
 var SnapshotClient = class {
   constructor() {
     this.snapshotStateMap = /* @__PURE__ */ new Map();
   }
-  setTest(test3) {
-    return __async(this, null, function* () {
-      var _a2;
-      this.test = test3;
-      if (((_a2 = this.snapshotState) == null ? void 0 : _a2.testFilePath) !== this.test.file.filepath) {
-        this.saveCurrent();
-        const filePath = this.test.file.filepath;
-        if (!this.getSnapshotState(test3)) {
-          this.snapshotStateMap.set(
+  async setTest(test3) {
+    var _a2;
+    this.test = test3;
+    if (((_a2 = this.snapshotState) == null ? void 0 : _a2.testFilePath) !== this.test.file.filepath) {
+      this.saveCurrent();
+      const filePath = this.test.file.filepath;
+      if (!this.getSnapshotState(test3)) {
+        this.snapshotStateMap.set(
+          filePath,
+          await SnapshotState.create(
             filePath,
-            yield SnapshotState.create(
-              filePath,
-              getWorkerState().config.snapshotOptions
-            )
-          );
-        }
-        this.snapshotState = this.getSnapshotState(test3);
+            getWorkerState().config.snapshotOptions
+          )
+        );
       }
-    });
+      this.snapshotState = this.getSnapshotState(test3);
+    }
   }
   getSnapshotState(test3) {
     return this.snapshotStateMap.get(test3.file.filepath);
@@ -12816,14 +12756,12 @@ var SnapshotClient = class {
       }
     }
   }
-  saveCurrent() {
-    return __async(this, null, function* () {
-      if (!this.snapshotState)
-        return;
-      const result = yield this.snapshotState.pack();
-      yield rpc().snapshotSaved(result);
-      this.snapshotState = void 0;
-    });
+  async saveCurrent() {
+    if (!this.snapshotState)
+      return;
+    const result = await this.snapshotState.pack();
+    await rpc().snapshotSaved(result);
+    this.snapshotState = void 0;
   }
   clear() {
     this.snapshotStateMap.clear();
@@ -12966,7 +12904,8 @@ function createExpect(test3) {
   expect2.getState = () => getState(expect2);
   expect2.setState = (state) => setState(state, expect2);
   const globalState = getState(globalThis[GLOBAL_EXPECT]) || {};
-  setState(__spreadProps(__spreadValues({}, globalState), {
+  setState({
+    ...globalState,
     assertionCalls: 0,
     isExpectingAssertions: false,
     isExpectingAssertionsError: null,
@@ -12975,7 +12914,7 @@ function createExpect(test3) {
     environment: getCurrentEnvironment(),
     testPath: test3 ? (_a2 = test3.suite.file) == null ? void 0 : _a2.filepath : globalState.testPath,
     currentTestName: test3 ? getFullName(test3) : globalState.currentTestName
-  }), expect2);
+  }, expect2);
   expect2.extend = (matchers) => expect.extend(expect2, matchers);
   function assertions(expected) {
     const errorGen = () => new Error(`expected number of assertions to be ${expected}, but got ${expect2.getState().assertionCalls}`);
@@ -14466,21 +14405,17 @@ var FakeTimers = class {
     if (this._checkFakeTimers())
       this._clock.runAll();
   }
-  runAllTimersAsync() {
-    return __async(this, null, function* () {
-      if (this._checkFakeTimers())
-        yield this._clock.runAllAsync();
-    });
+  async runAllTimersAsync() {
+    if (this._checkFakeTimers())
+      await this._clock.runAllAsync();
   }
   runOnlyPendingTimers() {
     if (this._checkFakeTimers())
       this._clock.runToLast();
   }
-  runOnlyPendingTimersAsync() {
-    return __async(this, null, function* () {
-      if (this._checkFakeTimers())
-        yield this._clock.runToLastAsync();
-    });
+  async runOnlyPendingTimersAsync() {
+    if (this._checkFakeTimers())
+      await this._clock.runToLastAsync();
   }
   advanceTimersToNextTimer(steps = 1) {
     if (this._checkFakeTimers()) {
@@ -14492,27 +14427,23 @@ var FakeTimers = class {
       }
     }
   }
-  advanceTimersToNextTimerAsync(steps = 1) {
-    return __async(this, null, function* () {
-      if (this._checkFakeTimers()) {
-        for (let i = steps; i > 0; i--) {
-          yield this._clock.nextAsync();
-          this._clock.tick(0);
-          if (this._clock.countTimers() === 0)
-            break;
-        }
+  async advanceTimersToNextTimerAsync(steps = 1) {
+    if (this._checkFakeTimers()) {
+      for (let i = steps; i > 0; i--) {
+        await this._clock.nextAsync();
+        this._clock.tick(0);
+        if (this._clock.countTimers() === 0)
+          break;
       }
-    });
+    }
   }
   advanceTimersByTime(msToRun) {
     if (this._checkFakeTimers())
       this._clock.tick(msToRun);
   }
-  advanceTimersByTimeAsync(msToRun) {
-    return __async(this, null, function* () {
-      if (this._checkFakeTimers())
-        yield this._clock.tickAsync(msToRun);
-    });
+  async advanceTimersByTimeAsync(msToRun) {
+    if (this._checkFakeTimers())
+      await this._clock.tickAsync(msToRun);
   }
   runAllTicks() {
     if (this._checkFakeTimers()) {
@@ -14537,10 +14468,11 @@ var FakeTimers = class {
     }
     if (!this._fakingTime) {
       const toFake = Object.keys(this._fakeTimers.timers);
-      this._clock = this._fakeTimers.install(__spreadValues({
+      this._clock = this._fakeTimers.install({
         now: Date.now(),
-        toFake
-      }, this._userConfig));
+        toFake,
+        ...this._userConfig
+      });
       this._fakingTime = true;
     }
   }
@@ -14555,7 +14487,7 @@ var FakeTimers = class {
     if (this._fakingTime) {
       this._clock.setSystemTime(now3);
     } else {
-      mockDate(now3 != null ? now3 : this.getRealSystemTime());
+      mockDate(now3 ?? this.getRealSystemTime());
       this._fakingDate = true;
     }
   }
@@ -14621,21 +14553,17 @@ Otherwise, it might be a Vitest bug. Please report it to https://github.com/vite
     this._timers.runOnlyPendingTimers();
     return this;
   }
-  runOnlyPendingTimersAsync() {
-    return __async(this, null, function* () {
-      yield this._timers.runOnlyPendingTimersAsync();
-      return this;
-    });
+  async runOnlyPendingTimersAsync() {
+    await this._timers.runOnlyPendingTimersAsync();
+    return this;
   }
   runAllTimers() {
     this._timers.runAllTimers();
     return this;
   }
-  runAllTimersAsync() {
-    return __async(this, null, function* () {
-      yield this._timers.runAllTimersAsync();
-      return this;
-    });
+  async runAllTimersAsync() {
+    await this._timers.runAllTimersAsync();
+    return this;
   }
   runAllTicks() {
     this._timers.runAllTicks();
@@ -14645,21 +14573,17 @@ Otherwise, it might be a Vitest bug. Please report it to https://github.com/vite
     this._timers.advanceTimersByTime(ms);
     return this;
   }
-  advanceTimersByTimeAsync(ms) {
-    return __async(this, null, function* () {
-      yield this._timers.advanceTimersByTimeAsync(ms);
-      return this;
-    });
+  async advanceTimersByTimeAsync(ms) {
+    await this._timers.advanceTimersByTimeAsync(ms);
+    return this;
   }
   advanceTimersToNextTimer() {
     this._timers.advanceTimersToNextTimer();
     return this;
   }
-  advanceTimersToNextTimerAsync() {
-    return __async(this, null, function* () {
-      yield this._timers.advanceTimersToNextTimerAsync();
-      return this;
-    });
+  async advanceTimersToNextTimerAsync() {
+    await this._timers.advanceTimersToNextTimerAsync();
+    return this;
   }
   getTimerCount() {
     return this._timers.getTimerCount();
@@ -14703,15 +14627,11 @@ Otherwise, it might be a Vitest bug. Please report it to https://github.com/vite
   doUnmock(path2) {
     this._mocker.queueUnmock(path2, this.getImporter());
   }
-  importActual(path2) {
-    return __async(this, null, function* () {
-      return this._mocker.importActual(path2, this.getImporter());
-    });
+  async importActual(path2) {
+    return this._mocker.importActual(path2, this.getImporter());
   }
-  importMock(path2) {
-    return __async(this, null, function* () {
-      return this._mocker.importMock(path2, this.getImporter());
-    });
+  async importMock(path2) {
+    return this._mocker.importMock(path2, this.getImporter());
   }
   mocked(item, _options = {}) {
     return item;
@@ -14773,15 +14693,13 @@ Otherwise, it might be a Vitest bug. Please report it to https://github.com/vite
     resetModules(state.moduleCache);
     return this;
   }
-  dynamicImportSettled() {
-    return __async(this, null, function* () {
-      return waitForImportsToResolve();
-    });
+  async dynamicImportSettled() {
+    return waitForImportsToResolve();
   }
   setConfig(config2) {
     const state = getWorkerState();
     if (!this._config)
-      this._config = __spreadValues({}, state.config);
+      this._config = { ...state.config };
     Object.assign(state.config, config2);
   }
   resetConfig() {

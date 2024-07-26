@@ -1,27 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -41,26 +24,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // node_modules/dotenv/package.json
 var require_package = __commonJS({
@@ -137,7 +100,7 @@ var require_package = __commonJS({
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
     "use strict";
-    var fs2 = require("fs");
+    var fs = require("fs");
     var path = require("path");
     var os = require("os");
     var crypto = require("crypto");
@@ -244,7 +207,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs2.existsSync(filepath)) {
+            if (fs.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -254,7 +217,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs2.existsSync(possibleVaultPath)) {
+      if (fs.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -298,7 +261,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e) {
           if (debug) {
@@ -401,7 +364,7 @@ var require_main = __commonJS({
   }
 });
 
-// src/index.ts
+// src/server.ts
 var import_cors = __toESM(require("cors"));
 var import_dotenv7 = __toESM(require_main());
 var import_express79 = __toESM(require("express"));
@@ -431,15 +394,16 @@ var {
   REDIS_PASSWORD,
   REDIS_TLS_REJECT_UNAUTHORIZED
 } = process.env;
-var redisClient = new import_ioredis.default(__spreadValues({
+var redisClient = new import_ioredis.default({
   username: REDIS_USER,
   host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2e3)
-}, REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
-  tls: { servername: REDIS_HOST }
-}));
+  retryStrategy: (times) => Math.min(times * 50, 2e3),
+  ...REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
+    tls: { servername: REDIS_HOST }
+  }
+});
 redisClient.on("error", (err) => {
   console.error("Redis error:", err);
 });
@@ -460,84 +424,75 @@ function setRedis(key, value) {
 
 // src/functions/index.ts
 import_dotenv2.default.config();
-function getAuthenticationHash() {
-  return __async(this, null, function* () {
-    var _a;
-    const salt = process.env.SECRET_SALT;
-    const ssid = (_a = yield getRedis("_session_ssid")) != null ? _a : "00000";
-    return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
-  });
+async function getAuthenticationHash() {
+  const salt = process.env.SECRET_SALT;
+  const ssid = await getRedis("_session_ssid") ?? "00000";
+  return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
 }
 
 // src/config/database/index.ts
 var import_promise = __toESM(require("mysql2/promise"));
 var import_dotenv3 = __toESM(require_main());
-var import_fs = __toESM(require("fs"));
 import_dotenv3.default.config();
 var {
   MYSQL_HOST,
   MYSQL_USER,
+  MYSQL_PORT,
   MYSQL_PASSWORD,
   MYSQL_DATABASE,
-  MYSQL_PORT,
-  MYSQL_SSL_REJECT_UNAUTHORIZED
+  MYSQL_SSL_CA_CERT
 } = process.env;
-var dbConfig = __spreadValues({
+var dbConfig = {
   host: MYSQL_HOST,
   user: MYSQL_USER,
   password: MYSQL_PASSWORD,
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
-  connectionLimit: 10
-}, MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
-  ssl: {
-    ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+  connectionLimit: 10,
+  ...MYSQL_SSL_CA_CERT && {
+    ssl: { ca: MYSQL_SSL_CA_CERT }
   }
-});
+};
 var dbPool = import_promise.default.createPool(dbConfig);
 process.on("beforeExit", () => {
   dbPool.end();
 });
-function executeQuery(query, values) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      const [results] = yield connection.query(query, values);
-      return results;
-    } catch (error) {
-      if (error) {
-        throw new Error(`Erro na consulta: ${error}`);
-      }
-      throw error;
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeQuery(query, values) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    const [results] = await connection.query(query, values);
+    return results;
+  } catch (error) {
+    if (error) {
+      throw new Error(`Erro na consulta: ${error}`);
     }
-  });
+    throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
-function executeTransaction(queries) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      yield connection.beginTransaction();
-      for (const { query, values } of queries) {
-        yield connection.query(query, values);
-      }
-      yield connection.commit();
-    } catch (error) {
-      if (connection) {
-        yield connection.rollback();
-      }
-      throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeTransaction(queries) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    await connection.beginTransaction();
+    for (const { query, values } of queries) {
+      await connection.query(query, values);
     }
-  });
+    await connection.commit();
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
 
 // src/routes/tec/historic/details/index.ts
@@ -552,7 +507,7 @@ var paramsSchema = import_zod.z.object({
   updateCount: import_zod.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus = /* @__PURE__ */ new Map();
-router.post("/historic/details", (req, res) => __async(void 0, null, function* () {
+router.post("/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -565,9 +520,9 @@ router.post("/historic/details", (req, res) => __async(void 0, null, function* (
   try {
     executionStatus.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -575,14 +530,14 @@ router.post("/historic/details", (req, res) => __async(void 0, null, function* (
         try {
           const sql1 = "SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?";
           const sql2 = "SELECT * FROM tbl_service_catalog";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, updateCount]);
-          const serviceList = yield executeQuery(sql2);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
+          const serviceList = await executeQuery(sql2);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken.TokenExpiredError) {
@@ -602,7 +557,7 @@ router.post("/historic/details", (req, res) => __async(void 0, null, function* (
   } finally {
     executionStatus.set(ip, false);
   }
-}));
+});
 var details_default = router;
 
 // src/routes/tec/historic/index.ts
@@ -613,7 +568,7 @@ var paramsSchema2 = import_zod2.z.object({
   initial_id: import_zod2.z.number().nullable().optional(),
   token: import_zod2.z.string()
 });
-router2.post("/historic", (req, res) => __async(void 0, null, function* () {
+router2.post("/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -626,15 +581,15 @@ router2.post("/historic", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus2.set(ip, true);
     const { initial_id, token } = paramsSchema2.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken2.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken2.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -663,17 +618,17 @@ router2.post("/historic", (req, res) => __async(void 0, null, function* () {
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id]);
-          });
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id]);
+          };
           const { user: admin } = decoded;
-          const resultEmployee = yield selectEmployee(initial_id, admin.id);
+          const resultEmployee = await selectEmployee(initial_id, admin.id);
           res.json(resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken2.TokenExpiredError) {
@@ -693,7 +648,7 @@ router2.post("/historic", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus2.set(ip, false);
   }
-}));
+});
 router2.use(details_default);
 var historic_default = router2;
 
@@ -780,7 +735,7 @@ var paramsSchema3 = import_zod3.z.object({
   token: import_zod3.z.string()
 });
 var executionStatus3 = /* @__PURE__ */ new Map();
-router3.post("/new", (req, res) => __async(void 0, null, function* () {
+router3.post("/new", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -801,9 +756,9 @@ router3.post("/new", (req, res) => __async(void 0, null, function* () {
       startServiceAt,
       token
     } = paramsSchema3.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken3.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken3.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -876,18 +831,18 @@ router3.post("/new", (req, res) => __async(void 0, null, function* () {
           finished_at
       ) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryOperations, values },
             { query: queryOperationsHistory, values }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: String(employee.id) }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken3.TokenExpiredError) {
@@ -907,7 +862,7 @@ router3.post("/new", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus3.set(ip, false);
   }
-}));
+});
 var new_default = router3;
 
 // src/routes/tec/running/index.ts
@@ -929,36 +884,35 @@ function getCurrentDateTime2() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function insert_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime2();
-    const {
-      row,
-      newStatus,
-      listMaterial,
-      listService,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count + 1,
-      row.start_service_at,
-      row.created_at,
-      newStatus === "concluded" ? row.modification_at : createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null,
-      newStatus === "concluded" ? createdAt : null
-    ];
-    const queryOperations = `
+async function insert_state_modification(props) {
+  const createdAt = getCurrentDateTime2();
+  const {
+    row,
+    newStatus,
+    listMaterial,
+    listService,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count + 1,
+    row.start_service_at,
+    row.created_at,
+    newStatus === "concluded" ? row.modification_at : createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null,
+    newStatus === "concluded" ? createdAt : null
+  ];
+  const queryOperations = `
   INSERT INTO tbl_operations_logs (
     protocol, 
     employee_id, 
@@ -979,8 +933,7 @@ function insert_state_modification(props) {
     finished_at
 ) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 
 // src/routes/tec/running/cancel/index.ts
@@ -991,7 +944,7 @@ var paramsSchema4 = import_zod4.z.object({
   protocol: import_zod4.z.string().max(17)
 });
 var executionStatus4 = /* @__PURE__ */ new Map();
-router4.post("/running/cancel", (req, res) => __async(void 0, null, function* () {
+router4.post("/running/cancel", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1004,9 +957,9 @@ router4.post("/running/cancel", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus4.set(ip, true);
     const { token, protocol } = paramsSchema4.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken4.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken4.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1014,26 +967,26 @@ router4.post("/running/cancel", (req, res) => __async(void 0, null, function* ()
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const valueDeleteOperations = [row.employee_id, row.protocol];
           const queryDeleteOperations = "DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
           const newStatus = "canceled";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
             { query: queryDeleteOperations, values: valueDeleteOperations },
-            __spreadValues({}, createStateModificationHistoryRecord)
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken4.TokenExpiredError) {
@@ -1053,7 +1006,7 @@ router4.post("/running/cancel", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus4.set(ip, false);
   }
-}));
+});
 var cancel_default = router4;
 
 // src/routes/tec/running/pause/index.ts
@@ -1073,35 +1026,34 @@ function getCurrentDateTime3() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function update_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime3();
-    const {
-      row,
-      newStatus,
-      listService,
-      listMaterial,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count,
-      row.start_service_at,
-      row.created_at,
-      createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null
-    ];
-    const queryOperations = `
+async function update_state_modification(props) {
+  const createdAt = getCurrentDateTime3();
+  const {
+    row,
+    newStatus,
+    listService,
+    listMaterial,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count,
+    row.start_service_at,
+    row.created_at,
+    createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null
+  ];
+  const queryOperations = `
       INSERT INTO tbl_operations (
           protocol, 
           employee_id, 
@@ -1138,8 +1090,7 @@ function update_state_modification(props) {
           list_material = VALUES(list_material),
           observation = VALUES(observation),
           finished_at = VALUES(finished_at);`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 
 // src/routes/tec/running/pause/index.ts
@@ -1150,7 +1101,7 @@ var paramsSchema5 = import_zod5.z.object({
   protocol: import_zod5.z.string().max(17)
 });
 var executionStatus5 = /* @__PURE__ */ new Map();
-router5.post("/running/pause", (req, res) => __async(void 0, null, function* () {
+router5.post("/running/pause", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1163,9 +1114,9 @@ router5.post("/running/pause", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus5.set(ip, true);
     const { token, protocol } = paramsSchema5.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken5.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken5.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1173,25 +1124,25 @@ router5.post("/running/pause", (req, res) => __async(void 0, null, function* () 
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "active"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "paused";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken5.TokenExpiredError) {
@@ -1211,7 +1162,7 @@ router5.post("/running/pause", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus5.set(ip, false);
   }
-}));
+});
 var pause_default = router5;
 
 // src/routes/tec/running/start/index.ts
@@ -1226,7 +1177,7 @@ var paramsSchema6 = import_zod6.z.object({
   protocol: import_zod6.z.string().max(17)
 });
 var executionStatus6 = /* @__PURE__ */ new Map();
-router6.post("/running/start", (req, res) => __async(void 0, null, function* () {
+router6.post("/running/start", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1239,9 +1190,9 @@ router6.post("/running/start", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus6.set(ip, true);
     const { token, protocol } = paramsSchema6.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken6.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken6.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1249,25 +1200,25 @@ router6.post("/running/start", (req, res) => __async(void 0, null, function* () 
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "paused"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "paused"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "active";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken6.TokenExpiredError) {
@@ -1287,7 +1238,7 @@ router6.post("/running/start", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus6.set(ip, false);
   }
-}));
+});
 var start_default = router6;
 
 // src/routes/tec/running/finish/index.ts
@@ -1299,40 +1250,40 @@ var import_jsonwebtoken7 = __toESM(require("jsonwebtoken"));
 var import_zod7 = require("zod");
 
 // src/models/stock_employee/increment_item.ts
-function increment_item(materials) {
-  return __async(this, null, function* () {
-    function generateQueryListMaterial(arr) {
-      const placeholders = arr.map(() => "?").join(", ");
-      return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
-    }
-    function generatePlaceholders3(data) {
-      const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
-      return placeholders;
-    }
-    const requestListMaterial = JSON.parse(materials);
-    if (!requestListMaterial) {
-      throw new Error("Lista de materiais n\xE3o foi fornecida");
-    }
-    const listMaterialKeys = Object.keys(requestListMaterial);
-    const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-    const selectQueryListMaterial = yield executeQuery(queryListMaterial, listMaterialKeys);
-    const resultQueryListMaterial = selectQueryListMaterial.map((items) => __spreadProps(__spreadValues({}, items), {
-      quantity_value: items.quantity_value - requestListMaterial[items.id]
-    }));
-    const updateValueMaterialsEmployee = [];
-    resultQueryListMaterial.forEach((item) => {
-      updateValueMaterialsEmployee.push(
-        item.id,
-        item.employee_id,
-        item.product_name,
-        item.product_code,
-        item.product_batch,
-        requestListMaterial[item.id],
-        item.unit_type,
-        item.created_at
-      );
-    });
-    const queryMaterialsEmployee = `
+async function increment_item(materials) {
+  function generateQueryListMaterial(arr) {
+    const placeholders = arr.map(() => "?").join(", ");
+    return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
+  }
+  function generatePlaceholders3(data) {
+    const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
+    return placeholders;
+  }
+  const requestListMaterial = JSON.parse(materials);
+  if (!requestListMaterial) {
+    throw new Error("Lista de materiais n\xE3o foi fornecida");
+  }
+  const listMaterialKeys = Object.keys(requestListMaterial);
+  const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const resultQueryListMaterial = selectQueryListMaterial.map((items) => ({
+    ...items,
+    quantity_value: items.quantity_value - requestListMaterial[items.id]
+  }));
+  const updateValueMaterialsEmployee = [];
+  resultQueryListMaterial.forEach((item) => {
+    updateValueMaterialsEmployee.push(
+      item.id,
+      item.employee_id,
+      item.product_name,
+      item.product_code,
+      item.product_batch,
+      requestListMaterial[item.id],
+      item.unit_type,
+      item.created_at
+    );
+  });
+  const queryMaterialsEmployee = `
   INSERT INTO tbl_stock_employee 
       (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
     VALUES ${generatePlaceholders3(resultQueryListMaterial)}
@@ -1346,45 +1297,44 @@ function increment_item(materials) {
       unit_type = VALUES(unit_type),
       created_at = VALUES(created_at);
     `;
-    return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
-  });
+  return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
 }
 
 // src/models/stock_employee/decrement_item.ts
-function decrement_item(materials) {
-  return __async(this, null, function* () {
-    function generateQueryListMaterial(arr) {
-      const placeholders = arr.map(() => "?").join(", ");
-      return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
-    }
-    function generatePlaceholders3(data) {
-      const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
-      return placeholders;
-    }
-    const requestListMaterial = JSON.parse(materials);
-    if (!requestListMaterial) {
-      throw new Error("Lista de materiais n\xE3o foi fornecida");
-    }
-    const listMaterialKeys = Object.keys(requestListMaterial);
-    const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
-    const selectQueryListMaterial = yield executeQuery(queryListMaterial, listMaterialKeys);
-    const resultQueryListMaterial = selectQueryListMaterial.map((items) => __spreadProps(__spreadValues({}, items), {
-      quantity_value: items.quantity_value - requestListMaterial[items.id]
-    }));
-    const updateValueMaterialsEmployee = [];
-    resultQueryListMaterial.forEach((item) => {
-      updateValueMaterialsEmployee.push(
-        item.id,
-        item.employee_id,
-        item.product_name,
-        item.product_code,
-        item.product_batch,
-        requestListMaterial[item.id],
-        item.unit_type,
-        item.created_at
-      );
-    });
-    const queryMaterialsEmployee = `
+async function decrement_item(materials) {
+  function generateQueryListMaterial(arr) {
+    const placeholders = arr.map(() => "?").join(", ");
+    return `SELECT * FROM tbl_stock_employee WHERE id IN (${placeholders})`;
+  }
+  function generatePlaceholders3(data) {
+    const placeholders = data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
+    return placeholders;
+  }
+  const requestListMaterial = JSON.parse(materials);
+  if (!requestListMaterial) {
+    throw new Error("Lista de materiais n\xE3o foi fornecida");
+  }
+  const listMaterialKeys = Object.keys(requestListMaterial);
+  const queryListMaterial = generateQueryListMaterial(listMaterialKeys);
+  const selectQueryListMaterial = await executeQuery(queryListMaterial, listMaterialKeys);
+  const resultQueryListMaterial = selectQueryListMaterial.map((items) => ({
+    ...items,
+    quantity_value: items.quantity_value - requestListMaterial[items.id]
+  }));
+  const updateValueMaterialsEmployee = [];
+  resultQueryListMaterial.forEach((item) => {
+    updateValueMaterialsEmployee.push(
+      item.id,
+      item.employee_id,
+      item.product_name,
+      item.product_code,
+      item.product_batch,
+      requestListMaterial[item.id],
+      item.unit_type,
+      item.created_at
+    );
+  });
+  const queryMaterialsEmployee = `
   INSERT INTO tbl_stock_employee 
       (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
     VALUES ${generatePlaceholders3(resultQueryListMaterial)}
@@ -1398,8 +1348,7 @@ function decrement_item(materials) {
       unit_type = VALUES(unit_type),
       created_at = VALUES(created_at);
     `;
-    return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
-  });
+  return { query: queryMaterialsEmployee, values: updateValueMaterialsEmployee };
 }
 
 // src/routes/tec/running/finish/concluded/index.ts
@@ -1412,7 +1361,7 @@ var paramsSchema7 = import_zod7.z.object({
   listMaterial: import_zod7.z.string().optional()
 });
 var executionStatus7 = /* @__PURE__ */ new Map();
-router7.post("/running/finish/concluded", (req, res) => __async(void 0, null, function* () {
+router7.post("/running/finish/concluded", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1431,9 +1380,9 @@ router7.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
       listMaterial,
       listService
     } = paramsSchema7.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken7.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken7.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1441,7 +1390,7 @@ router7.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
         try {
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [user.id, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [user.id, protocol, "active"]);
           if (!row) {
             console.error("Invalid request");
             return res.status(400).json({ error: "Invalid request" });
@@ -1454,23 +1403,23 @@ router7.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
             observation
           };
           const executeTransactionArray = [];
-          const updateStateModificationService = yield update_state_modification(modification);
+          const updateStateModificationService = await update_state_modification(modification);
           executeTransactionArray.push(updateStateModificationService);
-          const createStateModificationHistoryRecord = yield insert_state_modification(modification);
+          const createStateModificationHistoryRecord = await insert_state_modification(modification);
           executeTransactionArray.push(createStateModificationHistoryRecord);
           if (listMaterial) {
-            const decrementStockItemQuantityEmployee = yield decrement_item(listMaterial);
+            const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
             executeTransactionArray.push(decrementStockItemQuantityEmployee);
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken7.TokenExpiredError) {
@@ -1490,7 +1439,7 @@ router7.post("/running/finish/concluded", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus7.set(ip, false);
   }
-}));
+});
 var concluded_default = router7;
 
 // src/routes/tec/running/finish/select-material/index.ts
@@ -1503,7 +1452,7 @@ var paramsSchema8 = import_zod8.z.object({
   protocol: import_zod8.z.string().max(17)
 });
 var executionStatus8 = /* @__PURE__ */ new Map();
-router8.post("/running/finish/select-material", (req, res) => __async(void 0, null, function* () {
+router8.post("/running/finish/select-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1516,9 +1465,9 @@ router8.post("/running/finish/select-material", (req, res) => __async(void 0, nu
   try {
     executionStatus8.set(ip, true);
     const { token, protocol } = paramsSchema8.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken8.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken8.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1527,13 +1476,13 @@ router8.post("/running/finish/select-material", (req, res) => __async(void 0, nu
           const { user } = decoded;
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ? ORDER BY created_at DESC";
           const newStatus = "active";
-          const rows = yield executeQuery(selectSql, [user.id, protocol, newStatus]);
+          const rows = await executeQuery(selectSql, [user.id, protocol, newStatus]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken8.TokenExpiredError) {
@@ -1553,7 +1502,7 @@ router8.post("/running/finish/select-material", (req, res) => __async(void 0, nu
   } finally {
     executionStatus8.set(ip, false);
   }
-}));
+});
 var select_material_default = router8;
 
 // src/routes/tec/running/finish/select-service/index.ts
@@ -1566,7 +1515,7 @@ var paramsSchema9 = import_zod9.z.object({
   protocol: import_zod9.z.string().max(17)
 });
 var executionStatus9 = /* @__PURE__ */ new Map();
-router9.post("/running/finish/select-service", (req, res) => __async(void 0, null, function* () {
+router9.post("/running/finish/select-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1579,9 +1528,9 @@ router9.post("/running/finish/select-service", (req, res) => __async(void 0, nul
   try {
     executionStatus9.set(ip, true);
     const { token, protocol } = paramsSchema9.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken9.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken9.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1591,14 +1540,14 @@ router9.post("/running/finish/select-service", (req, res) => __async(void 0, nul
           const sql1 = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ? ORDER BY created_at DESC";
           const sql2 = "SELECT * FROM tbl_service_catalog WHERE status = ?";
           const newStatus = "active";
-          const currentOperation = yield executeQuery(sql1, [user.id, protocol, newStatus]);
-          const serviceList = yield executeQuery(sql2, ["ativo"]);
+          const currentOperation = await executeQuery(sql1, [user.id, protocol, newStatus]);
+          const serviceList = await executeQuery(sql2, ["ativo"]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken9.TokenExpiredError) {
@@ -1618,7 +1567,7 @@ router9.post("/running/finish/select-service", (req, res) => __async(void 0, nul
   } finally {
     executionStatus9.set(ip, false);
   }
-}));
+});
 var select_service_default = router9;
 
 // src/routes/tec/running/finish/index.ts
@@ -1632,7 +1581,7 @@ var finish_default = router10;
 var import_zod10 = require("zod");
 var router11 = import_express11.default.Router();
 var executionStatus10 = /* @__PURE__ */ new Map();
-router11.post("/running", (req, res) => __async(void 0, null, function* () {
+router11.post("/running", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1646,9 +1595,9 @@ router11.post("/running", (req, res) => __async(void 0, null, function* () {
     executionStatus10.set(ip, true);
     const paramsSchema61 = import_zod10.z.object({ token: import_zod10.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken10.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken10.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1662,13 +1611,13 @@ router11.post("/running", (req, res) => __async(void 0, null, function* () {
       LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       WHERE u1.employee_id = ?
       ORDER BY u1.created_at DESC`;
-          const rows = yield executeQuery(sql, [user.id]);
+          const rows = await executeQuery(sql, [user.id]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken10.TokenExpiredError) {
@@ -1688,7 +1637,7 @@ router11.post("/running", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus10.set(ip, false);
   }
-}));
+});
 router11.use(finish_default);
 router11.use(cancel_default);
 router11.use(pause_default);
@@ -1705,7 +1654,7 @@ var paramsSchema10 = import_zod11.z.object({
   token: import_zod11.z.string()
 });
 var executionStatus11 = /* @__PURE__ */ new Map();
-router12.post("/stock", (req, res) => __async(void 0, null, function* () {
+router12.post("/stock", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1718,22 +1667,22 @@ router12.post("/stock", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus11.set(ip, true);
     const { employee_id, token } = paramsSchema10.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken11.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken11.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_stock_employee WHERE employee_id = ? ORDER BY created_at DESC";
-          const rows = yield executeQuery(sql, [employee_id]);
+          const rows = await executeQuery(sql, [employee_id]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken11.TokenExpiredError) {
@@ -1753,7 +1702,7 @@ router12.post("/stock", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus11.set(ip, false);
   }
-}));
+});
 var stock_default = router12;
 
 // src/routes/tec/index.ts
@@ -1805,7 +1754,7 @@ var paramsSchema11 = import_zod12.z.object({
   token: import_zod12.z.string()
 });
 var executionStatus12 = /* @__PURE__ */ new Map();
-router14.post("/manage/new", (req, res) => __async(void 0, null, function* () {
+router14.post("/manage/new", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1827,9 +1776,9 @@ router14.post("/manage/new", (req, res) => __async(void 0, null, function* () {
       startServiceAt,
       token
     } = paramsSchema11.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken12.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken12.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1902,18 +1851,18 @@ router14.post("/manage/new", (req, res) => __async(void 0, null, function* () {
           finished_at
       ) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryOperations, values },
             { query: queryOperationsHistory, values }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: employeeId }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken12.TokenExpiredError) {
@@ -1933,7 +1882,7 @@ router14.post("/manage/new", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus12.set(ip, false);
   }
-}));
+});
 var new_default2 = router14;
 
 // src/routes/admin/manage/historic/index.ts
@@ -1952,7 +1901,7 @@ var paramsSchema12 = import_zod13.z.object({
   updateCount: import_zod13.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus13 = /* @__PURE__ */ new Map();
-router15.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+router15.post("/manage/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -1965,9 +1914,9 @@ router15.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   try {
     executionStatus13.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema12.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken13.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken13.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -1982,14 +1931,14 @@ router15.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
       ORDER BY u1.created_at DESC;
       `;
           const sql2 = "SELECT * FROM tbl_service_catalog";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, updateCount]);
-          const serviceList = yield executeQuery(sql2);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
+          const serviceList = await executeQuery(sql2);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken13.TokenExpiredError) {
@@ -2009,7 +1958,7 @@ router15.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus13.set(ip, false);
   }
-}));
+});
 var details_default2 = router15;
 
 // src/routes/admin/manage/historic/index.ts
@@ -2022,7 +1971,7 @@ var paramsSchema13 = import_zod14.z.object({
   initial_id: import_zod14.z.number().nullable().optional(),
   token: import_zod14.z.string()
 });
-router16.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+router16.post("/manage/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2035,15 +1984,15 @@ router16.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   try {
     executionStatus14.set(ip, true);
     const { employee_all, employee_id, initial_id, token } = paramsSchema13.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken14.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken14.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id2) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -2072,10 +2021,10 @@ router16.post("/manage/historic", (req, res) => __async(void 0, null, function* 
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
-          });
-          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id2]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id2]);
+          };
+          const selectEmployeeAll = async (initial_id2) => {
             const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
@@ -2102,17 +2051,17 @@ router16.post("/manage/historic", (req, res) => __async(void 0, null, function* 
         ORDER BY id DESC
         LIMIT 10;
         `;
-            if (!initial_id2) return yield executeQuery(sqlFirst);
-            return yield executeQuery(sqlLast, [initial_id2]);
-          });
-          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
-          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+            if (!initial_id2) return await executeQuery(sqlFirst);
+            return await executeQuery(sqlLast, [initial_id2]);
+          };
+          const resultEmployeeAll = await selectEmployeeAll(initial_id);
+          const resultEmployee = await selectEmployee(initial_id, employee_id);
           res.json(employee_all ? resultEmployeeAll : resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken14.TokenExpiredError) {
@@ -2132,7 +2081,7 @@ router16.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   } finally {
     executionStatus14.set(ip, false);
   }
-}));
+});
 router16.use(details_default2);
 var historic_default2 = router16;
 
@@ -2149,7 +2098,7 @@ var paramsSchema14 = import_zod15.z.object({
   token: import_zod15.z.string()
 });
 var executionStatus15 = /* @__PURE__ */ new Map();
-router17.post("/manage/update_password_employee", (req, res) => __async(void 0, null, function* () {
+router17.post("/manage/update_password_employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2167,10 +2116,9 @@ router17.post("/manage/update_password_employee", (req, res) => __async(void 0, 
       newPasswordEmployee,
       token
     } = paramsSchema14.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken15.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
-        var _a;
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken15.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2178,20 +2126,20 @@ router17.post("/manage/update_password_employee", (req, res) => __async(void 0, 
         try {
           const { user: admin } = decoded;
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
-          const rowsAdmin = yield executeQuery(sqlSelect, [admin.id]);
-          if (!(rowsAdmin.length === 1 && import_bcryptjs.default.compareSync(yourPassword, (_a = rowsAdmin[0]) == null ? void 0 : _a.password))) {
+          const rowsAdmin = await executeQuery(sqlSelect, [admin.id]);
+          if (!(rowsAdmin.length === 1 && import_bcryptjs.default.compareSync(yourPassword, rowsAdmin[0]?.password))) {
             return res.status(401).send("Invalid credentials");
           }
           const hashEmployee = import_bcryptjs.default.hashSync(newPasswordEmployee, 10);
           const values = [hashEmployee, employeeId];
           const sqlUpdate = "UPDATE tbl_user_accounts SET password = ? WHERE id = ?";
-          yield executeQuery(sqlUpdate, values);
+          await executeQuery(sqlUpdate, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken15.TokenExpiredError) {
@@ -2211,7 +2159,7 @@ router17.post("/manage/update_password_employee", (req, res) => __async(void 0, 
   } finally {
     executionStatus15.set(ip, false);
   }
-}));
+});
 var update_password_employee_default = router17;
 
 // src/routes/admin/manage/update_status_employee/index.ts
@@ -2227,7 +2175,7 @@ var paramsSchema15 = import_zod16.z.object({
   token: import_zod16.z.string()
 });
 var executionStatus16 = /* @__PURE__ */ new Map();
-router18.post("/manage/update_status_employee", (req, res) => __async(void 0, null, function* () {
+router18.post("/manage/update_status_employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2245,9 +2193,9 @@ router18.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
       accountStatus,
       token
     } = paramsSchema15.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken16.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken16.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2255,7 +2203,7 @@ router18.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
         try {
           const { user: admin } = decoded;
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
-          const [user] = yield executeQuery(sqlSelect, [admin.id]);
+          const [user] = await executeQuery(sqlSelect, [admin.id]);
           if (!user) {
             return res.status(401).send("Credenciais inv\xE1lidas");
           }
@@ -2265,13 +2213,13 @@ router18.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
           }
           const values = [accountStatus, employeeId];
           const sqlUpdate = "UPDATE tbl_user_accounts SET status = ? WHERE id = ?";
-          yield executeQuery(sqlUpdate, values);
+          await executeQuery(sqlUpdate, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken16.TokenExpiredError) {
@@ -2291,14 +2239,14 @@ router18.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
   } finally {
     executionStatus16.set(ip, false);
   }
-}));
+});
 var update_status_employee_default = router18;
 
 // src/routes/admin/manage/index.ts
 var import_zod17 = require("zod");
 var router19 = import_express19.default.Router();
 var executionStatus17 = /* @__PURE__ */ new Map();
-router19.post("/manage", (req, res) => __async(void 0, null, function* () {
+router19.post("/manage", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2312,9 +2260,9 @@ router19.post("/manage", (req, res) => __async(void 0, null, function* () {
     executionStatus17.set(ip, true);
     const paramsSchema61 = import_zod17.z.object({ token: import_zod17.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken17.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken17.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2331,13 +2279,13 @@ router19.post("/manage", (req, res) => __async(void 0, null, function* () {
         FROM tbl_user_accounts 
         WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
           const roles = ["superadmin", "admin", "almox", "cop", "config"];
-          const rows = yield executeQuery(sql, roles);
+          const rows = await executeQuery(sql, roles);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken17.TokenExpiredError) {
@@ -2357,7 +2305,7 @@ router19.post("/manage", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus17.set(ip, false);
   }
-}));
+});
 router19.use(new_default2);
 router19.use(historic_default2);
 router19.use(update_password_employee_default);
@@ -2385,7 +2333,7 @@ var paramsSchema16 = import_zod18.z.object({
   listMaterial: import_zod18.z.string().optional()
 });
 var executionStatus18 = /* @__PURE__ */ new Map();
-router20.post("/concluded", (req, res) => __async(void 0, null, function* () {
+router20.post("/concluded", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2398,16 +2346,16 @@ router20.post("/concluded", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus18.set(ip, true);
     const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema16.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken18.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken18.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(sql, [employeeId, protocol]);
+          const [row] = await executeQuery(sql, [employeeId, protocol]);
           if (!row) {
             console.error("Requisi\xE7\xE3o inv\xE1lida");
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lida" });
@@ -2421,7 +2369,7 @@ router20.post("/concluded", (req, res) => __async(void 0, null, function* () {
           const deleteValues = [row.employee_id, row.protocol];
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "concluded";
-          const createStateModificationHistoryRecord = yield insert_state_modification({
+          const createStateModificationHistoryRecord = await insert_state_modification({
             row,
             newStatus,
             listMaterial,
@@ -2430,18 +2378,18 @@ router20.post("/concluded", (req, res) => __async(void 0, null, function* () {
           });
           executeTransactionArray.push(createStateModificationHistoryRecord);
           if (row.status !== "analysis" && listMaterial) {
-            const decrementStockItemQuantityEmployee = yield decrement_item(listMaterial);
+            const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
             executeTransactionArray.push(decrementStockItemQuantityEmployee);
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken18.TokenExpiredError) {
@@ -2461,7 +2409,7 @@ router20.post("/concluded", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus18.set(ip, false);
   }
-}));
+});
 var concluded_default2 = router20;
 
 // src/routes/admin/running/finish/select-material/index.ts
@@ -2475,7 +2423,7 @@ var paramsSchema17 = import_zod19.z.object({
   protocol: import_zod19.z.string().max(17)
 });
 var executionStatus19 = /* @__PURE__ */ new Map();
-router21.post("/running/finish/select-material", (req, res) => __async(void 0, null, function* () {
+router21.post("/running/finish/select-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2488,9 +2436,9 @@ router21.post("/running/finish/select-material", (req, res) => __async(void 0, n
   try {
     executionStatus19.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema17.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken19.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken19.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2498,13 +2446,13 @@ router21.post("/running/finish/select-material", (req, res) => __async(void 0, n
         try {
           const status = "finished";
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
-          const rows = yield executeQuery(sql, [employeeId, protocol, status]);
+          const rows = await executeQuery(sql, [employeeId, protocol, status]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken19.TokenExpiredError) {
@@ -2524,7 +2472,7 @@ router21.post("/running/finish/select-material", (req, res) => __async(void 0, n
   } finally {
     executionStatus19.set(ip, false);
   }
-}));
+});
 var select_material_default2 = router21;
 
 // src/routes/admin/running/finish/select-service/index.ts
@@ -2538,7 +2486,7 @@ var paramsSchema18 = import_zod20.z.object({
   protocol: import_zod20.z.string().max(17)
 });
 var executionStatus20 = /* @__PURE__ */ new Map();
-router22.post("/running/finish/select-service", (req, res) => __async(void 0, null, function* () {
+router22.post("/running/finish/select-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2551,9 +2499,9 @@ router22.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   try {
     executionStatus20.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema18.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken20.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken20.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2562,14 +2510,14 @@ router22.post("/running/finish/select-service", (req, res) => __async(void 0, nu
           const status = "finished";
           const sql1 = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
           const sql2 = "SELECT * FROM tbl_service_catalog WHERE status = ?";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, status]);
-          const serviceList = yield executeQuery(sql2, ["ativo"]);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, status]);
+          const serviceList = await executeQuery(sql2, ["ativo"]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken20.TokenExpiredError) {
@@ -2589,7 +2537,7 @@ router22.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   } finally {
     executionStatus20.set(ip, false);
   }
-}));
+});
 var select_service_default2 = router22;
 
 // src/routes/admin/running/finish/index.ts
@@ -2610,7 +2558,7 @@ var paramsSchema19 = import_zod21.z.object({
   protocol: import_zod21.z.string().max(17)
 });
 var executionStatus21 = /* @__PURE__ */ new Map();
-router24.post("/running/cancel", (req, res) => __async(void 0, null, function* () {
+router24.post("/running/cancel", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2623,16 +2571,16 @@ router24.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   try {
     executionStatus21.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema19.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken21.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken21.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
@@ -2644,21 +2592,21 @@ router24.post("/running/cancel", (req, res) => __async(void 0, null, function* (
           const queryOperations = "DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "canceled";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
           if (row.status === "analysis" && row.list_material) {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken21.TokenExpiredError) {
@@ -2678,7 +2626,7 @@ router24.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   } finally {
     executionStatus21.set(ip, false);
   }
-}));
+});
 var cancel_default2 = router24;
 
 // src/routes/admin/running/pause/index.ts
@@ -2692,7 +2640,7 @@ var paramsSchema20 = import_zod22.z.object({
 });
 var router25 = import_express25.default.Router();
 var executionStatus22 = /* @__PURE__ */ new Map();
-router25.post("/running/pause", (req, res) => __async(void 0, null, function* () {
+router25.post("/running/pause", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2705,9 +2653,9 @@ router25.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus22.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema20.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken22.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken22.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2717,25 +2665,25 @@ router25.post("/running/pause", (req, res) => __async(void 0, null, function* ()
             executionStatus22.set(ip, false);
           }
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol, "active"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "paused";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken22.TokenExpiredError) {
@@ -2755,7 +2703,7 @@ router25.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus22.set(ip, false);
   }
-}));
+});
 var pause_default2 = router25;
 
 // src/routes/admin/running/start/index.ts
@@ -2769,7 +2717,7 @@ var paramsSchema21 = import_zod23.z.object({
   protocol: import_zod23.z.string().max(17)
 });
 var executionStatus23 = /* @__PURE__ */ new Map();
-router26.post("/running/start", (req, res) => __async(void 0, null, function* () {
+router26.post("/running/start", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2782,35 +2730,35 @@ router26.post("/running/start", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus23.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema21.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken23.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken23.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           const executeTransactionArray = [];
           const newStatus = "active";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, updateStateModificationService));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...updateStateModificationService });
           if (row.status === "analysis") {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken23.TokenExpiredError) {
@@ -2830,14 +2778,14 @@ router26.post("/running/start", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus23.set(ip, false);
   }
-}));
+});
 var start_default2 = router26;
 
 // src/routes/admin/running/index.ts
 var import_zod24 = require("zod");
 var router27 = import_express27.default.Router();
 var executionStatus24 = /* @__PURE__ */ new Map();
-router27.post("/running", (req, res) => __async(void 0, null, function* () {
+router27.post("/running", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2851,9 +2799,9 @@ router27.post("/running", (req, res) => __async(void 0, null, function* () {
     executionStatus24.set(ip, true);
     const paramsSchema61 = import_zod24.z.object({ token: import_zod24.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken24.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken24.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2869,13 +2817,13 @@ router27.post("/running", (req, res) => __async(void 0, null, function* () {
       LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       ORDER BY u1.created_at DESC;
     `;
-          const rows = yield executeQuery(sql);
+          const rows = await executeQuery(sql);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken24.TokenExpiredError) {
@@ -2895,7 +2843,7 @@ router27.post("/running", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus24.set(ip, false);
   }
-}));
+});
 router27.use(finish_default2);
 router27.use(cancel_default2);
 router27.use(pause_default2);
@@ -2929,7 +2877,7 @@ function getCurrentDateTime5() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus25 = /* @__PURE__ */ new Map();
-router28.post("/register-employee", (req, res) => __async(void 0, null, function* () {
+router28.post("/register-employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -2948,9 +2896,9 @@ router28.post("/register-employee", (req, res) => __async(void 0, null, function
       accountType,
       token
     } = paramsSchema22.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken25.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken25.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -2968,20 +2916,20 @@ router28.post("/register-employee", (req, res) => __async(void 0, null, function
             createdAt
           ];
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE identification = ?";
-          const rows = yield executeQuery(sqlSelect, [identification]);
+          const rows = await executeQuery(sqlSelect, [identification]);
           if (rows.length > 0) {
             res.json({ status: "already registered" });
             console.log("Funcion\xE1rio(a) n\xE3o registrado!");
             return;
           }
           const sqlInsert = "INSERT INTO tbl_user_accounts ( name, role, team, status, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ?)";
-          yield executeQuery(sqlInsert, values);
+          await executeQuery(sqlInsert, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken25.TokenExpiredError) {
@@ -3001,7 +2949,7 @@ router28.post("/register-employee", (req, res) => __async(void 0, null, function
   } finally {
     executionStatus25.set(ip, false);
   }
-}));
+});
 var register_employee_default = router28;
 
 // src/routes/admin/index.ts
@@ -3052,7 +3000,7 @@ var paramsSchema23 = import_zod26.z.object({
   token: import_zod26.z.string()
 });
 var executionStatus26 = /* @__PURE__ */ new Map();
-router30.post("/manage/new", (req, res) => __async(void 0, null, function* () {
+router30.post("/manage/new", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3074,9 +3022,9 @@ router30.post("/manage/new", (req, res) => __async(void 0, null, function* () {
       startServiceAt,
       token
     } = paramsSchema23.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken26.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken26.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3149,18 +3097,18 @@ router30.post("/manage/new", (req, res) => __async(void 0, null, function* () {
           finished_at
       ) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryOperations, values },
             { query: queryOperationsHistory, values }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: employeeId }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken26.TokenExpiredError) {
@@ -3180,7 +3128,7 @@ router30.post("/manage/new", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus26.set(ip, false);
   }
-}));
+});
 var new_default3 = router30;
 
 // src/routes/superadmin/manage/historic/index.ts
@@ -3199,7 +3147,7 @@ var paramsSchema24 = import_zod27.z.object({
   updateCount: import_zod27.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus27 = /* @__PURE__ */ new Map();
-router31.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+router31.post("/manage/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3212,9 +3160,9 @@ router31.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   try {
     executionStatus27.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema24.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken27.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken27.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3229,14 +3177,14 @@ router31.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
       ORDER BY u1.created_at DESC;
       `;
           const sql2 = "SELECT * FROM tbl_service_catalog";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, updateCount]);
-          const serviceList = yield executeQuery(sql2);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
+          const serviceList = await executeQuery(sql2);
           res.json({ currentOperation: [...currentOperation], serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken27.TokenExpiredError) {
@@ -3256,7 +3204,7 @@ router31.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus27.set(ip, false);
   }
-}));
+});
 var details_default3 = router31;
 
 // src/routes/superadmin/manage/historic/index.ts
@@ -3269,7 +3217,7 @@ var paramsSchema25 = import_zod28.z.object({
   initial_id: import_zod28.z.number().nullable().optional(),
   token: import_zod28.z.string()
 });
-router32.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+router32.post("/manage/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3282,15 +3230,15 @@ router32.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   try {
     executionStatus28.set(ip, true);
     const { employee_all, employee_id, initial_id, token } = paramsSchema25.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken28.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken28.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id2) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -3319,10 +3267,10 @@ router32.post("/manage/historic", (req, res) => __async(void 0, null, function* 
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
-          });
-          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id2]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id2]);
+          };
+          const selectEmployeeAll = async (initial_id2) => {
             const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
@@ -3349,17 +3297,17 @@ router32.post("/manage/historic", (req, res) => __async(void 0, null, function* 
         ORDER BY id DESC
         LIMIT 10;
         `;
-            if (!initial_id2) return yield executeQuery(sqlFirst);
-            return yield executeQuery(sqlLast, [initial_id2]);
-          });
-          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
-          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+            if (!initial_id2) return await executeQuery(sqlFirst);
+            return await executeQuery(sqlLast, [initial_id2]);
+          };
+          const resultEmployeeAll = await selectEmployeeAll(initial_id);
+          const resultEmployee = await selectEmployee(initial_id, employee_id);
           res.json(employee_all ? resultEmployeeAll : resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken28.TokenExpiredError) {
@@ -3379,7 +3327,7 @@ router32.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   } finally {
     executionStatus28.set(ip, false);
   }
-}));
+});
 router32.use(details_default3);
 var historic_default3 = router32;
 
@@ -3396,7 +3344,7 @@ var paramsSchema26 = import_zod29.z.object({
   token: import_zod29.z.string()
 });
 var executionStatus29 = /* @__PURE__ */ new Map();
-router33.post("/manage/update_password_employee", (req, res) => __async(void 0, null, function* () {
+router33.post("/manage/update_password_employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3414,10 +3362,9 @@ router33.post("/manage/update_password_employee", (req, res) => __async(void 0, 
       newPasswordEmployee,
       token
     } = paramsSchema26.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken29.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
-        var _a;
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken29.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3425,20 +3372,20 @@ router33.post("/manage/update_password_employee", (req, res) => __async(void 0, 
         try {
           const { user: admin } = decoded;
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
-          const rowsAdmin = yield executeQuery(sqlSelect, [admin.id]);
-          if (!(rowsAdmin.length === 1 && import_bcryptjs4.default.compareSync(yourPassword, (_a = rowsAdmin[0]) == null ? void 0 : _a.password))) {
+          const rowsAdmin = await executeQuery(sqlSelect, [admin.id]);
+          if (!(rowsAdmin.length === 1 && import_bcryptjs4.default.compareSync(yourPassword, rowsAdmin[0]?.password))) {
             return res.status(401).send("Invalid credentials");
           }
           const hashEmployee = import_bcryptjs4.default.hashSync(newPasswordEmployee, 10);
           const values = [hashEmployee, employeeId];
           const sqlUpdate = "UPDATE tbl_user_accounts SET password = ? WHERE id = ?";
-          yield executeQuery(sqlUpdate, values);
+          await executeQuery(sqlUpdate, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken29.TokenExpiredError) {
@@ -3458,7 +3405,7 @@ router33.post("/manage/update_password_employee", (req, res) => __async(void 0, 
   } finally {
     executionStatus29.set(ip, false);
   }
-}));
+});
 var update_password_employee_default2 = router33;
 
 // src/routes/superadmin/manage/update_status_employee/index.ts
@@ -3474,7 +3421,7 @@ var paramsSchema27 = import_zod30.z.object({
   token: import_zod30.z.string()
 });
 var executionStatus30 = /* @__PURE__ */ new Map();
-router34.post("/manage/update_status_employee", (req, res) => __async(void 0, null, function* () {
+router34.post("/manage/update_status_employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3492,9 +3439,9 @@ router34.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
       accountStatus,
       token
     } = paramsSchema27.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken30.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken30.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3502,7 +3449,7 @@ router34.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
         try {
           const { user: admin } = decoded;
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
-          const [user] = yield executeQuery(sqlSelect, [admin.id]);
+          const [user] = await executeQuery(sqlSelect, [admin.id]);
           if (!user) {
             return res.status(401).send("Credenciais inv\xE1lidas");
           }
@@ -3512,13 +3459,13 @@ router34.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
           }
           const values = [accountStatus, employeeId];
           const sqlUpdate = "UPDATE tbl_user_accounts SET status = ? WHERE id = ?";
-          yield executeQuery(sqlUpdate, values);
+          await executeQuery(sqlUpdate, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken30.TokenExpiredError) {
@@ -3538,7 +3485,7 @@ router34.post("/manage/update_status_employee", (req, res) => __async(void 0, nu
   } finally {
     executionStatus30.set(ip, false);
   }
-}));
+});
 var update_status_employee_default2 = router34;
 
 // src/routes/superadmin/manage/view_production/index.ts
@@ -3554,7 +3501,7 @@ var paramsSchema28 = import_zod31.z.object({
   selectedFirstDate: import_zod31.z.string().min(1),
   selectedLastDate: import_zod31.z.string().min(1)
 });
-router35.post("/manage/view_production", (req, res) => __async(void 0, null, function* () {
+router35.post("/manage/view_production", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3567,9 +3514,9 @@ router35.post("/manage/view_production", (req, res) => __async(void 0, null, fun
   try {
     executionStatus31.set(ip, true);
     const { employee_id, token, selectedFirstDate, selectedLastDate } = paramsSchema28.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken31.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken31.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3590,14 +3537,14 @@ router35.post("/manage/view_production", (req, res) => __async(void 0, null, fun
     `;
           const sql2 = "SELECT * FROM tbl_service_catalog";
           const values = [employee_id, "concluded", firstFormatted, lastFormatted];
-          const currentOperation = yield executeQuery(sql1, values);
-          const serviceList = yield executeQuery(sql2);
+          const currentOperation = await executeQuery(sql1, values);
+          const serviceList = await executeQuery(sql2);
           res.json({ currentOperation: [...currentOperation], serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken31.TokenExpiredError) {
@@ -3617,7 +3564,7 @@ router35.post("/manage/view_production", (req, res) => __async(void 0, null, fun
   } finally {
     executionStatus31.set(ip, false);
   }
-}));
+});
 var view_production_default = router35;
 
 // src/routes/superadmin/manage/service-enabler-and-disabler/index.ts
@@ -3631,7 +3578,7 @@ var paramsSchema29 = import_zod32.z.object({
   status: import_zod32.z.enum(["ativo", "inativo"]).optional()
 });
 var executionStatus32 = /* @__PURE__ */ new Map();
-router36.post("/manage/service-enabler-and-disabler", (req, res) => __async(void 0, null, function* () {
+router36.post("/manage/service-enabler-and-disabler", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3644,9 +3591,9 @@ router36.post("/manage/service-enabler-and-disabler", (req, res) => __async(void
   try {
     executionStatus32.set(ip, true);
     const { token, status, modificationId } = paramsSchema29.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken32.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken32.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3655,15 +3602,15 @@ router36.post("/manage/service-enabler-and-disabler", (req, res) => __async(void
           const sqlUpdate = "UPDATE tbl_service_catalog SET status = ? WHERE id = ?";
           const sqlSelect = "SELECT * FROM tbl_service_catalog";
           if (modificationId && status) {
-            yield executeQuery(sqlUpdate, [status, modificationId]);
+            await executeQuery(sqlUpdate, [status, modificationId]);
           }
-          const serviceList = yield executeQuery(sqlSelect);
+          const serviceList = await executeQuery(sqlSelect);
           res.json(serviceList);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken32.TokenExpiredError) {
@@ -3683,7 +3630,7 @@ router36.post("/manage/service-enabler-and-disabler", (req, res) => __async(void
   } finally {
     executionStatus32.set(ip, false);
   }
-}));
+});
 var service_enabler_and_disabler_default = router36;
 
 // src/routes/superadmin/manage/index.ts
@@ -3691,7 +3638,7 @@ var import_zod33 = require("zod");
 var router37 = import_express37.default.Router();
 var paramsSchema30 = import_zod33.z.object({ token: import_zod33.z.string() });
 var executionStatus33 = /* @__PURE__ */ new Map();
-router37.post("/manage", (req, res) => __async(void 0, null, function* () {
+router37.post("/manage", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3704,9 +3651,9 @@ router37.post("/manage", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus33.set(ip, true);
     const { token } = paramsSchema30.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken33.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken33.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3723,13 +3670,13 @@ router37.post("/manage", (req, res) => __async(void 0, null, function* () {
         FROM tbl_user_accounts 
         WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
           const roles = ["superadmin", "admin", "almox", "cop", "config"];
-          const rows = yield executeQuery(sql, roles);
+          const rows = await executeQuery(sql, roles);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken33.TokenExpiredError) {
@@ -3749,7 +3696,7 @@ router37.post("/manage", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus33.set(ip, false);
   }
-}));
+});
 router37.use(new_default3);
 router37.use(historic_default3);
 router37.use(view_production_default);
@@ -3779,7 +3726,7 @@ var paramsSchema31 = import_zod34.z.object({
   listMaterial: import_zod34.z.string().optional()
 });
 var executionStatus34 = /* @__PURE__ */ new Map();
-router38.post("/concluded", (req, res) => __async(void 0, null, function* () {
+router38.post("/concluded", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3792,16 +3739,16 @@ router38.post("/concluded", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus34.set(ip, true);
     const { token, employeeId, protocol, observation, listService, listMaterial } = paramsSchema31.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken34.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken34.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(sql, [employeeId, protocol]);
+          const [row] = await executeQuery(sql, [employeeId, protocol]);
           if (!row) {
             console.error("Requisi\xE7\xE3o inv\xE1lida");
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lida" });
@@ -3815,7 +3762,7 @@ router38.post("/concluded", (req, res) => __async(void 0, null, function* () {
           const deleteValues = [row.employee_id, row.protocol];
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "concluded";
-          const createStateModificationHistoryRecord = yield insert_state_modification({
+          const createStateModificationHistoryRecord = await insert_state_modification({
             row,
             newStatus,
             listMaterial,
@@ -3824,18 +3771,18 @@ router38.post("/concluded", (req, res) => __async(void 0, null, function* () {
           });
           executeTransactionArray.push(createStateModificationHistoryRecord);
           if (row.status !== "analysis" && listMaterial) {
-            const decrementStockItemQuantityEmployee = yield decrement_item(listMaterial);
+            const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
             executeTransactionArray.push(decrementStockItemQuantityEmployee);
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken34.TokenExpiredError) {
@@ -3855,7 +3802,7 @@ router38.post("/concluded", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus34.set(ip, false);
   }
-}));
+});
 var concluded_default3 = router38;
 
 // src/routes/superadmin/running/finish/select-material/index.ts
@@ -3869,7 +3816,7 @@ var paramsSchema32 = import_zod35.z.object({
   protocol: import_zod35.z.string().max(17)
 });
 var executionStatus35 = /* @__PURE__ */ new Map();
-router39.post("/running/finish/select-material", (req, res) => __async(void 0, null, function* () {
+router39.post("/running/finish/select-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3882,9 +3829,9 @@ router39.post("/running/finish/select-material", (req, res) => __async(void 0, n
   try {
     executionStatus35.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema32.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken35.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken35.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3892,13 +3839,13 @@ router39.post("/running/finish/select-material", (req, res) => __async(void 0, n
         try {
           const status = "finished";
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
-          const rows = yield executeQuery(sql, [employeeId, protocol, status]);
+          const rows = await executeQuery(sql, [employeeId, protocol, status]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken35.TokenExpiredError) {
@@ -3918,7 +3865,7 @@ router39.post("/running/finish/select-material", (req, res) => __async(void 0, n
   } finally {
     executionStatus35.set(ip, false);
   }
-}));
+});
 var select_material_default3 = router39;
 
 // src/routes/superadmin/running/finish/select-service/index.ts
@@ -3932,7 +3879,7 @@ var paramsSchema33 = import_zod36.z.object({
   protocol: import_zod36.z.string().max(17)
 });
 var executionStatus36 = /* @__PURE__ */ new Map();
-router40.post("/running/finish/select-service", (req, res) => __async(void 0, null, function* () {
+router40.post("/running/finish/select-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -3945,9 +3892,9 @@ router40.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   try {
     executionStatus36.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema33.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken36.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken36.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -3956,14 +3903,14 @@ router40.post("/running/finish/select-service", (req, res) => __async(void 0, nu
           const status = "finished";
           const sql1 = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
           const sql2 = "SELECT * FROM tbl_service_catalog WHERE status = ?";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, status]);
-          const serviceList = yield executeQuery(sql2, ["ativo"]);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, status]);
+          const serviceList = await executeQuery(sql2, ["ativo"]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken36.TokenExpiredError) {
@@ -3983,7 +3930,7 @@ router40.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   } finally {
     executionStatus36.set(ip, false);
   }
-}));
+});
 var select_service_default3 = router40;
 
 // src/routes/superadmin/running/finish/index.ts
@@ -4004,7 +3951,7 @@ var paramsSchema34 = import_zod37.z.object({
   protocol: import_zod37.z.string().max(17)
 });
 var executionStatus37 = /* @__PURE__ */ new Map();
-router42.post("/running/cancel", (req, res) => __async(void 0, null, function* () {
+router42.post("/running/cancel", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4017,16 +3964,16 @@ router42.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   try {
     executionStatus37.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema34.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken37.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken37.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
@@ -4038,21 +3985,21 @@ router42.post("/running/cancel", (req, res) => __async(void 0, null, function* (
           const queryOperations = "DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "canceled";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
           if (row.status === "analysis" && row.list_material) {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken37.TokenExpiredError) {
@@ -4072,7 +4019,7 @@ router42.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   } finally {
     executionStatus37.set(ip, false);
   }
-}));
+});
 var cancel_default3 = router42;
 
 // src/routes/superadmin/running/pause/index.ts
@@ -4086,7 +4033,7 @@ var paramsSchema35 = import_zod38.z.object({
 });
 var router43 = import_express43.default.Router();
 var executionStatus38 = /* @__PURE__ */ new Map();
-router43.post("/running/pause", (req, res) => __async(void 0, null, function* () {
+router43.post("/running/pause", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4099,9 +4046,9 @@ router43.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus38.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema35.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken38.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken38.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4111,25 +4058,25 @@ router43.post("/running/pause", (req, res) => __async(void 0, null, function* ()
             executionStatus38.set(ip, false);
           }
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol, "active"]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol, "active"]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "paused";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken38.TokenExpiredError) {
@@ -4149,7 +4096,7 @@ router43.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus38.set(ip, false);
   }
-}));
+});
 var pause_default3 = router43;
 
 // src/routes/superadmin/running/start/index.ts
@@ -4163,7 +4110,7 @@ var paramsSchema36 = import_zod39.z.object({
   protocol: import_zod39.z.string().max(17)
 });
 var executionStatus39 = /* @__PURE__ */ new Map();
-router44.post("/running/start", (req, res) => __async(void 0, null, function* () {
+router44.post("/running/start", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4176,35 +4123,35 @@ router44.post("/running/start", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus39.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema36.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken39.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken39.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           const executeTransactionArray = [];
           const newStatus = "active";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, updateStateModificationService));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...updateStateModificationService });
           if (row.status === "analysis") {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken39.TokenExpiredError) {
@@ -4224,14 +4171,14 @@ router44.post("/running/start", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus39.set(ip, false);
   }
-}));
+});
 var start_default3 = router44;
 
 // src/routes/superadmin/running/index.ts
 var import_zod40 = require("zod");
 var router45 = import_express45.default.Router();
 var executionStatus40 = /* @__PURE__ */ new Map();
-router45.post("/running", (req, res) => __async(void 0, null, function* () {
+router45.post("/running", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4245,9 +4192,9 @@ router45.post("/running", (req, res) => __async(void 0, null, function* () {
     executionStatus40.set(ip, true);
     const paramsSchema61 = import_zod40.z.object({ token: import_zod40.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken40.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken40.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4263,13 +4210,13 @@ router45.post("/running", (req, res) => __async(void 0, null, function* () {
       LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       ORDER BY u1.created_at DESC;
     `;
-          const rows = yield executeQuery(sql);
+          const rows = await executeQuery(sql);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken40.TokenExpiredError) {
@@ -4289,7 +4236,7 @@ router45.post("/running", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus40.set(ip, false);
   }
-}));
+});
 router45.use(finish_default3);
 router45.use(cancel_default3);
 router45.use(pause_default3);
@@ -4323,7 +4270,7 @@ function getCurrentDateTime7() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus41 = /* @__PURE__ */ new Map();
-router46.post("/register-employee", (req, res) => __async(void 0, null, function* () {
+router46.post("/register-employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4342,9 +4289,9 @@ router46.post("/register-employee", (req, res) => __async(void 0, null, function
       accountType,
       token
     } = paramsSchema37.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken41.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken41.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4362,20 +4309,20 @@ router46.post("/register-employee", (req, res) => __async(void 0, null, function
             createdAt
           ];
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE identification = ?";
-          const rows = yield executeQuery(sqlSelect, [identification]);
+          const rows = await executeQuery(sqlSelect, [identification]);
           if (rows.length > 0) {
             res.json({ status: "already registered" });
             console.log("Funcion\xE1rio(a) n\xE3o registrado!");
             return;
           }
           const sqlInsert = "INSERT INTO tbl_user_accounts ( name, role, team, status, identification, password, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ?)";
-          yield executeQuery(sqlInsert, values);
+          await executeQuery(sqlInsert, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken41.TokenExpiredError) {
@@ -4395,7 +4342,7 @@ router46.post("/register-employee", (req, res) => __async(void 0, null, function
   } finally {
     executionStatus41.set(ip, false);
   }
-}));
+});
 var register_employee_default2 = router46;
 
 // src/routes/superadmin/register-service/index.ts
@@ -4420,7 +4367,7 @@ function getCurrentDateTime8() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus42 = /* @__PURE__ */ new Map();
-router47.post("/register-service", (req, res) => __async(void 0, null, function* () {
+router47.post("/register-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4438,9 +4385,9 @@ router47.post("/register-service", (req, res) => __async(void 0, null, function*
       observation,
       token
     } = paramsSchema38.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken42.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken42.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4454,13 +4401,13 @@ router47.post("/register-service", (req, res) => __async(void 0, null, function*
             createdAt
           ];
           const sqlInsert = "INSERT INTO tbl_service_catalog ( description, status, observation, created_at) VALUES ( ?, ?, ?, ?)";
-          yield executeQuery(sqlInsert, values);
+          await executeQuery(sqlInsert, values);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken42.TokenExpiredError) {
@@ -4480,7 +4427,7 @@ router47.post("/register-service", (req, res) => __async(void 0, null, function*
   } finally {
     executionStatus42.set(ip, false);
   }
-}));
+});
 var register_service_default = router47;
 
 // src/routes/superadmin/index.ts
@@ -4504,7 +4451,7 @@ var paramsSchema39 = import_zod43.z.object({
   token: import_zod43.z.string()
 });
 var executionStatus43 = /* @__PURE__ */ new Map();
-router49.post("/select-theme", (req, res) => __async(void 0, null, function* () {
+router49.post("/select-theme", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4517,24 +4464,24 @@ router49.post("/select-theme", (req, res) => __async(void 0, null, function* () 
   try {
     executionStatus43.set(ip, true);
     const { bussines, token } = paramsSchema39.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken43.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken43.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           if (bussines) {
-            yield setRedis("company", bussines);
+            await setRedis("company", bussines);
           }
-          const company = yield getRedis("company");
+          const company = await getRedis("company");
           res.json(company);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken43.TokenExpiredError) {
@@ -4554,7 +4501,7 @@ router49.post("/select-theme", (req, res) => __async(void 0, null, function* () 
   } finally {
     executionStatus43.set(ip, false);
   }
-}));
+});
 var select_theme_default = router49;
 
 // src/routes/config/disconnect-everything/index.ts
@@ -4569,7 +4516,7 @@ var executionStatus44 = /* @__PURE__ */ new Map();
 function getRandomSSID(comprimento = 10) {
   return Math.random().toString(36).slice(2, comprimento);
 }
-router50.post("/disconnect-everything", (req, res) => __async(void 0, null, function* () {
+router50.post("/disconnect-everything", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4582,17 +4529,17 @@ router50.post("/disconnect-everything", (req, res) => __async(void 0, null, func
   try {
     executionStatus44.set(ip, true);
     const { token } = paramsSchema40.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken44.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken44.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const ssid = getRandomSSID();
-          yield setRedis("_session_ssid", ssid);
-          const socket = yield websocket(token);
+          await setRedis("_session_ssid", ssid);
+          const socket = await websocket(token);
           socket.emit("ALL_REMOTE_LOGOUT_USER");
           res.json({ success: true });
           socket.close();
@@ -4600,7 +4547,7 @@ router50.post("/disconnect-everything", (req, res) => __async(void 0, null, func
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken44.TokenExpiredError) {
@@ -4620,7 +4567,7 @@ router50.post("/disconnect-everything", (req, res) => __async(void 0, null, func
   } finally {
     executionStatus44.set(ip, false);
   }
-}));
+});
 var disconnect_everything_default = router50;
 
 // src/routes/config/index.ts
@@ -4670,7 +4617,7 @@ var paramsSchema41 = import_zod45.z.object({
   token: import_zod45.z.string()
 });
 var executionStatus45 = /* @__PURE__ */ new Map();
-router52.post("/manage/new", (req, res) => __async(void 0, null, function* () {
+router52.post("/manage/new", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4692,9 +4639,9 @@ router52.post("/manage/new", (req, res) => __async(void 0, null, function* () {
       startServiceAt,
       token
     } = paramsSchema41.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken45.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken45.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4767,18 +4714,18 @@ router52.post("/manage/new", (req, res) => __async(void 0, null, function* () {
           finished_at
       ) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryOperations, values },
             { query: queryOperationsHistory, values }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: employeeId }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken45.TokenExpiredError) {
@@ -4798,7 +4745,7 @@ router52.post("/manage/new", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus45.set(ip, false);
   }
-}));
+});
 var new_default4 = router52;
 
 // src/routes/cop/manage/historic/index.ts
@@ -4817,7 +4764,7 @@ var paramsSchema42 = import_zod46.z.object({
   updateCount: import_zod46.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus46 = /* @__PURE__ */ new Map();
-router53.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+router53.post("/manage/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4830,9 +4777,9 @@ router53.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   try {
     executionStatus46.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema42.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken46.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken46.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -4847,14 +4794,14 @@ router53.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
       ORDER BY u1.created_at DESC;
       `;
           const sql2 = "SELECT * FROM tbl_service_catalog";
-          const serviceList = yield executeQuery(sql2);
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, updateCount]);
+          const serviceList = await executeQuery(sql2);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, updateCount]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken46.TokenExpiredError) {
@@ -4874,7 +4821,7 @@ router53.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus46.set(ip, false);
   }
-}));
+});
 var details_default4 = router53;
 
 // src/routes/cop/manage/historic/index.ts
@@ -4887,7 +4834,7 @@ var paramsSchema43 = import_zod47.z.object({
   initial_id: import_zod47.z.number().nullable().optional(),
   token: import_zod47.z.string()
 });
-router54.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+router54.post("/manage/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -4900,15 +4847,15 @@ router54.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   try {
     executionStatus47.set(ip, true);
     const { employee_all, employee_id, initial_id, token } = paramsSchema43.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken47.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken47.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id2) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -4937,10 +4884,10 @@ router54.post("/manage/historic", (req, res) => __async(void 0, null, function* 
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
-          });
-          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id2]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id2]);
+          };
+          const selectEmployeeAll = async (initial_id2) => {
             const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
@@ -4967,17 +4914,17 @@ router54.post("/manage/historic", (req, res) => __async(void 0, null, function* 
         ORDER BY id DESC
         LIMIT 10;
         `;
-            if (!initial_id2) return yield executeQuery(sqlFirst);
-            return yield executeQuery(sqlLast, [initial_id2]);
-          });
-          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
-          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+            if (!initial_id2) return await executeQuery(sqlFirst);
+            return await executeQuery(sqlLast, [initial_id2]);
+          };
+          const resultEmployeeAll = await selectEmployeeAll(initial_id);
+          const resultEmployee = await selectEmployee(initial_id, employee_id);
           res.json(employee_all ? resultEmployeeAll : resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken47.TokenExpiredError) {
@@ -4997,7 +4944,7 @@ router54.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   } finally {
     executionStatus47.set(ip, false);
   }
-}));
+});
 router54.use(details_default4);
 var historic_default4 = router54;
 
@@ -5006,7 +4953,7 @@ var import_zod48 = require("zod");
 var router55 = import_express55.default.Router();
 var paramsSchema44 = import_zod48.z.object({ token: import_zod48.z.string() });
 var executionStatus48 = /* @__PURE__ */ new Map();
-router55.post("/manage", (req, res) => __async(void 0, null, function* () {
+router55.post("/manage", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5019,9 +4966,9 @@ router55.post("/manage", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus48.set(ip, true);
     const { token } = paramsSchema44.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken48.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken48.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5038,13 +4985,13 @@ router55.post("/manage", (req, res) => __async(void 0, null, function* () {
         FROM tbl_user_accounts 
         WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
           const roles = ["superadmin", "admin", "almox", "cop", "config"];
-          const rows = yield executeQuery(sql, roles);
+          const rows = await executeQuery(sql, roles);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken48.TokenExpiredError) {
@@ -5064,7 +5011,7 @@ router55.post("/manage", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus48.set(ip, false);
   }
-}));
+});
 router55.use(new_default4);
 router55.use(historic_default4);
 var manage_default3 = router55;
@@ -5090,7 +5037,7 @@ var paramsSchema45 = import_zod49.z.object({
   listMaterial: import_zod49.z.string().optional()
 });
 var executionStatus49 = /* @__PURE__ */ new Map();
-router56.post("/concluded", (req, res) => __async(void 0, null, function* () {
+router56.post("/concluded", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5104,16 +5051,16 @@ router56.post("/concluded", (req, res) => __async(void 0, null, function* () {
     executionStatus49.set(ip, true);
     const body = paramsSchema45.parse(req.body);
     const { token, employeeId, protocol, observation, listService, listMaterial } = body;
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken49.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken49.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(sql, [employeeId, protocol]);
+          const [row] = await executeQuery(sql, [employeeId, protocol]);
           if (!row) {
             console.error("Requisi\xE7\xE3o inv\xE1lida");
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lida" });
@@ -5127,7 +5074,7 @@ router56.post("/concluded", (req, res) => __async(void 0, null, function* () {
           const deleteValues = [row.employee_id, row.protocol];
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "concluded";
-          const createStateModificationHistoryRecord = yield insert_state_modification({
+          const createStateModificationHistoryRecord = await insert_state_modification({
             row,
             newStatus,
             listMaterial,
@@ -5136,18 +5083,18 @@ router56.post("/concluded", (req, res) => __async(void 0, null, function* () {
           });
           executeTransactionArray.push(createStateModificationHistoryRecord);
           if (row.status !== "analysis" && listMaterial) {
-            const decrementStockItemQuantityEmployee = yield decrement_item(listMaterial);
+            const decrementStockItemQuantityEmployee = await decrement_item(listMaterial);
             executeTransactionArray.push(decrementStockItemQuantityEmployee);
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken49.TokenExpiredError) {
@@ -5167,7 +5114,7 @@ router56.post("/concluded", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus49.set(ip, false);
   }
-}));
+});
 var concluded_default4 = router56;
 
 // src/routes/cop/running/finish/select-material/index.ts
@@ -5181,7 +5128,7 @@ var paramsSchema46 = import_zod50.z.object({
   protocol: import_zod50.z.string().max(17)
 });
 var executionStatus50 = /* @__PURE__ */ new Map();
-router57.post("/running/finish/select-material", (req, res) => __async(void 0, null, function* () {
+router57.post("/running/finish/select-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5194,9 +5141,9 @@ router57.post("/running/finish/select-material", (req, res) => __async(void 0, n
   try {
     executionStatus50.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema46.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken50.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken50.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5204,13 +5151,13 @@ router57.post("/running/finish/select-material", (req, res) => __async(void 0, n
         try {
           const status = "finished";
           const sql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
-          const rows = yield executeQuery(sql, [employeeId, protocol, status]);
+          const rows = await executeQuery(sql, [employeeId, protocol, status]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken50.TokenExpiredError) {
@@ -5230,7 +5177,7 @@ router57.post("/running/finish/select-material", (req, res) => __async(void 0, n
   } finally {
     executionStatus50.set(ip, false);
   }
-}));
+});
 var select_material_default4 = router57;
 
 // src/routes/cop/running/finish/select-service/index.ts
@@ -5244,7 +5191,7 @@ var paramsSchema47 = import_zod51.z.object({
   protocol: import_zod51.z.string().max(17)
 });
 var executionStatus51 = /* @__PURE__ */ new Map();
-router58.post("/running/finish/select-service", (req, res) => __async(void 0, null, function* () {
+router58.post("/running/finish/select-service", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5257,9 +5204,9 @@ router58.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   try {
     executionStatus51.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema47.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken51.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken51.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5268,14 +5215,14 @@ router58.post("/running/finish/select-service", (req, res) => __async(void 0, nu
           const status = "finished";
           const sql1 = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status <> ?";
           const sql2 = "SELECT * FROM tbl_service_catalog WHERE status = ?";
-          const currentOperation = yield executeQuery(sql1, [employeeId, protocol, status]);
-          const serviceList = yield executeQuery(sql2, ["ativo"]);
+          const currentOperation = await executeQuery(sql1, [employeeId, protocol, status]);
+          const serviceList = await executeQuery(sql2, ["ativo"]);
           res.json({ currentOperation, serviceList });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken51.TokenExpiredError) {
@@ -5295,7 +5242,7 @@ router58.post("/running/finish/select-service", (req, res) => __async(void 0, nu
   } finally {
     executionStatus51.set(ip, false);
   }
-}));
+});
 var select_service_default4 = router58;
 
 // src/routes/cop/running/finish/index.ts
@@ -5316,7 +5263,7 @@ var paramsSchema48 = import_zod52.z.object({
   protocol: import_zod52.z.string().max(17)
 });
 var executionStatus52 = /* @__PURE__ */ new Map();
-router60.post("/running/cancel", (req, res) => __async(void 0, null, function* () {
+router60.post("/running/cancel", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5329,16 +5276,16 @@ router60.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   try {
     executionStatus52.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema48.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken52.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken52.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
@@ -5350,21 +5297,21 @@ router60.post("/running/cancel", (req, res) => __async(void 0, null, function* (
           const queryOperations = "DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
           executeTransactionArray.push({ query: queryOperations, values: deleteValues });
           const newStatus = "canceled";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
           if (row.status === "analysis" && row.list_material) {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken52.TokenExpiredError) {
@@ -5384,7 +5331,7 @@ router60.post("/running/cancel", (req, res) => __async(void 0, null, function* (
   } finally {
     executionStatus52.set(ip, false);
   }
-}));
+});
 var cancel_default4 = router60;
 
 // src/routes/cop/running/pause/index.ts
@@ -5398,7 +5345,7 @@ var paramsSchema49 = import_zod53.z.object({
 });
 var router61 = import_express61.default.Router();
 var executionStatus53 = /* @__PURE__ */ new Map();
-router61.post("/running/pause", (req, res) => __async(void 0, null, function* () {
+router61.post("/running/pause", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5411,9 +5358,9 @@ router61.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus53.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema49.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken53.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken53.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5423,26 +5370,26 @@ router61.post("/running/pause", (req, res) => __async(void 0, null, function* ()
             executionStatus53.set(ip, false);
           }
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ? AND status = ?";
-          const [rowQuery] = yield executeQuery(selectSql, [employeeId, protocol, "active"]);
+          const [rowQuery] = await executeQuery(selectSql, [employeeId, protocol, "active"]);
           const row = rowQuery;
           if (!row) {
             return res.status(400).json({ error: "Requisi\xE7\xE3o inv\xE1lido" });
           }
           const newStatus = "paused";
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          yield executeTransaction([
-            __spreadValues({}, updateStateModificationService),
-            __spreadValues({}, createStateModificationHistoryRecord)
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          await executeTransaction([
+            { ...updateStateModificationService },
+            { ...createStateModificationHistoryRecord }
           ]);
-          const socket = yield websocket(token);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken53.TokenExpiredError) {
@@ -5462,7 +5409,7 @@ router61.post("/running/pause", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus53.set(ip, false);
   }
-}));
+});
 var pause_default4 = router61;
 
 // src/routes/cop/running/start/index.ts
@@ -5476,7 +5423,7 @@ var paramsSchema50 = import_zod54.z.object({
   protocol: import_zod54.z.string().max(17)
 });
 var executionStatus54 = /* @__PURE__ */ new Map();
-router62.post("/running/start", (req, res) => __async(void 0, null, function* () {
+router62.post("/running/start", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5489,35 +5436,35 @@ router62.post("/running/start", (req, res) => __async(void 0, null, function* ()
   try {
     executionStatus54.set(ip, true);
     const { token, employeeId, protocol } = paramsSchema50.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken54.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken54.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const selectSql = "SELECT * FROM tbl_operations WHERE employee_id = ? AND protocol = ?";
-          const [row] = yield executeQuery(selectSql, [employeeId, protocol]);
+          const [row] = await executeQuery(selectSql, [employeeId, protocol]);
           const executeTransactionArray = [];
           const newStatus = "active";
-          const createStateModificationHistoryRecord = yield insert_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, createStateModificationHistoryRecord));
-          const updateStateModificationService = yield update_state_modification({ row, newStatus });
-          executeTransactionArray.push(__spreadValues({}, updateStateModificationService));
+          const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...createStateModificationHistoryRecord });
+          const updateStateModificationService = await update_state_modification({ row, newStatus });
+          executeTransactionArray.push({ ...updateStateModificationService });
           if (row.status === "analysis") {
-            const incrementStockItemQuantityEmployee = yield increment_item(row.list_material);
-            executeTransactionArray.push(__spreadValues({}, incrementStockItemQuantityEmployee));
+            const incrementStockItemQuantityEmployee = await increment_item(row.list_material);
+            executeTransactionArray.push({ ...incrementStockItemQuantityEmployee });
           }
-          yield executeTransaction(executeTransactionArray);
-          const socket = yield websocket(token);
+          await executeTransaction(executeTransactionArray);
+          const socket = await websocket(token);
           socket.emit("RUNNING_REFRESH", JSON.stringify({ employee_id: row.employee_id }));
           res.json({ success: true });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken54.TokenExpiredError) {
@@ -5537,14 +5484,14 @@ router62.post("/running/start", (req, res) => __async(void 0, null, function* ()
   } finally {
     executionStatus54.set(ip, false);
   }
-}));
+});
 var start_default4 = router62;
 
 // src/routes/cop/running/index.ts
 var import_zod55 = require("zod");
 var router63 = import_express63.default.Router();
 var executionStatus55 = /* @__PURE__ */ new Map();
-router63.post("/running", (req, res) => __async(void 0, null, function* () {
+router63.post("/running", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5558,9 +5505,9 @@ router63.post("/running", (req, res) => __async(void 0, null, function* () {
     executionStatus55.set(ip, true);
     const paramsSchema61 = import_zod55.z.object({ token: import_zod55.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken55.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken55.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5576,13 +5523,13 @@ router63.post("/running", (req, res) => __async(void 0, null, function* () {
       LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
       ORDER BY u1.created_at DESC;
     `;
-          const rows = yield executeQuery(sql);
+          const rows = await executeQuery(sql);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken55.TokenExpiredError) {
@@ -5602,7 +5549,7 @@ router63.post("/running", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus55.set(ip, false);
   }
-}));
+});
 router63.use(finish_default4);
 router63.use(cancel_default4);
 router63.use(pause_default4);
@@ -5631,18 +5578,17 @@ var paramsSchema51 = import_zod56.z.object({
   }),
   password: import_zod56.z.string().min(1)
 });
-router65.post("/signin", (req, res) => __async(void 0, null, function* () {
-  var _a, _b;
+router65.post("/signin", async (req, res) => {
   try {
     const { password, identification } = paramsSchema51.parse(req.body);
     const sql = "SELECT * FROM tbl_user_accounts WHERE identification = ?";
-    const [userQuery] = yield executeQuery(sql, [identification]);
+    const [userQuery] = await executeQuery(sql, [identification]);
     const user = userQuery;
     if (!user) {
       return res.status(401).send("Credenciais inv\xE1lidas");
     }
-    const company = (_a = yield getRedis("company")) != null ? _a : "exatelecom";
-    const ssid = (_b = yield getRedis("_session_ssid")) != null ? _b : "00000";
+    const company = await getRedis("company") ?? "exatelecom";
+    const ssid = await getRedis("_session_ssid") ?? "00000";
     const content = {
       user: {
         id: user.id,
@@ -5672,7 +5618,7 @@ router65.post("/signin", (req, res) => __async(void 0, null, function* () {
       return res.status(500).json({ error: "Erro interno no servidor." });
     }
   }
-}));
+});
 var signin_default = router65;
 
 // src/routes/auth/data_user/index.ts
@@ -5684,7 +5630,7 @@ var paramsSchema52 = import_zod57.z.object({
   token: import_zod57.z.string()
 });
 var executionStatus56 = /* @__PURE__ */ new Map();
-router66.post("/data_user", (req, res) => __async(void 0, null, function* () {
+router66.post("/data_user", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5697,9 +5643,9 @@ router66.post("/data_user", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus56.set(ip, true);
     const { token } = paramsSchema52.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken56.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken56.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5707,7 +5653,7 @@ router66.post("/data_user", (req, res) => __async(void 0, null, function* () {
         try {
           const { user } = decoded;
           const sqlSelect = "SELECT * FROM tbl_user_accounts WHERE id = ?";
-          const [data] = yield executeQuery(sqlSelect, [user.id]);
+          const [data] = await executeQuery(sqlSelect, [user.id]);
           if (!data) {
             return res.status(401).send("Credenciais inv\xE1lidas");
           }
@@ -5716,7 +5662,7 @@ router66.post("/data_user", (req, res) => __async(void 0, null, function* () {
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken56.TokenExpiredError) {
@@ -5736,7 +5682,7 @@ router66.post("/data_user", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus56.set(ip, false);
   }
-}));
+});
 var data_user_default = router66;
 
 // src/routes/auth/index.ts
@@ -5772,41 +5718,39 @@ function getCurrentDateTime10() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function material_operation(_0) {
-  return __async(this, arguments, function* ({ insert, employeeId, transferType }) {
-    function generatePlaceholders3(count) {
-      let valueQuery = "";
-      const placeholders = Array(count).fill("?").join(", ");
-      for (let i = 0; i < insert.length; i++) {
-        const valueSql = `(${placeholders})`;
-        valueQuery += valueSql;
-        if (i < insert.length - 1) {
-          valueQuery += ", ";
-        }
+async function material_operation({ insert, employeeId, transferType }) {
+  function generatePlaceholders3(count) {
+    let valueQuery = "";
+    const placeholders = Array(count).fill("?").join(", ");
+    for (let i = 0; i < insert.length; i++) {
+      const valueSql = `(${placeholders})`;
+      valueQuery += valueSql;
+      if (i < insert.length - 1) {
+        valueQuery += ", ";
       }
-      return valueQuery;
     }
-    const createdAt = getCurrentDateTime10();
-    const insertValueMaterialsEmployee = [];
-    insert.forEach((item) => {
-      insertValueMaterialsEmployee.push(
-        employeeId,
-        item.product_name,
-        item.product_code,
-        item.product_batch || null,
-        item.quantity_value,
-        item.unit_type,
-        transferType,
-        createdAt
-      );
-    });
-    const queryMaterialsStock = `
+    return valueQuery;
+  }
+  const createdAt = getCurrentDateTime10();
+  const insertValueMaterialsEmployee = [];
+  insert.forEach((item) => {
+    insertValueMaterialsEmployee.push(
+      employeeId,
+      item.product_name,
+      item.product_code,
+      item.product_batch || null,
+      item.quantity_value,
+      item.unit_type,
+      transferType,
+      createdAt
+    );
+  });
+  const queryMaterialsStock = `
   INSERT INTO tbl_stock_logs
     (employee_id, product_name, product_code, product_batch, quantity_value, unit_type, transfer_type, created_at) 
   VALUES 
     ${generatePlaceholders3(8)}`;
-    return { query: queryMaterialsStock, values: insertValueMaterialsEmployee };
-  });
+  return { query: queryMaterialsStock, values: insertValueMaterialsEmployee };
 }
 
 // src/routes/almox/stock/select-employee/insert-maretial/index.ts
@@ -5849,7 +5793,7 @@ function getCurrentDateTime11() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus57 = /* @__PURE__ */ new Map();
-router68.post("/stock/select-employee/insert-material", (req, res) => __async(void 0, null, function* () {
+router68.post("/stock/select-employee/insert-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5862,9 +5806,9 @@ router68.post("/stock/select-employee/insert-material", (req, res) => __async(vo
   try {
     executionStatus57.set(ip, true);
     const { insert, employee_id, token } = paramsSchema53.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken57.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken57.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -5924,22 +5868,22 @@ router68.post("/stock/select-employee/insert-material", (req, res) => __async(vo
         unit_type = VALUES(unit_type),
         created_at = VALUES(created_at);
       `;
-          const queryMaterialsStockTransferLog = yield material_operation({
+          const queryMaterialsStockTransferLog = await material_operation({
             insert,
             employeeId: employee_id,
             transferType: "sent"
           });
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryMaterialsStock, values: updateValuesMaterialsStock },
             { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
-            __spreadValues({}, queryMaterialsStockTransferLog)
+            { ...queryMaterialsStockTransferLog }
           ]);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken57.TokenExpiredError) {
@@ -5959,13 +5903,13 @@ router68.post("/stock/select-employee/insert-material", (req, res) => __async(vo
   } finally {
     executionStatus57.set(ip, false);
   }
-}));
+});
 var insert_maretial_default = router68;
 
 // src/routes/almox/stock/select-employee/index.ts
 var router69 = import_express69.default.Router();
 var executionStatus58 = /* @__PURE__ */ new Map();
-router69.post("/stock/select-employee", (req, res) => __async(void 0, null, function* () {
+router69.post("/stock/select-employee", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -5979,22 +5923,22 @@ router69.post("/stock/select-employee", (req, res) => __async(void 0, null, func
     executionStatus58.set(ip, true);
     const paramsSchema61 = import_zod59.z.object({ token: import_zod59.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken58.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken58.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT id, role, name, identification, created_at FROM tbl_user_accounts WHERE role = ? ORDER BY created_at DESC";
-          const rows = yield executeQuery(sql, ["tec"]);
+          const rows = await executeQuery(sql, ["tec"]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken58.TokenExpiredError) {
@@ -6014,7 +5958,7 @@ router69.post("/stock/select-employee", (req, res) => __async(void 0, null, func
   } finally {
     executionStatus58.set(ip, false);
   }
-}));
+});
 router69.use(insert_maretial_default);
 var select_employee_default = router69;
 
@@ -6027,7 +5971,7 @@ var paramsSchema54 = import_zod60.z.object({
   productCode: import_zod60.z.string()
 });
 var executionStatus59 = /* @__PURE__ */ new Map();
-router70.post("/stock", (req, res) => __async(void 0, null, function* () {
+router70.post("/stock", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6040,9 +5984,9 @@ router70.post("/stock", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus59.set(ip, true);
     const { token, productAll, productCode } = paramsSchema54.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken59.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken59.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6050,13 +5994,13 @@ router70.post("/stock", (req, res) => __async(void 0, null, function* () {
         try {
           const sqlproductAll = "SELECT * FROM tbl_stock_almox ORDER BY created_at DESC";
           const sqlProductCode = "SELECT * FROM tbl_stock_almox WHERE product_code = ?";
-          const rows = productAll ? yield executeQuery(sqlproductAll) : yield executeQuery(sqlProductCode, [productCode]);
+          const rows = productAll ? await executeQuery(sqlproductAll) : await executeQuery(sqlProductCode, [productCode]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken59.TokenExpiredError) {
@@ -6076,7 +6020,7 @@ router70.post("/stock", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus59.set(ip, false);
   }
-}));
+});
 router70.use(select_employee_default);
 var stock_default2 = router70;
 
@@ -6100,7 +6044,7 @@ var paramsSchema55 = import_zod61.z.object({
   updateCount: import_zod61.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus60 = /* @__PURE__ */ new Map();
-router71.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+router71.post("/manage/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6113,22 +6057,22 @@ router71.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   try {
     executionStatus60.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema55.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken60.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken60.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?";
-          const rows = yield executeQuery(sql, [employeeId, protocol, updateCount]);
+          const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken60.TokenExpiredError) {
@@ -6148,7 +6092,7 @@ router71.post("/manage/historic/details", (req, res) => __async(void 0, null, fu
   } finally {
     executionStatus60.set(ip, false);
   }
-}));
+});
 var details_default5 = router71;
 
 // src/routes/almox/manage/historic/index.ts
@@ -6161,7 +6105,7 @@ var paramsSchema56 = import_zod62.z.object({
   initial_id: import_zod62.z.number().nullable().optional(),
   token: import_zod62.z.string()
 });
-router72.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+router72.post("/manage/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6174,15 +6118,15 @@ router72.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   try {
     executionStatus61.set(ip, true);
     const { employee_all, employee_id, initial_id, token } = paramsSchema56.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken61.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken61.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id2) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -6211,10 +6155,10 @@ router72.post("/manage/historic", (req, res) => __async(void 0, null, function* 
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
-          });
-          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id2]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id2]);
+          };
+          const selectEmployeeAll = async (initial_id2) => {
             const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
@@ -6241,17 +6185,17 @@ router72.post("/manage/historic", (req, res) => __async(void 0, null, function* 
         ORDER BY id DESC
         LIMIT 10;
         `;
-            if (!initial_id2) return yield executeQuery(sqlFirst);
-            return yield executeQuery(sqlLast, [initial_id2]);
-          });
-          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
-          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+            if (!initial_id2) return await executeQuery(sqlFirst);
+            return await executeQuery(sqlLast, [initial_id2]);
+          };
+          const resultEmployeeAll = await selectEmployeeAll(initial_id);
+          const resultEmployee = await selectEmployee(initial_id, employee_id);
           res.json(employee_all ? resultEmployeeAll : resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken61.TokenExpiredError) {
@@ -6271,7 +6215,7 @@ router72.post("/manage/historic", (req, res) => __async(void 0, null, function* 
   } finally {
     executionStatus61.set(ip, false);
   }
-}));
+});
 router72.use(details_default5);
 var historic_default5 = router72;
 
@@ -6321,7 +6265,7 @@ function getCurrentDateTime12() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus62 = /* @__PURE__ */ new Map();
-router73.post("/manage/pick-material", (req, res) => __async(void 0, null, function* () {
+router73.post("/manage/pick-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6334,9 +6278,9 @@ router73.post("/manage/pick-material", (req, res) => __async(void 0, null, funct
   try {
     executionStatus62.set(ip, true);
     const { insert, employee_id, token } = paramsSchema57.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken62.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken62.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6396,22 +6340,22 @@ router73.post("/manage/pick-material", (req, res) => __async(void 0, null, funct
         unit_type = VALUES(unit_type),
         created_at = VALUES(created_at);
       `;
-          const queryMaterialsStockTransferLog = yield material_operation({
+          const queryMaterialsStockTransferLog = await material_operation({
             insert,
             employeeId: employee_id,
             transferType: "sent"
           });
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryMaterialsStock, values: updateValuesMaterialsStock },
             { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
-            __spreadValues({}, queryMaterialsStockTransferLog)
+            { ...queryMaterialsStockTransferLog }
           ]);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken62.TokenExpiredError) {
@@ -6431,14 +6375,14 @@ router73.post("/manage/pick-material", (req, res) => __async(void 0, null, funct
   } finally {
     executionStatus62.set(ip, false);
   }
-}));
+});
 var pick_material_default = router73;
 
 // src/routes/almox/manage/index.ts
 var import_zod64 = require("zod");
 var router74 = import_express74.default.Router();
 var executionStatus63 = /* @__PURE__ */ new Map();
-router74.post("/manage", (req, res) => __async(void 0, null, function* () {
+router74.post("/manage", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6452,9 +6396,9 @@ router74.post("/manage", (req, res) => __async(void 0, null, function* () {
     executionStatus63.set(ip, true);
     const paramsSchema61 = import_zod64.z.object({ token: import_zod64.z.string() });
     const { token } = paramsSchema61.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken63.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken63.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6471,13 +6415,13 @@ router74.post("/manage", (req, res) => __async(void 0, null, function* () {
         FROM tbl_user_accounts 
         WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
           const roles = ["superadmin", "admin", "almox", "cop", "config"];
-          const rows = yield executeQuery(sql, roles);
+          const rows = await executeQuery(sql, roles);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken63.TokenExpiredError) {
@@ -6497,7 +6441,7 @@ router74.post("/manage", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus63.set(ip, false);
   }
-}));
+});
 router74.use(historic_default5);
 router74.use(pick_material_default);
 var manage_default4 = router74;
@@ -6529,7 +6473,7 @@ function getCurrentDateTime13() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus64 = /* @__PURE__ */ new Map();
-router75.post("/register-material", (req, res) => __async(void 0, null, function* () {
+router75.post("/register-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6550,9 +6494,9 @@ router75.post("/register-material", (req, res) => __async(void 0, null, function
       observation,
       token
     } = paramsSchema58.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken64.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken64.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6569,7 +6513,7 @@ router75.post("/register-material", (req, res) => __async(void 0, null, function
             createdAt
           ];
           const sqlSelect = "SELECT * FROM tbl_stock_almox WHERE product_code = ?";
-          const rows = yield executeQuery(sqlSelect, [productCode]);
+          const rows = await executeQuery(sqlSelect, [productCode]);
           if (rows.length > 0) {
             res.json({ status: "already registered" });
             console.log("Produto j\xE1 registrado!");
@@ -6584,22 +6528,22 @@ router75.post("/register-material", (req, res) => __async(void 0, null, function
             created_at: createdAt
           };
           const { user: employee } = decoded;
-          const queryMaterialsStockOperationLog = yield material_operation({
+          const queryMaterialsStockOperationLog = await material_operation({
             insert: [obj],
             employeeId: employee.id,
             transferType: "sent"
           });
           const queryMaterialsStockRegister = "INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )";
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryMaterialsStockRegister, values },
-            __spreadValues({}, queryMaterialsStockOperationLog)
+            { ...queryMaterialsStockOperationLog }
           ]);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken64.TokenExpiredError) {
@@ -6619,7 +6563,7 @@ router75.post("/register-material", (req, res) => __async(void 0, null, function
   } finally {
     executionStatus64.set(ip, false);
   }
-}));
+});
 var register_material_default = router75;
 
 // src/routes/almox/historic/index.ts
@@ -6629,7 +6573,7 @@ var import_zod66 = require("zod");
 var router76 = import_express76.default.Router();
 var paramsSchema59 = import_zod66.z.object({ token: import_zod66.z.string() });
 var executionStatus65 = /* @__PURE__ */ new Map();
-router76.post("/historic", (req, res) => __async(void 0, null, function* () {
+router76.post("/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6642,9 +6586,9 @@ router76.post("/historic", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus65.set(ip, true);
     const { token } = paramsSchema59.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken65.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken65.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6659,13 +6603,13 @@ router76.post("/historic", (req, res) => __async(void 0, null, function* () {
         ON u1.employee_id = tec_user.id 
         ORDER BY u1.id DESC;
         `;
-          const rows = yield executeQuery(sql);
+          const rows = await executeQuery(sql);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken65.TokenExpiredError) {
@@ -6685,7 +6629,7 @@ router76.post("/historic", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus65.set(ip, false);
   }
-}));
+});
 var historic_default6 = router76;
 
 // src/routes/almox/stock-view/index.ts
@@ -6697,7 +6641,7 @@ var paramsSchema60 = import_zod67.z.object({
   token: import_zod67.z.string()
 });
 var executionStatus66 = /* @__PURE__ */ new Map();
-router77.post("/stock-view", (req, res) => __async(void 0, null, function* () {
+router77.post("/stock-view", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -6710,9 +6654,9 @@ router77.post("/stock-view", (req, res) => __async(void 0, null, function* () {
   try {
     executionStatus66.set(ip, true);
     const { token } = paramsSchema60.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken66.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken66.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -6724,14 +6668,14 @@ router77.post("/stock-view", (req, res) => __async(void 0, null, function* () {
       JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
       ORDER BY u1.created_at DESC`;
           const sqlStockAlmox = "SELECT * FROM tbl_stock_almox ORDER BY created_at DESC";
-          const rowsStockEmployee = yield executeQuery(sqlStockEmployee);
-          const rowsStockAlmox = yield executeQuery(sqlStockAlmox);
+          const rowsStockEmployee = await executeQuery(sqlStockEmployee);
+          const rowsStockAlmox = await executeQuery(sqlStockAlmox);
           res.json({ employee: rowsStockEmployee, almox: rowsStockAlmox });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken66.TokenExpiredError) {
@@ -6751,7 +6695,7 @@ router77.post("/stock-view", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus66.set(ip, false);
   }
-}));
+});
 var stock_view_default = router77;
 
 // src/routes/almox/index.ts
@@ -6763,7 +6707,7 @@ router78.use(historic_default6);
 router78.use(stock_view_default);
 var almox_default = router78;
 
-// src/index.ts
+// src/server.ts
 import_dotenv7.default.config();
 var app = (0, import_express79.default)();
 var server = import_http.default.createServer(app);
@@ -6806,4 +6750,4 @@ server.listen(PORT, () => {
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} 
 `);
 });
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=server.js.map

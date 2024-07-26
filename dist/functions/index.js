@@ -3,22 +3,8 @@ var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -43,26 +29,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // node_modules/dotenv/package.json
 var require_package = __commonJS({
@@ -424,15 +390,16 @@ var {
   REDIS_PASSWORD,
   REDIS_TLS_REJECT_UNAUTHORIZED
 } = process.env;
-var redisClient = new import_ioredis.default(__spreadValues({
+var redisClient = new import_ioredis.default({
   username: REDIS_USER,
   host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2e3)
-}, REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
-  tls: { servername: REDIS_HOST }
-}));
+  retryStrategy: (times) => Math.min(times * 50, 2e3),
+  ...REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
+    tls: { servername: REDIS_HOST }
+  }
+});
 redisClient.on("error", (err) => {
   console.error("Redis error:", err);
 });
@@ -449,13 +416,10 @@ function getRedis(value) {
 
 // src/functions/index.ts
 import_dotenv2.default.config();
-function getAuthenticationHash() {
-  return __async(this, null, function* () {
-    var _a;
-    const salt = process.env.SECRET_SALT;
-    const ssid = (_a = yield getRedis("_session_ssid")) != null ? _a : "00000";
-    return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
-  });
+async function getAuthenticationHash() {
+  const salt = process.env.SECRET_SALT;
+  const ssid = await getRedis("_session_ssid") ?? "00000";
+  return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

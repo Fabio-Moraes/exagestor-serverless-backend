@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/models/operation_logs/index.ts
 var operation_logs_exports = {};
@@ -55,36 +35,35 @@ function getCurrentDateTime() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function insert_state_modification(props) {
-  return __async(this, null, function* () {
-    const createdAt = getCurrentDateTime();
-    const {
-      row,
-      newStatus,
-      listMaterial,
-      listService,
-      observation
-    } = props;
-    const values = [
-      row.protocol,
-      row.employee_id,
-      row.creator_leader_id,
-      row.client_name,
-      row.city,
-      row.classification,
-      row.nomenclature,
-      row.address,
-      newStatus,
-      row.update_count + 1,
-      row.start_service_at,
-      row.created_at,
-      newStatus === "concluded" ? row.modification_at : createdAt,
-      listService != null ? listService : null,
-      listMaterial != null ? listMaterial : null,
-      observation != null ? observation : null,
-      newStatus === "concluded" ? createdAt : null
-    ];
-    const queryOperations = `
+async function insert_state_modification(props) {
+  const createdAt = getCurrentDateTime();
+  const {
+    row,
+    newStatus,
+    listMaterial,
+    listService,
+    observation
+  } = props;
+  const values = [
+    row.protocol,
+    row.employee_id,
+    row.creator_leader_id,
+    row.client_name,
+    row.city,
+    row.classification,
+    row.nomenclature,
+    row.address,
+    newStatus,
+    row.update_count + 1,
+    row.start_service_at,
+    row.created_at,
+    newStatus === "concluded" ? row.modification_at : createdAt,
+    listService ?? null,
+    listMaterial ?? null,
+    observation ?? null,
+    newStatus === "concluded" ? createdAt : null
+  ];
+  const queryOperations = `
   INSERT INTO tbl_operations_logs (
     protocol, 
     employee_id, 
@@ -105,8 +84,7 @@ function insert_state_modification(props) {
     finished_at
 ) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    return { query: queryOperations, values };
-  });
+  return { query: queryOperations, values };
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

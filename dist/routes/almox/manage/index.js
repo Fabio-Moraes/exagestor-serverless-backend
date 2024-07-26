@@ -3,22 +3,8 @@ var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -43,26 +29,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // node_modules/dotenv/package.json
 var require_package = __commonJS({
@@ -139,7 +105,7 @@ var require_package = __commonJS({
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
     "use strict";
-    var fs2 = require("fs");
+    var fs = require("fs");
     var path = require("path");
     var os = require("os");
     var crypto = require("crypto");
@@ -246,7 +212,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs2.existsSync(filepath)) {
+            if (fs.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -256,7 +222,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs2.existsSync(possibleVaultPath)) {
+      if (fs.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -300,7 +266,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e) {
           if (debug) {
@@ -428,15 +394,16 @@ var {
   REDIS_PASSWORD,
   REDIS_TLS_REJECT_UNAUTHORIZED
 } = process.env;
-var redisClient = new import_ioredis.default(__spreadValues({
+var redisClient = new import_ioredis.default({
   username: REDIS_USER,
   host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2e3)
-}, REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
-  tls: { servername: REDIS_HOST }
-}));
+  retryStrategy: (times) => Math.min(times * 50, 2e3),
+  ...REDIS_TLS_REJECT_UNAUTHORIZED === "true" && {
+    tls: { servername: REDIS_HOST }
+  }
+});
 redisClient.on("error", (err) => {
   console.error("Redis error:", err);
 });
@@ -453,84 +420,75 @@ function getRedis(value) {
 
 // src/functions/index.ts
 import_dotenv2.default.config();
-function getAuthenticationHash() {
-  return __async(this, null, function* () {
-    var _a;
-    const salt = process.env.SECRET_SALT;
-    const ssid = (_a = yield getRedis("_session_ssid")) != null ? _a : "00000";
-    return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
-  });
+async function getAuthenticationHash() {
+  const salt = process.env.SECRET_SALT;
+  const ssid = await getRedis("_session_ssid") ?? "00000";
+  return (0, import_node_crypto.createHash)("sha256").update(ssid + salt).digest("hex");
 }
 
 // src/config/database/index.ts
 var import_promise = __toESM(require("mysql2/promise"));
 var import_dotenv3 = __toESM(require_main());
-var import_fs = __toESM(require("fs"));
 import_dotenv3.default.config();
 var {
   MYSQL_HOST,
   MYSQL_USER,
+  MYSQL_PORT,
   MYSQL_PASSWORD,
   MYSQL_DATABASE,
-  MYSQL_PORT,
-  MYSQL_SSL_REJECT_UNAUTHORIZED
+  MYSQL_SSL_CA_CERT
 } = process.env;
-var dbConfig = __spreadValues({
+var dbConfig = {
   host: MYSQL_HOST,
   user: MYSQL_USER,
   password: MYSQL_PASSWORD,
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
-  connectionLimit: 10
-}, MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
-  ssl: {
-    ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+  connectionLimit: 10,
+  ...MYSQL_SSL_CA_CERT && {
+    ssl: { ca: MYSQL_SSL_CA_CERT }
   }
-});
+};
 var dbPool = import_promise.default.createPool(dbConfig);
 process.on("beforeExit", () => {
   dbPool.end();
 });
-function executeQuery(query, values) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      const [results] = yield connection.query(query, values);
-      return results;
-    } catch (error) {
-      if (error) {
-        throw new Error(`Erro na consulta: ${error}`);
-      }
-      throw error;
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeQuery(query, values) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    const [results] = await connection.query(query, values);
+    return results;
+  } catch (error) {
+    if (error) {
+      throw new Error(`Erro na consulta: ${error}`);
     }
-  });
+    throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
-function executeTransaction(queries) {
-  return __async(this, null, function* () {
-    let connection = null;
-    try {
-      connection = yield dbPool.getConnection();
-      yield connection.beginTransaction();
-      for (const { query, values } of queries) {
-        yield connection.query(query, values);
-      }
-      yield connection.commit();
-    } catch (error) {
-      if (connection) {
-        yield connection.rollback();
-      }
-      throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
-    } finally {
-      if (connection) {
-        connection.release();
-      }
+async function executeTransaction(queries) {
+  let connection = null;
+  try {
+    connection = await dbPool.getConnection();
+    await connection.beginTransaction();
+    for (const { query, values } of queries) {
+      await connection.query(query, values);
     }
-  });
+    await connection.commit();
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    throw new Error(`Erro durante a transa\xE7\xE3o: ${error}`);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 }
 
 // src/routes/almox/manage/historic/index.ts
@@ -549,7 +507,7 @@ var paramsSchema = import_zod.z.object({
   updateCount: import_zod.z.string().min(1).transform((item) => Number(item))
 });
 var executionStatus = /* @__PURE__ */ new Map();
-router.post("/manage/historic/details", (req, res) => __async(void 0, null, function* () {
+router.post("/manage/historic/details", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -562,22 +520,22 @@ router.post("/manage/historic/details", (req, res) => __async(void 0, null, func
   try {
     executionStatus.set(ip, true);
     const { token, employeeId, protocol, updateCount } = paramsSchema.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
           const sql = "SELECT * FROM tbl_operations_logs WHERE employee_id = ? AND protocol = ? AND update_count = ?";
-          const rows = yield executeQuery(sql, [employeeId, protocol, updateCount]);
+          const rows = await executeQuery(sql, [employeeId, protocol, updateCount]);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken.TokenExpiredError) {
@@ -597,7 +555,7 @@ router.post("/manage/historic/details", (req, res) => __async(void 0, null, func
   } finally {
     executionStatus.set(ip, false);
   }
-}));
+});
 var details_default = router;
 
 // src/routes/almox/manage/historic/index.ts
@@ -610,7 +568,7 @@ var paramsSchema2 = import_zod2.z.object({
   initial_id: import_zod2.z.number().nullable().optional(),
   token: import_zod2.z.string()
 });
-router2.post("/manage/historic", (req, res) => __async(void 0, null, function* () {
+router2.post("/manage/historic", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -623,15 +581,15 @@ router2.post("/manage/historic", (req, res) => __async(void 0, null, function* (
   try {
     executionStatus2.set(ip, true);
     const { employee_all, employee_id, initial_id, token } = paramsSchema2.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken2.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken2.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
         }
         try {
-          const selectEmployee = (initial_id2, employee_id2) => __async(void 0, null, function* () {
+          const selectEmployee = async (initial_id2, employee_id2) => {
             const sqlFirst = `
           SELECT u1.*, 
           tec_user.name AS name_tec, 
@@ -660,10 +618,10 @@ router2.post("/manage/historic", (req, res) => __async(void 0, null, function* (
           ORDER BY id DESC
           LIMIT 10;
           `;
-            if (!initial_id2) return yield executeQuery(sqlFirst, [employee_id2]);
-            return yield executeQuery(sqlLast, [initial_id2, employee_id2]);
-          });
-          const selectEmployeeAll = (initial_id2) => __async(void 0, null, function* () {
+            if (!initial_id2) return await executeQuery(sqlFirst, [employee_id2]);
+            return await executeQuery(sqlLast, [initial_id2, employee_id2]);
+          };
+          const selectEmployeeAll = async (initial_id2) => {
             const sqlFirst = `
         SELECT u1.*, 
         tec_user.name AS name_tec, 
@@ -690,17 +648,17 @@ router2.post("/manage/historic", (req, res) => __async(void 0, null, function* (
         ORDER BY id DESC
         LIMIT 10;
         `;
-            if (!initial_id2) return yield executeQuery(sqlFirst);
-            return yield executeQuery(sqlLast, [initial_id2]);
-          });
-          const resultEmployeeAll = yield selectEmployeeAll(initial_id);
-          const resultEmployee = yield selectEmployee(initial_id, employee_id);
+            if (!initial_id2) return await executeQuery(sqlFirst);
+            return await executeQuery(sqlLast, [initial_id2]);
+          };
+          const resultEmployeeAll = await selectEmployeeAll(initial_id);
+          const resultEmployee = await selectEmployee(initial_id, employee_id);
           res.json(employee_all ? resultEmployeeAll : resultEmployee);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken2.TokenExpiredError) {
@@ -720,7 +678,7 @@ router2.post("/manage/historic", (req, res) => __async(void 0, null, function* (
   } finally {
     executionStatus2.set(ip, false);
   }
-}));
+});
 router2.use(details_default);
 var historic_default = router2;
 
@@ -739,41 +697,39 @@ function getCurrentDateTime() {
   const seconds = now.getSeconds().toString().padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-function material_operation(_0) {
-  return __async(this, arguments, function* ({ insert, employeeId, transferType }) {
-    function generatePlaceholders2(count) {
-      let valueQuery = "";
-      const placeholders = Array(count).fill("?").join(", ");
-      for (let i = 0; i < insert.length; i++) {
-        const valueSql = `(${placeholders})`;
-        valueQuery += valueSql;
-        if (i < insert.length - 1) {
-          valueQuery += ", ";
-        }
+async function material_operation({ insert, employeeId, transferType }) {
+  function generatePlaceholders2(count) {
+    let valueQuery = "";
+    const placeholders = Array(count).fill("?").join(", ");
+    for (let i = 0; i < insert.length; i++) {
+      const valueSql = `(${placeholders})`;
+      valueQuery += valueSql;
+      if (i < insert.length - 1) {
+        valueQuery += ", ";
       }
-      return valueQuery;
     }
-    const createdAt = getCurrentDateTime();
-    const insertValueMaterialsEmployee = [];
-    insert.forEach((item) => {
-      insertValueMaterialsEmployee.push(
-        employeeId,
-        item.product_name,
-        item.product_code,
-        item.product_batch || null,
-        item.quantity_value,
-        item.unit_type,
-        transferType,
-        createdAt
-      );
-    });
-    const queryMaterialsStock = `
+    return valueQuery;
+  }
+  const createdAt = getCurrentDateTime();
+  const insertValueMaterialsEmployee = [];
+  insert.forEach((item) => {
+    insertValueMaterialsEmployee.push(
+      employeeId,
+      item.product_name,
+      item.product_code,
+      item.product_batch || null,
+      item.quantity_value,
+      item.unit_type,
+      transferType,
+      createdAt
+    );
+  });
+  const queryMaterialsStock = `
   INSERT INTO tbl_stock_logs
     (employee_id, product_name, product_code, product_batch, quantity_value, unit_type, transfer_type, created_at) 
   VALUES 
     ${generatePlaceholders2(8)}`;
-    return { query: queryMaterialsStock, values: insertValueMaterialsEmployee };
-  });
+  return { query: queryMaterialsStock, values: insertValueMaterialsEmployee };
 }
 
 // src/routes/almox/manage/pick-material/index.ts
@@ -820,7 +776,7 @@ function getCurrentDateTime2() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 var executionStatus3 = /* @__PURE__ */ new Map();
-router3.post("/manage/pick-material", (req, res) => __async(void 0, null, function* () {
+router3.post("/manage/pick-material", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -833,9 +789,9 @@ router3.post("/manage/pick-material", (req, res) => __async(void 0, null, functi
   try {
     executionStatus3.set(ip, true);
     const { insert, employee_id, token } = paramsSchema3.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken3.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken3.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -895,22 +851,22 @@ router3.post("/manage/pick-material", (req, res) => __async(void 0, null, functi
         unit_type = VALUES(unit_type),
         created_at = VALUES(created_at);
       `;
-          const queryMaterialsStockTransferLog = yield material_operation({
+          const queryMaterialsStockTransferLog = await material_operation({
             insert,
             employeeId: employee_id,
             transferType: "sent"
           });
-          yield executeTransaction([
+          await executeTransaction([
             { query: queryMaterialsStock, values: updateValuesMaterialsStock },
             { query: queryMaterialsEmployee, values: insertValueMaterialsEmployee },
-            __spreadValues({}, queryMaterialsStockTransferLog)
+            { ...queryMaterialsStockTransferLog }
           ]);
           res.json({ status: "success" });
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken3.TokenExpiredError) {
@@ -930,14 +886,14 @@ router3.post("/manage/pick-material", (req, res) => __async(void 0, null, functi
   } finally {
     executionStatus3.set(ip, false);
   }
-}));
+});
 var pick_material_default = router3;
 
 // src/routes/almox/manage/index.ts
 var import_zod4 = require("zod");
 var router4 = import_express4.default.Router();
 var executionStatus4 = /* @__PURE__ */ new Map();
-router4.post("/manage", (req, res) => __async(void 0, null, function* () {
+router4.post("/manage", async (req, res) => {
   const ip = req.ip;
   if (!ip) {
     console.error("IP n\xE3o fornecido");
@@ -951,9 +907,9 @@ router4.post("/manage", (req, res) => __async(void 0, null, function* () {
     executionStatus4.set(ip, true);
     const paramsSchema4 = import_zod4.z.object({ token: import_zod4.z.string() });
     const { token } = paramsSchema4.parse(req.body);
-    const authenticationHash = yield getAuthenticationHash();
-    yield new Promise((resolve, reject) => {
-      import_jsonwebtoken4.default.verify(token, authenticationHash, (error, decoded) => __async(void 0, null, function* () {
+    const authenticationHash = await getAuthenticationHash();
+    await new Promise((resolve, reject) => {
+      import_jsonwebtoken4.default.verify(token, authenticationHash, async (error, decoded) => {
         if (error) {
           reject(error);
           return;
@@ -970,13 +926,13 @@ router4.post("/manage", (req, res) => __async(void 0, null, function* () {
         FROM tbl_user_accounts 
         WHERE role <> ? AND role <> ? AND role <> ? AND role <> ? AND role <> ? ORDER BY created_at DESC`;
           const roles = ["superadmin", "admin", "almox", "cop", "config"];
-          const rows = yield executeQuery(sql, roles);
+          const rows = await executeQuery(sql, roles);
           res.json(rows);
           resolve(true);
         } catch (err) {
           reject(err);
         }
-      }));
+      });
     });
   } catch (error) {
     if (error instanceof import_jsonwebtoken4.TokenExpiredError) {
@@ -996,7 +952,7 @@ router4.post("/manage", (req, res) => __async(void 0, null, function* () {
   } finally {
     executionStatus4.set(ip, false);
   }
-}));
+});
 router4.use(historic_default);
 router4.use(pick_material_default);
 var manage_default = router4;

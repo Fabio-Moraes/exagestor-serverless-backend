@@ -20,7 +20,7 @@ type ServiceData = {
 }
 
 type TypeProps = {
-  row: ServiceData,
+  row: ServiceData;
   newStatus: 'paused' | 'active' | 'canceled' | 'analysis' | 'concluded';
   listMaterial?: string | null;
   listService?: string;

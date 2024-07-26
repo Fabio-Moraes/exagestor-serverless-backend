@@ -5,9 +5,10 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "npx tsup src && node dist/index.js",
+    "dev": "node dist/index.js",
     "dev:local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
+    "vercel-build": "tsc",
     "test": "vitest"
   },
   "engines": {

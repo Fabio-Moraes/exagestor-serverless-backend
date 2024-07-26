@@ -2,11 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "back_end",
-  "private": true,
   "main": "index.js",
+  "engines": {
+    "node":"14.x"
+  },
   "scripts": {
-    "dev": "echo '✅ Initialized...' && node dist/server.js",
-    "vercel-build": "echo '🔥 Building...' && yarn"
+    "start": "echo '✅ Initialized...' && node dist/server.js"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

@@ -494,7 +494,7 @@ var dbConfig = {
   connectionLimit: 10,
   ...MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
     ssl: {
-      ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.pem")
+      ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.txt")
     }
   }
 };

@@ -22,7 +22,7 @@ const dbConfig = {
   connectionLimit: 10,
   ...(MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
     ssl: {
-      ca: fs.readFileSync(__dirname + '/certs/ca-cert.pem'),
+      ca: fs.readFileSync(__dirname + '/certs/ca-cert.txt'),
     },
   })
 };

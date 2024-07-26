@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "back_end",
   "private": true,
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "node dist/index.js",
     "dev-local": "tsx watch src/index.ts",

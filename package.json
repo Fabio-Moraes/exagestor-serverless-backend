@@ -6,13 +6,12 @@
   "main": "index.js",
   "scripts": {
     "start--": "node dist/server.js",
-    "dev": "node dist/server.js",
+    "dev--": "node dist/server.js",
     "dev:env--": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "clean--": "rimraf dist",
     "build--": "echo '🔥 Building...' && npm run clean && npx tsup src --out-dir dist --format esm,cjs",
-    "ts-check": "tsc --project tsconfig.json --noEmit",
-    "test--": "vitest",
-    "build": "npx tsup src"
+    "ts-check--": "tsc --project tsconfig.json --noEmit",
+    "test--": "vitest"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",

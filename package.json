@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "back_end",
   "private": true,
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "node dist/index.js",
+    "start": "echo '✅ Starting...' && node dist/index.js",
     "dev-local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "clean": "rm -rf dist",
-    "vercel-build": "echo '✅ Building project...' && tsc",
+    "build": "echo '🔥 Building...' && tsc",
     "ts.check": "tsc --project tsconfig.json",
     "test": "vitest"
   },

@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node vercel/output/index.js",
+    "dev": "node vercel/output/dist/index.js",
     "dev:local": "tsx watch src/index.ts",
     "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/index.ts",
     "vercel-build": "tsc",

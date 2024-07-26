@@ -105,7 +105,7 @@ var require_package = __commonJS({
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
     "use strict";
-    var fs2 = require("fs");
+    var fs = require("fs");
     var path = require("path");
     var os = require("os");
     var crypto = require("crypto");
@@ -212,7 +212,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs2.existsSync(filepath)) {
+            if (fs.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -222,7 +222,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
       }
-      if (fs2.existsSync(possibleVaultPath)) {
+      if (fs.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -266,7 +266,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path2 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs2.readFileSync(path2, { encoding }));
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e) {
           if (debug) {
@@ -430,8 +430,34 @@ async function getAuthenticationHash() {
 // src/config/database/index.ts
 var import_promise = __toESM(require("mysql2/promise"));
 var import_dotenv3 = __toESM(require_main());
-var import_fs = __toESM(require("fs"));
 import_dotenv3.default.config();
+var cert = `
+-----BEGIN CERTIFICATE-----
+MIIEQTCCAqmgAwIBAgIUfjj2w0jSUVf1vcnLv3z0Av5xOZEwDQYJKoZIhvcNAQEM
+BQAwOjE4MDYGA1UEAwwvNjIyNjhiODItNjFiZS00MTJjLThiNmUtNWRmMGRlNTE2
+NDdiIFByb2plY3QgQ0EwHhcNMjQwNDExMTE0OTIzWhcNMzQwNDA5MTE0OTIzWjA6
+MTgwNgYDVQQDDC82MjI2OGI4Mi02MWJlLTQxMmMtOGI2ZS01ZGYwZGU1MTY0N2Ig
+UHJvamVjdCBDQTCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBANWnb3lV
+JZV1reJ8oq4fzlGAlkInw14YsRWF5qn8s83b1qVamphzpmxjhcVAudAYen99WYc5
+S++dvtGRzWYKqxq/2Kp4IddHVaRHaLDk9i+1uKx8jWu0ImRQ04ozWkj5Z7+YrN3+
+Xup46UXGmZf/hE/AQXIMSYLMv+W8hdfTgDZriI+4yra1PwL90oIXNkbuXtfWqcl9
+AqEIeTHPRwyg/JUKdruHtA1cgFR/t1+fIosSIkoy91SzYmZLYCgXmx3Dw8DZj9UY
+bNffIH3XOa6eJXDBnl3xir4Pq+Ifcv0h64/DMQHcAKJU342ANi17XG+MLnBpvd+E
+EAJPx02dtSDSrWb/sjbtvsKxLDx7NKMTVyFgGfYjxJwzt79FKeZeX41ejLA/CuH1
+cb1k3W1kXXWRpyC4SQAvxtmMK/TfIiMZDtf9kn85jUJcMf9hv+qfP7FnEIffLq/r
+ifLDlGepNoui3dnqM51cAffl2/N1sVVzX0LLiN0DuSutHRFqOWX4D4hdXwIDAQAB
+oz8wPTAdBgNVHQ4EFgQUddhDxLk3Te49a3/6gsKIpmzmdQkwDwYDVR0TBAgwBgEB
+/wIBADALBgNVHQ8EBAMCAQYwDQYJKoZIhvcNAQEMBQADggGBAGaKG4v6Hz7qY9MD
++fmMvuxI8dBAe54vOwv+6N0gNPKsYvIeuLUXlqLJi4t28oHwZl26aGVKjhFk75B1
+X+1O+1g3lK/aJzweCwHc5zKa8FBRaytvRUaBkV9mwECfX8g8rPt+OJ3No++6xK49
+AdbHKBUkNW5+kS5ua5KcLhi6Zcr3Pq25tLlz7S2JccyjAW1yh0Zbp6W0dy7DIiJe
+jMvEAboqTYzSXFrJObdZs9+oQs8sOGPZkdzr0Vip8WhoTiHP8Zi7uCvoh/CBqa5P
+3zNzKXffEGXxmRW0YZmdRzGyjEa+u4tRX1NoswKIwoD3XPemsuEAbND2BkGKmOPn
+ud6RdybaTsj9llNmm1OVfc69UzPRcE6Eobbw+obA2tOY/KQSBkuwfNZkD7+GtFP7
+OTy3cA1uy01x3cEOskNpPZ+6poBgs7AyAc1VPyJbupFvce/qPqu5ut/4x1hKb9Ex
+klAEltAivfVZWP+VY8AOm/x6GUSqmZFhFE+vDC4cEkwf+p1gAw==
+-----END CERTIFICATE-----
+`;
 var {
   MYSQL_HOST,
   MYSQL_USER,
@@ -449,7 +475,7 @@ var dbConfig = {
   connectionLimit: 10,
   ...MYSQL_SSL_REJECT_UNAUTHORIZED === "true" && {
     ssl: {
-      ca: import_fs.default.readFileSync(__dirname + "/certs/ca-cert.txt")
+      ca: cert
     }
   }
 };

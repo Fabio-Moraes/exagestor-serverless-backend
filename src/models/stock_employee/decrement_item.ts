@@ -8,6 +8,7 @@ type MaterialTypes = {
   product_code: string;
   product_batch: string | null;
   quantity_value: number;
+  category: string;
   created_at: string;
 };
 
@@ -18,7 +19,7 @@ export async function decrement_item(materials: string) {
   }
 
   function generatePlaceholders(data: MaterialTypes[]) {
-    const placeholders = data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+    const placeholders = data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     return placeholders;
   }
 
@@ -49,13 +50,14 @@ export async function decrement_item(materials: string) {
       item.product_batch,
       requestListMaterial[item.id],
       item.unit_type,
+      item.category,
       item.created_at
     );
   });
 
   const queryMaterialsEmployee = `
   INSERT INTO tbl_stock_employee 
-      (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
+      (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, category, created_at)
     VALUES ${generatePlaceholders(resultQueryListMaterial)}
     ON DUPLICATE KEY UPDATE 
       id = VALUES(id),
@@ -65,6 +67,7 @@ export async function decrement_item(materials: string) {
       product_batch = VALUES(product_batch),
       quantity_value = quantity_value - VALUES(quantity_value),
       unit_type = VALUES(unit_type),
+      category = VALUE(category),
       created_at = VALUES(created_at);
     `;
 

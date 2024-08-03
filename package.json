@@ -1,11 +1,14 @@
 {
-  "name": "server",
+  "name": "exagestor_serverless_backend",
+  "description": "serverless_backend",
   "version": "1.0.0",
   "private": true,
-  "description": "back_end",
   "main": "index.js",
   "scripts": {
-    "start": "echo '✅ Initialized...' && node dist/server.js"
+    "dev": "tsx watch src/server.ts",
+    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
+    "build": "tsc",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "fabio_vieira_moraes",
@@ -43,7 +46,6 @@
     "moment": "^2.30.1",
     "mysql2": "^3.6.2",
     "socket.io-client": "^4.7.2",
-    "tsup": "^8.2.3",
     "zod": "^3.21.4"
   },
   "resolutions": {

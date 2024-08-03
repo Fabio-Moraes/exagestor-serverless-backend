@@ -17,6 +17,7 @@ const insertedMaterialSchema = z.array(z.object({
   product_code: z.string(),
   product_batch: z.string().nullable(),
   quantity_value: z.string(),
+  category: z.string(),
   created_at: z.string(),
 }));
 
@@ -98,6 +99,7 @@ router.post('/manage/pick-material', async (req: Request, res: Response) => {
           item.product_batch,
           item.quantity_value,
           item.unit_type,
+          item.category,
           createdAt,
         );
       });
@@ -112,15 +114,16 @@ router.post('/manage/pick-material', async (req: Request, res: Response) => {
           item.product_batch,
           item.quantity_value,
           item.unit_type,
+          item.category,
           createdAt
         );
       });
 
       const queryMaterialsStock = `
       INSERT INTO tbl_stock_almox 
-        (id, product_name, product_code, product_batch, quantity_value, unit_type, created_at) 
+        (id, product_name, product_code, product_batch, quantity_value, unit_type, category, created_at) 
       VALUES 
-        ${generatePlaceholders(7, insert)}
+        ${generatePlaceholders(8, insert)}
       ON DUPLICATE KEY UPDATE 
         id = VALUES(id),
         product_name = VALUES(product_name),
@@ -128,13 +131,14 @@ router.post('/manage/pick-material', async (req: Request, res: Response) => {
         product_batch = VALUES(product_batch),
         quantity_value = quantity_value + VALUES(quantity_value),
         unit_type = VALUES(unit_type),
+        category = VALUES(category),
         created_at = VALUES(created_at);
       `;
 
       const queryMaterialsEmployee = `
       INSERT INTO tbl_stock_employee 
-        (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, created_at)
-      VALUES ${generatePlaceholders(8, insert)}
+        (id, employee_id, product_name, product_code, product_batch, quantity_value, unit_type, category, created_at)
+      VALUES ${generatePlaceholders(9, insert)}
       ON DUPLICATE KEY UPDATE 
         id = VALUES(id),
         employee_id = VALUES(employee_id),
@@ -143,6 +147,7 @@ router.post('/manage/pick-material', async (req: Request, res: Response) => {
         product_batch = VALUES(product_batch),
         quantity_value = quantity_value - VALUES(quantity_value),
         unit_type = VALUES(unit_type),
+        category = VALUES(category),
         created_at = VALUES(created_at);
       `;
 

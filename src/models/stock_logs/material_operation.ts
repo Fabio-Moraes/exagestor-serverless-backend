@@ -9,13 +9,13 @@ function getCurrentDateTime(): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-
 interface InsertItem {
   product_name: string;
   unit_type: string;
   product_code: string;
   product_batch?: string | null;
   quantity_value: string;
+  category: string;
   created_at: string;
 }
 
@@ -52,15 +52,16 @@ export async function material_operation({ insert, employeeId, transferType }: P
       item.quantity_value,
       item.unit_type,
       transferType,
+      item.category,
       createdAt
     );
-  });
+  }); 
 
   const queryMaterialsStock = `
   INSERT INTO tbl_stock_logs
-    (employee_id, product_name, product_code, product_batch, quantity_value, unit_type, transfer_type, created_at) 
+    (employee_id, product_name, product_code, product_batch, quantity_value, unit_type, transfer_type, category, created_at) 
   VALUES 
-    ${generatePlaceholders(8)}`;
+    ${generatePlaceholders(9)}`;
 
   return { query: queryMaterialsStock, values: insertValueMaterialsEmployee };
 }

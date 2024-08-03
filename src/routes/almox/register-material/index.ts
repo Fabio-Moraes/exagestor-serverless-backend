@@ -21,6 +21,7 @@ const paramsSchema = z.object({
   quantityValue: z.string().min(1).regex(noSpaces).regex(onlyNumbers),
   unitType: z.enum(['UNID', 'CX', 'METRO']),
   observation: z.string().max(500).nullable(),
+  category: z.enum(['COMUM', 'CONSTRUÇÃO' ]),
   token: z.string()
 });
 
@@ -60,6 +61,7 @@ router.post('/register-material', async (req: Request, res: Response) => {
       quantityValue,
       unitType,
       observation,
+      category,
       token
     } = paramsSchema.parse(req.body);
         const authenticationHash = await getAuthenticationHash();
@@ -80,6 +82,7 @@ router.post('/register-material', async (req: Request, res: Response) => {
         quantityValue,
         unitType,
         observation,
+        category,
         createdAt
       ];
 
@@ -98,6 +101,7 @@ router.post('/register-material', async (req: Request, res: Response) => {
         product_code: productCode,
         product_batch: productBatch,
         quantity_value: quantityValue,
+        category: category,
         created_at: createdAt,
       };
 
@@ -106,7 +110,7 @@ router.post('/register-material', async (req: Request, res: Response) => {
         insert: [obj], employeeId: employee.id, transferType: 'sent'
       });
 
-      const queryMaterialsStockRegister = 'INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ? )';
+      const queryMaterialsStockRegister = 'INSERT INTO tbl_stock_almox ( product_name, product_code, product_batch, quantity_value, unit_type, observation, category, created_at) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )';
 
       await executeTransaction([
         { query: queryMaterialsStockRegister, values: values },

@@ -12,6 +12,9 @@ import cop from './routes/cop';
 import auth from './routes/auth';
 import almox from './routes/almox';
 
+import { websocket } from './config/websocket';
+import { Socket } from 'socket.io-client';
+
 dotenv.config();
 
 const app = express();
@@ -42,7 +45,7 @@ app.use('/api/almox', almox);
 
 app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);
-  res.status(500).send('Ocorreu um erro interno.');
+  res.status(500).send('An internal error has occurred.');
 });
 
 const PORT = Number(process.env.PORT);
@@ -59,5 +62,36 @@ const ASCIIART = `%c
 server.listen(PORT, () => {
   console.log(ASCIIART, 'color: #bada55');
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} \n`);
+});
+
+const onShutdown = async () => {
+  console.log('The server is shutting down...');
+  try {
+    const socket = await websocket('') as Socket;
+
+    await new Promise<void>((resolve, reject) => {
+      socket.emit('SERVER_SHUTDOWN', {}, (error?: Error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    console.log('Event emitted successfully.');
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGINT', async () => {
+  onShutdown();
+});
+
+process.on('SIGTERM', async () => {
+  onShutdown();
 });
 

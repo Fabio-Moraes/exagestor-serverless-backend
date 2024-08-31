@@ -105,6 +105,7 @@ router.post('/manage/new', async (req: Request, res: Response) => {
         null,
         createdAt,
         null,
+        'TIPO_COMUM',
         null,
       ];
 
@@ -125,10 +126,11 @@ router.post('/manage/new', async (req: Request, res: Response) => {
           list_material, 
           observation, 
           created_at, 
-          modification_at, 
+          modification_at,
+          type_operation, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const queryOperationsHistory =  `
       INSERT INTO tbl_operations_logs (
@@ -147,10 +149,11 @@ router.post('/manage/new', async (req: Request, res: Response) => {
           list_material, 
           observation, 
           created_at, 
-          modification_at, 
+          modification_at,
+          type_operation, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       await executeTransaction([
         { query: queryOperations, values: values },

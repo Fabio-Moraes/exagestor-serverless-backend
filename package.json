@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "dev:ip": "yarn exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
+    "dev:ip": "pnpm exec ./scripts/ip-swapper-env && tsx watch src/server.ts",
     "build": "tsc",
     "test": "vitest"
   },
@@ -50,6 +50,7 @@
   },
   "resolutions": {
     "glob": "^9.0.0",
-    "rimraf": "^4.0.0"
+    "rimraf": "^4.0.0",
+    "@humanwhocodes/config-array": "npm:@eslint/config-array"
   }
 }

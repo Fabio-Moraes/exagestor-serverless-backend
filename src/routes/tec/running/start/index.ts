@@ -6,8 +6,8 @@ import { getAuthenticationHash } from '../../../../functions';
 import { executeQuery, executeTransaction } from '../../../../config/database';
 
 import { z, ZodError } from 'zod';
-
 import dotenv from 'dotenv';
+
 import { update_state_modification } from '../../../../models/operations';
 import { insert_state_modification } from '../../../../models/operation_logs';
 
@@ -41,6 +41,7 @@ interface ServiceData {
   list_material: string;
   list_service: string;
   observation: string;
+  type_operation: string;
   protocol: string;
 }
 
@@ -91,7 +92,7 @@ router.post('/running/start', async (req: Request, res: Response) => {
       const socket = await websocket(token) as Socket;
       socket.emit('RUNNING_REFRESH', JSON.stringify({ employee_id: row.employee_id }));
       res.json({ success: true });
-        resolve(true);
+      resolve(true);
         }
         catch (err) {
           reject(err);

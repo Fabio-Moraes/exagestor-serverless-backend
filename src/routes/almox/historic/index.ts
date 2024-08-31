@@ -5,7 +5,10 @@ import { executeQuery } from '../../../config/database';
 import { z, ZodError } from 'zod';
 
 const router = express.Router();
-const paramsSchema = z.object({ token: z.string() });
+const paramsSchema = z.object({ 
+  initial_id: z.number().nullable().optional(),
+  token: z.string() 
+});
 const executionStatus: Map<string, boolean> = new Map();
 
 router.post('/historic', async (req: Request, res: Response) => {
@@ -24,7 +27,7 @@ router.post('/historic', async (req: Request, res: Response) => {
   try {
     executionStatus.set(ip, true);
 
-    const { token } = paramsSchema.parse(req.body);
+    const { initial_id, token } = paramsSchema.parse(req.body);
     const authenticationHash = await getAuthenticationHash();
 
     await new Promise((resolve, reject) => {
@@ -35,18 +38,38 @@ router.post('/historic', async (req: Request, res: Response) => {
         }
 
     try {
-      const sql = `
+      const selectMaterial = async (initial_id?: number | null) => {
+      const sqlFirst = `
+        SELECT u1.*, 
+        tec_user.name AS name_tec,
+        tec_user.role AS name_role      
+        FROM tbl_stock_logs u1
+        JOIN tbl_user_accounts tec_user
+        ON u1.employee_id = tec_user.id            
+        WHERE u1.id < (SELECT MAX(id) FROM tbl_stock_logs) + 1    
+        ORDER BY u1.id DESC
+        LIMIT 10;
+        `;
+
+        const sqlLast = `
         SELECT u1.*, 
         tec_user.name AS name_tec,
         tec_user.role AS name_role
         FROM tbl_stock_logs u1
         JOIN tbl_user_accounts tec_user
-        ON u1.employee_id = tec_user.id 
-        ORDER BY u1.id DESC;
+        ON u1.employee_id = tec_user.id          
+        WHERE u1.id < ?  
+        ORDER BY u1.id DESC
+        LIMIT 10;
         `;
 
-      const rows = await executeQuery(sql);
-      res.json(rows);
+        if (!initial_id) return await executeQuery(sqlFirst);
+        return await executeQuery(sqlLast, [initial_id]);
+      };
+
+      const resultMaterial = await selectMaterial(initial_id);
+
+      res.json(resultMaterial);
         resolve(true);
         }
         catch (err) {

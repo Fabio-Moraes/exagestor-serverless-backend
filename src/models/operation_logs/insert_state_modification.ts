@@ -16,6 +16,7 @@ type ServiceData = {
   list_material: string;
   list_service: string;
   observation: string;
+  type_operation: string;
   protocol: string;
 }
 
@@ -66,6 +67,7 @@ export async function insert_state_modification(props: TypeProps) {
     listService ?? null,
     listMaterial ?? null,
     observation ?? null,
+    row.type_operation,
     newStatus === 'concluded' ? createdAt : null,
   ];
 
@@ -86,10 +88,11 @@ export async function insert_state_modification(props: TypeProps) {
     modification_at, 
     list_service, 
     list_material,
-    observation,  
+    observation,
+    type_operation,  
     finished_at
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   
 return { query: queryOperations, values: values };
 }

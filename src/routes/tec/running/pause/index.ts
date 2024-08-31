@@ -40,6 +40,7 @@ interface ServiceData {
   finished_at: string;
   list_material: string;
   list_service: string;
+  type_operation: string;
   observation: string;
   protocol: string;
 }

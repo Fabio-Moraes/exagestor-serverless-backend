@@ -5,6 +5,7 @@ import { getAuthenticationHash } from '../../../functions';
 import { executeQuery } from '../../../config/database';
 
 import routesNewService from './new';
+import routesNewConstructionService from './new-construction-service';
 import routerHistoric from './historic';
 import routerUpdatePasswordEmployee from './update_password_employee';
 import routerUpdateStatusEmployee from './update_status_employee';
@@ -90,6 +91,7 @@ router.post('/manage', async (req: Request, res: Response) => {
 });
 
 router.use(routesNewService);
+router.use(routesNewConstructionService);
 router.use(routerHistoric);
 router.use(routerViewProduction);
 router.use(routerUpdatePasswordEmployee);

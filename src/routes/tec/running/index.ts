@@ -9,6 +9,8 @@ import routesCancel from './cancel';
 import routesPause from './pause';
 import routesStart from './start';
 import routesFinish from './finish';
+import routerConstruction from './construction';
+import routerConnectShared from './connect-shared';
 
 import { z, ZodError } from 'zod';
 
@@ -45,7 +47,7 @@ router.post('/running', async (req: Request, res: Response) => {
     try {
       const { user } = decoded as Decoded;
 
-      const sql = `
+      const sqlRunningService = `
       SELECT u1.*, tec_user.name AS name_tec, creator_leader_user.name AS name_creator_leader
       FROM tbl_operations u1
       JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
@@ -53,9 +55,23 @@ router.post('/running', async (req: Request, res: Response) => {
       WHERE u1.employee_id = ?
       ORDER BY u1.created_at DESC`;
 
-      const rows = await executeQuery(sql, [user.id]);
-      res.json(rows);
-        resolve(true);
+      const sqlRunningServicesShared = `
+      SELECT u1.*, tec_user.name AS name_tec, creator_leader_user.name AS name_creator_leader
+      FROM tbl_operations u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      LEFT JOIN tbl_user_accounts creator_leader_user ON u1.creator_leader_id = creator_leader_user.id
+      WHERE EXISTS (
+      SELECT 1
+          FROM tbl_shared_service_authorized p
+          WHERE p.protocol = u1.protocol AND p.employee_id = ?
+      )
+      ORDER BY u1.created_at DESC`;
+
+      const rowsRunningService = await executeQuery(sqlRunningService, [user.id]);
+      const rowsRunningServiceShared = await executeQuery(sqlRunningServicesShared, [user.id]);
+
+      res.json({runningService: rowsRunningService, runningServiceShared: rowsRunningServiceShared});
+      resolve(true);
         }
         catch (err) {
           reject(err);
@@ -89,5 +105,7 @@ router.use(routesFinish);
 router.use(routesCancel);
 router.use(routesPause);
 router.use(routesStart);
+router.use(routerConstruction);
+router.use(routerConnectShared);
 
 export default router;

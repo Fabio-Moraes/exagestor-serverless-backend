@@ -16,6 +16,7 @@ interface ServiceData {
   list_material: string;
   list_service: string;
   observation: string;
+  type_operation: string;
   protocol: string;
 }
 
@@ -65,7 +66,8 @@ export async function update_state_modification(props: TypeProps) {
     createdAt,
     listService ?? null,
     listMaterial ?? null,
-    observation ?? null
+    observation ?? null,
+    row.type_operation
   ];
 
   const queryOperations = `
@@ -85,10 +87,11 @@ export async function update_state_modification(props: TypeProps) {
           modification_at, 
           list_service, 
           list_material,
-          observation,  
+          observation,
+          type_operation,
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL) 
       ON DUPLICATE KEY UPDATE 
           employee_id = VALUES(employee_id),
           creator_leader_id = VALUES(creator_leader_id),
@@ -104,6 +107,7 @@ export async function update_state_modification(props: TypeProps) {
           list_service = VALUES(list_service),
           list_material = VALUES(list_material),
           observation = VALUES(observation),
+          type_operation = VALUES(type_operation),
           finished_at = VALUES(finished_at);`;
 
   return { query: queryOperations, values: values };

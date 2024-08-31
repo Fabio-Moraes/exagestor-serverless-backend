@@ -30,6 +30,7 @@ interface ServiceData {
   list_material: string;
   list_service: string;
   observation: string;
+  type_operation: string;
   protocol: string;
 }
 

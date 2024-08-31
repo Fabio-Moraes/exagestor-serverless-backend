@@ -29,6 +29,7 @@ type ServiceData = {
   list_material: string;
   list_service: string;
   observation: string;
+  type_operation: string;
   protocol: string;
 }
 
@@ -73,14 +74,19 @@ router.post('/running/cancel', async (req: Request, res: Response) => {
 
       if (!row) { return res.status(400).json({ error: 'Requisição inválido' }); }
 
-      const valueDeleteOperations = [row.employee_id, row.protocol];
       const queryDeleteOperations = 'DELETE FROM tbl_operations WHERE employee_id = ? AND protocol = ?';
+      const queryDeleteAuthorized = 'DELETE FROM tbl_shared_service_authorized WHERE protocol = ?';
+      const queryDeleteCableOperations = 'DELETE FROM tbl_cable_operations WHERE protocol = ?';
+      const queryDeleteCableSelected = 'DELETE FROM tbl_cable_selected WHERE protocol = ?';
 
       const newStatus = 'canceled';
       const createStateModificationHistoryRecord = await insert_state_modification({ row, newStatus });
 
       await executeTransaction([
-        { query: queryDeleteOperations, values: valueDeleteOperations },
+        { query: queryDeleteOperations, values: [row.employee_id, row.protocol] },
+        { query: queryDeleteAuthorized, values: [row.protocol] },
+        { query: queryDeleteCableOperations, values: [row.protocol] },
+        { query: queryDeleteCableSelected, values: [ row.protocol] },
         { ...createStateModificationHistoryRecord }
       ]);
 

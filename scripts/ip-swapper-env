@@ -2,7 +2,8 @@
 
 # Definir o arquivo de entrada
 input_file=".env"
-network_interface="enp1s0"
+network_interface_lan="enp1s0"
+network_interface_external="wlx00e04c00f4b8"
 
 # Função para extrair o IP de uma URL
 extrair_ip() {
@@ -22,7 +23,8 @@ ip_websocket=$(extrair_ip $(grep -Po 'WEBSOCKET_SERVER_BASEURL=ws://([^:]+):([0-
 echo "Escolha uma opção para o novo endereço IP:"
 echo "1. Utilizar o localhost"
 echo "2. Utilizar um IP predefinido"
-echo "3. Utilizar o IP da placa de rede ($network_interface)"
+echo "3. Utilizar o IP da placa de rede ($network_interface_lan)"
+echo "4. Utilizar o IP da placa de rede ($network_interface_external)"
 
 read -p "Opção: " option
 
@@ -37,7 +39,11 @@ case $option in
         ;;
     3)
         # Usar o IP da placa de rede enp1s0
-        new_ip=$(ip addr show $network_interface | awk '/inet / {print $2}' | cut -d "/" -f1)
+        new_ip=$(ip addr show $network_interface_lan | awk '/inet / {print $2}' | cut -d "/" -f1)
+        ;;
+    4)
+        # Usar o IP da placa de rede enp1s0
+        new_ip=$(ip addr show $network_interface_external | awk '/inet / {print $2}' | cut -d "/" -f1)
         ;;
     *)
         echo "Opção inválida. Saindo."

@@ -12,8 +12,8 @@ import cop from './routes/cop';
 import auth from './routes/auth';
 import almox from './routes/almox';
 
-import { websocket } from './config/websocket';
-import { Socket } from 'socket.io-client';
+//import { websocket } from './config/websocket';
+//import { Socket } from 'socket.io-client';
 
 dotenv.config();
 
@@ -64,7 +64,7 @@ server.listen(PORT, () => {
   console.log(`Server running at port: ${PORT} | pid: ${process.pid} \n`);
 });
 
-const onShutdown = async () => {
+/* const onShutdown = async () => {
   console.log('The server is shutting down...');
   try {
     const socket = await websocket('') as Socket;
@@ -85,7 +85,7 @@ const onShutdown = async () => {
   } finally {
     process.exit(0);
   }
-};
+}; 
 
 process.on('SIGINT', async () => {
   onShutdown();
@@ -94,4 +94,4 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   onShutdown();
 });
-
+*/

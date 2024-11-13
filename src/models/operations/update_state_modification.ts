@@ -15,6 +15,8 @@ interface ServiceData {
   finished_at: string;
   list_material: string;
   list_service: string;
+  list_dgoandbox: string;
+  node_name: string;
   observation: string;
   type_operation: string;
   protocol: string;
@@ -25,6 +27,8 @@ interface TypeProps {
   newStatus: 'paused' | 'active' | 'analysis';
   listMaterial?: string;
   listService?: string;
+  listDgoandbox?: string;
+  nodeName?: string;
   observation?: string;
 }
 
@@ -66,6 +70,8 @@ export async function update_state_modification(props: TypeProps) {
     createdAt,
     listService ?? null,
     listMaterial ?? null,
+    row.list_dgoandbox,
+    row.node_name,
     observation ?? null,
     row.type_operation
   ];
@@ -87,11 +93,13 @@ export async function update_state_modification(props: TypeProps) {
           modification_at, 
           list_service, 
           list_material,
+          list_dgoandbox,
+          node_name,
           observation,
           type_operation,
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL) 
       ON DUPLICATE KEY UPDATE 
           employee_id = VALUES(employee_id),
           creator_leader_id = VALUES(creator_leader_id),
@@ -106,6 +114,8 @@ export async function update_state_modification(props: TypeProps) {
           modification_at = VALUES(modification_at),
           list_service = VALUES(list_service),
           list_material = VALUES(list_material),
+          list_dgoandbox = VALUES(list_dgoandbox),
+          node_name = VALUES(node_name),
           observation = VALUES(observation),
           type_operation = VALUES(type_operation),
           finished_at = VALUES(finished_at);`;

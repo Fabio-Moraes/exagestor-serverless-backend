@@ -2,12 +2,13 @@ import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
 import { getAuthenticationHash } from '../../../../../../functions';
-import { executeTransaction } from '../../../../../../config/database';
+import { executeQuery, executeTransaction } from '../../../../../../config/database';
 
 import { z, ZodError } from 'zod';
 
 import { websocket } from '../../../../../../config/websocket';
 import { Socket } from 'socket.io-client';
+import { Decoded } from '../../../../../../types/jwt';
 
 const router = express.Router();
 
@@ -17,6 +18,17 @@ const paramsSchema = z.object({
   adequacyLengthMeters: z.number(),
   id: z.number()
 });
+
+function getCurrentDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 const executionStatus: Map<string, boolean> = new Map();
 
@@ -52,19 +64,37 @@ router.post('/running/construction/class-l/cable-adequacy', async (req: Request,
         }
 
     try {
-      const values1 = [
+      const createdAt = getCurrentDateTime();
+      const { user: employee } = decoded as Decoded;
+
+      const valuesCableOperations = [
         adequacyLengthMeters,
         protocol,
         id
       ];
 
-      const querySql1 = `
+      const sqlCableId = 'SELECT cable_id FROM tbl_cable_operations WHERE id = ?';
+      const [row] = await executeQuery(sqlCableId, [id]) as Array<{[key: string]: string}>;
+
+      const valuesCableOperationsLog = [
+        protocol,
+        0,
+        adequacyLengthMeters,
+        employee.id,
+        row.cable_id,
+        createdAt
+      ];
+
+      const querySqlCableOperations = `
       UPDATE tbl_cable_operations
       SET adequacy_length_meters = adequacy_length_meters + ?
       WHERE protocol = ? AND id = ?`;
 
+      const querySqlCableOperationsLog = 'INSERT INTO tbl_cable_operations_log ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
+
       await executeTransaction([ 
-        { query: querySql1, values: values1 },
+        { query: querySqlCableOperations, values: valuesCableOperations },
+        { query: querySqlCableOperationsLog, values: valuesCableOperationsLog }
       ]);
  
       const socket = await websocket(token) as Socket;

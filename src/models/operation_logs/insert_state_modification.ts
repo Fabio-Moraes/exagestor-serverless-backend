@@ -15,6 +15,8 @@ type ServiceData = {
   finished_at: string;
   list_material: string;
   list_service: string;
+  list_dgoandbox: string;
+  node_name: string;
   observation: string;
   type_operation: string;
   protocol: string;
@@ -25,6 +27,8 @@ type TypeProps = {
   newStatus: 'paused' | 'active' | 'canceled' | 'analysis' | 'concluded';
   listMaterial?: string | null;
   listService?: string;
+  list_dgoandbox?: string;
+  node_name?: string;
   observation?: string;
 }
 
@@ -47,6 +51,8 @@ export async function insert_state_modification(props: TypeProps) {
     newStatus,
     listMaterial,
     listService,
+    list_dgoandbox,
+    node_name,
     observation
   } = props;
 
@@ -66,6 +72,8 @@ export async function insert_state_modification(props: TypeProps) {
     newStatus === 'concluded' ? row.modification_at : createdAt,
     listService ?? null,
     listMaterial ?? null,
+    list_dgoandbox ?? null,
+    node_name ?? null,
     observation ?? null,
     row.type_operation,
     newStatus === 'concluded' ? createdAt : null,
@@ -88,11 +96,13 @@ export async function insert_state_modification(props: TypeProps) {
     modification_at, 
     list_service, 
     list_material,
+    list_dgoandbox,
+    node_name,
     observation,
     type_operation,  
     finished_at
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   
 return { query: queryOperations, values: values };
 }

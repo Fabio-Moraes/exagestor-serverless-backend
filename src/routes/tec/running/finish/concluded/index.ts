@@ -29,6 +29,7 @@ interface ServiceData {
   finished_at: string;
   list_material: string;
   list_service: string;
+  list_dgoandbox: string;
   observation: string;
   type_operation: string;
   protocol: string;

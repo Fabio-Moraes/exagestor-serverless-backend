@@ -1,20 +1,22 @@
 import express, { Request, Response } from 'express';
 import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+//import type { Decoded } from '../../../../../../types/jwt';
 
-import { getAuthenticationHash } from '../../../../../functions';
+import { getAuthenticationHash } from '../../../../../../functions';
+import { executeQuery } from '../../../../../../config/database';
 
 import { z, ZodError } from 'zod';
-import { executeQuery } from '../../../../../config/database';
 
 const router = express.Router();
 
-const paramsSchema = z.object({
-  token: z.string()
+const paramsSchema = z.object({ 
+  token: z.string(),
+  protocol: z.string().max(17)
 });
 
 const executionStatus: Map<string, boolean> = new Map();
 
-router.post('/manage/new-construction-service/cable-catalog', async (req: Request, res: Response) => {
+router.post('/running/construction/class-l/historic', async (req: Request, res: Response) => {
   const ip = req.ip;
 
   if (!ip) {
@@ -30,24 +32,30 @@ router.post('/manage/new-construction-service/cable-catalog', async (req: Reques
   try {
     executionStatus.set(ip, true);
 
-    const {
-      token
-    } = paramsSchema.parse(req.body);
+    const { token, protocol } = paramsSchema.parse(req.body);
     const authenticationHash = await getAuthenticationHash();
 
     await new Promise((resolve, reject) => {
-      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line 
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
         if (error) {
           reject(error);
           return;
         }
 
-        try {
-          const sql = 'SELECT * FROM tbl_cable_catalog';
-          const cableCatalog = await executeQuery(sql);
+    try {
+      //const { user } = decoded as Decoded;
 
-          res.json(cableCatalog);
-          resolve(true);
+      const sqlHistoricCableOperations  = `
+      SELECT u1.*, tec_user.name AS name_tec
+      FROM tbl_cable_operations_log u1
+      JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
+      WHERE u1.protocol = ? 
+      ORDER BY u1.created_at DESC`;
+
+      const rowsHistoricCableOperations = await executeQuery(sqlHistoricCableOperations, [protocol]);
+
+      res.json({historicCableOperations: rowsHistoricCableOperations});
+      resolve(true);
         }
         catch (err) {
           reject(err);

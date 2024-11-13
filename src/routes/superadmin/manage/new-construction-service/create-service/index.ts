@@ -44,6 +44,8 @@ const paramsSchema = z.object({
   }, {
     message: 'A data de início do serviço não pode ser anterior à data atual',
   }),
+  listDgoandbox: z.string().min(1).optional(),
+  nodeName: z.string().min(1).optional(),
   token: z.string()
 });
 
@@ -110,6 +112,8 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
       address,
       startServiceAt,
       selectedCable,
+      listDgoandbox,
+      nodeName,
       token
     } = paramsSchema.parse(req.body);
     const authenticationHash = await getAuthenticationHash();
@@ -143,6 +147,8 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
         null,
         null,
         null,
+        listDgoandbox || null,
+        nodeName || null,
         createdAt,
         null,
         'TIPO_CONSTRUÇÃO',
@@ -162,13 +168,15 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
           start_service_at,
           list_service, 
           list_material, 
-          observation, 
-          created_at, 
+          observation,
+          list_dgoandbox,
+          node_name, 
+          created_at,
           modification_at,
           type_operation, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const queryOperationsHistory =  `
       INSERT INTO tbl_operations_logs (
@@ -183,13 +191,15 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
           start_service_at,
           list_service, 
           list_material, 
-          observation, 
+          observation,
+          list_dgoandbox,
+          node_name,  
           created_at, 
           modification_at,
           type_operation, 
           finished_at
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       const insertValueCableSelected: Array<number | string | null> = [];
       selectedCable.forEach(item => {

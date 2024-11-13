@@ -10,7 +10,7 @@ import { z, ZodError } from 'zod';
 import { websocket } from '../../../../config/websocket';
 import { Socket } from 'socket.io-client';
 
-import routerCableCatalog from './cable-catalog';
+import routerCatalog from './catalog';
 import routerCreateService from './create-service';
 
 function getCurrentDateTime(date?: string): string {
@@ -219,7 +219,7 @@ router.post('/manage/new-construction-service', async (req: Request, res: Respon
   }
 });
 
-router.use(routerCableCatalog);
+router.use(routerCatalog);
 router.use(routerCreateService);
 
 export default router;

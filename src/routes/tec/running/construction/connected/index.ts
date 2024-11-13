@@ -1,0 +1,83 @@
+import express, { Request, Response } from 'express';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+
+import { getAuthenticationHash } from '../../../../../functions';
+import { executeQuery } from '../../../../../config/database';
+
+import { z, ZodError } from 'zod';
+
+const router = express.Router();
+
+const paramsSchema = z.object({
+  protocol: z.number().min(1),
+  token: z.string(),
+});
+
+const executionStatus: Map<string, boolean> = new Map();
+
+router.post('/running/construction/connected', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+}
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+      console.error('Já existe uma execução em andamento para este IP');
+      return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
+  try {
+    executionStatus.set(ip, true);
+    const { protocol, token } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
+
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line  
+        if (error) {
+          reject(error);
+          return;
+        }
+
+    try {      
+      const sql = `
+      SELECT user_accounts.name
+      FROM tbl_shared_service_authorized u1
+      JOIN tbl_user_accounts user_accounts ON u1.employee_id = user_accounts.id
+      WHERE u1.protocol = ?
+      ORDER BY u1.created_at DESC`;
+
+      const rows = await executeQuery(sql, [protocol]);
+      res.json(rows);
+        resolve(true);
+        }
+        catch (err) {
+          reject(err);
+        }
+      });
+    });
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  } finally {
+    executionStatus.set(ip, false);
+  }
+});
+
+export default router;

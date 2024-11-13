@@ -67,15 +67,15 @@ router.post('/running/construction/class-l/cable-laying', async (req: Request, r
       const createdAt = getCurrentDateTime();
       const { user: employee } = decoded as Decoded;
 
-      const values1 = [
+      const valuesCableSelected = [
         usedLengthMeters,
         id
       ];
 
-      const sql2 = 'SELECT cable_id FROM tbl_cable_selected WHERE id = ?';
-      const [row] = await executeQuery(sql2, [id]) as Array<{[key: string]: string}>;
+      const sqlCableId = 'SELECT cable_id FROM tbl_cable_selected WHERE id = ?';
+      const [row] = await executeQuery(sqlCableId, [id]) as Array<{[key: string]: string}>;
 
-      const values2 = [
+      const valuesCableOperations = [
         protocol,
         usedLengthMeters,
         0,
@@ -84,15 +84,17 @@ router.post('/running/construction/class-l/cable-laying', async (req: Request, r
         createdAt
       ];
 
-      const querySql1 = `
+      const querySqlCableSelected = `
       UPDATE tbl_cable_selected SET used_length_meters = used_length_meters + ? WHERE id = ?`;
 
-      const querySql2 = 'INSERT INTO tbl_cable_operations ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
+      const querySqlCableOperations = 'INSERT INTO tbl_cable_operations ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
 
+      const querySqlCableOperationsLog = 'INSERT INTO tbl_cable_operations_log ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
 
       await executeTransaction([ 
-        { query: querySql1, values: values1 },
-        { query: querySql2, values: values2 }
+        { query: querySqlCableSelected, values: valuesCableSelected },
+        { query: querySqlCableOperations, values: valuesCableOperations },
+        { query: querySqlCableOperationsLog, values: valuesCableOperations }
       ]);
  
       const socket = await websocket(token) as Socket;

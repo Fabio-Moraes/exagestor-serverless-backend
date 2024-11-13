@@ -7,6 +7,7 @@ import { executeQuery } from '../../../../../config/database';
 
 import routesCableLaying from './cable-laying';
 import routesCableAdequacy from './cable-adequacy';
+import routesHistoric from './historic';
 
 import { z, ZodError } from 'zod';
 
@@ -112,5 +113,6 @@ router.post('/running/construction/class-l', async (req: Request, res: Response)
 
 router.use(routesCableLaying);
 router.use(routesCableAdequacy);
+router.use(routesHistoric);
 
 export default router;

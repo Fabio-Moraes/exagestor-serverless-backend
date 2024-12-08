@@ -17,12 +17,20 @@ const redisClient = new Redis({
   host: REDIS_HOST,
   password: REDIS_PASSWORD,
   port: Number(REDIS_PORT),
-  retryStrategy: (times) => Math.min(times * 50, 2000),
+  maxRetriesPerRequest: 5, // Número máximo de tentativas por solicitação
+  connectTimeout: 10000, // Tempo máximo para estabelecer uma conexão (em milissegundos)
+  retryStrategy: (times) => Math.min(times * 50, 2000), // Estratégia de retry
+  reconnectOnError: (err) => {
+    const targetError = 'READONLY';
+    if (err.message.includes(targetError)) {
+      return true; // Reconectar em caso de erro READONLY
+    }
+    return false;
+  },
   ...(REDIS_TLS_REJECT_UNAUTHORIZED === 'true' && {
     tls: { servername: REDIS_HOST }
   }),
 });
-
 redisClient.on('error', (err) => {
   console.error('Redis error:', err);
 });

@@ -46,7 +46,7 @@ const dbConfig = {
   password: MYSQL_PASSWORD,
   database: MYSQL_DATABASE,
   port: Number(MYSQL_PORT),
-  connectionLimit: 10,
+  connectionLimit: 30,
   ...(MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' && {
     ssl: {
       ca: cert/* fs.readFileSync(__dirname + '/certs/ca-cert.txt') */,

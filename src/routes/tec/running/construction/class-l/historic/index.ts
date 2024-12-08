@@ -47,7 +47,7 @@ router.post('/running/construction/class-l/historic', async (req: Request, res: 
 
       const sqlHistoricCableOperations  = `
       SELECT u1.*, tec_user.name AS name_tec
-      FROM tbl_cable_operations_log u1
+      FROM tbl_cable_operations_logs u1
       JOIN tbl_user_accounts tec_user ON u1.employee_id = tec_user.id 
       WHERE u1.protocol = ? 
       ORDER BY u1.created_at DESC`;

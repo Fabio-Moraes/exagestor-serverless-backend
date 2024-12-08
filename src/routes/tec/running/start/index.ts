@@ -23,11 +23,11 @@ const paramsSchema = z.object({
   protocol: z.string().max(17),
 });
 
-interface ServiceData {
+type ServiceData = {
   id: number;
   client_name: string;
   employee_id: string;
-  creator_leader_id: string;
+  creator_leader_id?: string;
   city: string;
   address: string;
   nomenclature: string;
@@ -41,6 +41,7 @@ interface ServiceData {
   list_material: string;
   list_service: string;
   list_dgoandbox: string;
+  node_name: string;
   observation: string;
   type_operation: string;
   protocol: string;

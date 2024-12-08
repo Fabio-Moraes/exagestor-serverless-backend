@@ -89,7 +89,7 @@ router.post('/running/construction/class-l/cable-laying', async (req: Request, r
 
       const querySqlCableOperations = 'INSERT INTO tbl_cable_operations ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
 
-      const querySqlCableOperationsLog = 'INSERT INTO tbl_cable_operations_log ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
+      const querySqlCableOperationsLog = 'INSERT INTO tbl_cable_operations_logs ( protocol, cable_length_meters, adequacy_length_meters, employee_id, cable_id, created_at) VALUES ( ?, ?, ?, ?, ?, ?)';
 
       await executeTransaction([ 
         { query: querySqlCableSelected, values: valuesCableSelected },

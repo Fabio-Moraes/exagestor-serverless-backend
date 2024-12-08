@@ -28,6 +28,8 @@ type ServiceData = {
   finished_at: string;
   list_material: string;
   list_service: string;
+  list_dgoandbox: string;
+  node_name: string;
   observation: string;
   type_operation: string;
   protocol: string;

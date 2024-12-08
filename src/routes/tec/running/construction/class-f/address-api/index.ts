@@ -1,0 +1,82 @@
+import express, { Request, Response } from 'express';
+import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+import axios from 'axios';
+
+import { getAuthenticationHash } from '../../../../../../functions';
+
+import { z, ZodError } from 'zod';
+
+const router = express.Router();
+
+const executionStatus: Map<string, boolean> = new Map();
+
+router.post('/running/construction/class-f/address-api', async (req: Request, res: Response) => {
+  const ip = req.ip;
+
+  if (!ip) {
+    console.error('IP não fornecido');
+    return res.status(409).json({ error: 'IP não fornecido' });
+  }
+
+  if (executionStatus.has(ip) && executionStatus.get(ip) === true) {
+    console.error('Já existe uma execução em andamento para este IP');
+    return res.status(409).json({ error: 'Já existe uma execução em andamento para este IP' });
+  }
+
+  try {
+    executionStatus.set(ip, true);
+    const paramsSchema = z.object({ token: z.string(), longitude: z.string(), latitude: z.string()});
+    const { token, longitude, latitude } = paramsSchema.parse(req.body);
+    const authenticationHash = await getAuthenticationHash();
+
+    const apiKey = 'AIzaSyAnl9DMcJoCgYYjQmhtuAtkLU-ojXyv2j0'; //YOUR_GOOGLE_MAPS_API_KEY'
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    
+    await new Promise((resolve, reject) => {
+      jwt.verify(token, authenticationHash, async (error, decoded) => { // eslint-disable-line
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        try {
+          const response = await axios.get(url);
+          //console.log('TEST API', response.data.status);
+
+          if (response.data.status === 'OK') {
+            const address = response.data.results[0].formatted_address;
+            res.json({ address });
+          } else {
+            console.error('Nenhum resultado encontrado');
+            res.status(404).json({ error: 'Nenhum resultado encontrado' });
+          }
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log('Token expirado');
+      return res.status(403).json({ error: 'Token expirado' });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      console.log('Token inválido');
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+
+    if (error instanceof ZodError) {
+      console.error('Requisição inválida Zod', error.errors);
+      return res.status(400).json({ error: error.errors });
+    }
+
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  } finally {
+    executionStatus.set(ip, false);
+  }
+});
+
+export default router;

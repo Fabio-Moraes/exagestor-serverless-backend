@@ -7,6 +7,8 @@ import { executeQuery } from '../../../../../config/database';
 
 import { z, ZodError } from 'zod';
 
+import routesAddressApi from './address-api';
+
 const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
@@ -104,5 +106,7 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
     executionStatus.set(ip, false);
   }
 });
+
+router.use(routesAddressApi);
 
 export default router;

@@ -12,11 +12,11 @@ import { update_state_modification } from '../../../../../models/operations';
 import { Socket } from 'socket.io-client';
 import { websocket } from '../../../../../config/websocket';
 
-interface ServiceData {
+type ServiceData = {
   id: number;
   client_name: string;
   employee_id: string;
-  creator_leader_id: string;
+  creator_leader_id?: string;
   city: string;
   address: string;
   nomenclature: string;
@@ -30,6 +30,7 @@ interface ServiceData {
   list_material: string;
   list_service: string;
   list_dgoandbox: string;
+  node_name: string;
   observation: string;
   type_operation: string;
   protocol: string;

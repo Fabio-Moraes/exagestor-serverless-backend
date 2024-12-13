@@ -7,6 +7,7 @@ import { executeQuery } from '../../../../../config/database';
 
 import { z, ZodError } from 'zod';
 
+import routesFinishedDgoandboxApi from './finished-dgoandbox';
 import routesAddressApi from './address-api';
 
 const router = express.Router();
@@ -55,6 +56,8 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
       const sqlSelectedDgoandbox = `
       SELECT * FROM tbl_operations WHERE protocol = ?`;
 
+      const sqlSelectedcompletedDgoenbox = 'SELECT * FROM tbl_dgoandbox_operations WHERE protocol = ?';
+
       const sqlCatalogDgoandbox = `
       SELECT * FROM tbl_dgoandbox_catalog`;
 
@@ -67,11 +70,13 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
       ) AND protocol = ?`;
 
       const currentSelectedDgoandbox = await executeQuery(sqlSelectedDgoandbox, [protocol]);
+      const currentSelectedcompletedDgoenbox = await executeQuery(sqlSelectedcompletedDgoenbox, [protocol]);
       const currentCatalogDgoandbox = await executeQuery(sqlCatalogDgoandbox);
       const currentSharedPassword = await executeQuery(sqlSharedPassword, [user.id, protocol]);
 
       const data = {
-        selectedDgoandbox: currentSelectedDgoandbox, 
+        selectedDgoandbox: currentSelectedDgoandbox,
+        selectedcompletedDgoenbox: currentSelectedcompletedDgoenbox,
         catalogDgoandbox: currentCatalogDgoandbox,
         sharedPassword: currentSharedPassword
       };
@@ -108,5 +113,6 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
 });
 
 router.use(routesAddressApi);
+router.use(routesFinishedDgoandboxApi);
 
 export default router;

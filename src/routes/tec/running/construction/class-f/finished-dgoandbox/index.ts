@@ -3,7 +3,7 @@ import jwt, { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import type { Decoded } from '../../../../../../types/jwt';
 
 import { getAuthenticationHash } from '../../../../../../functions';
-import { executeTransaction, executeQuery } from '../../../../../../config/database';
+import { executeTransaction /* executeQuery */ } from '../../../../../../config/database';
 
 
 import routesCheckDgoenboxExistence from './check-dgoenbox-existence';
@@ -67,6 +67,8 @@ router.post('/running/construction/class-f/finished-dgoandbox', async (req: Requ
       observation
     } = paramsSchema.parse(req.body);
 
+    console.log('WWWWWWWWW', dgoandbox_name, dgoandbox_id, protocol);
+
     const authenticationHash = await getAuthenticationHash();
 
     await new Promise((resolve, reject) => {
@@ -78,18 +80,30 @@ router.post('/running/construction/class-f/finished-dgoandbox', async (req: Requ
 
         try {
           const createdAt = getCurrentDateTime();
-
+/* 
           const selectSql = 'SELECT * FROM tbl_dgoandbox_operations WHERE dgoandbox_name = ? AND protocol = ?';
           const [existing] = await executeQuery(selectSql, [dgoandbox_name, protocol]);
 
-          if (existing) { 
+          if (!existing) { 
             resolve(true);
             return res.status(400).json({ error: 'Requisição inválido' }); 
           }
-
+ */
           const { user: employee } = decoded as Decoded;
 
-          const values = [
+          const valuesDgoandboxOperations = [
+            latitude,
+            longitude,
+            node_name,
+            address,
+            observation,
+            createdAt,
+            dgoandbox_name,
+            dgoandbox_id,
+            protocol
+          ];
+
+          const valuesDgoandboxOperationsLogs = [
             protocol,
             employee.id,      
             dgoandbox_id,
@@ -99,30 +113,23 @@ router.post('/running/construction/class-f/finished-dgoandbox', async (req: Requ
             node_name,
             address,
             observation,
-            createdAt,
-            dgoandbox_name,
-            protocol,
+            createdAt
           ];
 
           const queryDgoandboxOperations = `
-            INSERT INTO tbl_dgoandbox_operations (
-                protocol, 
-                employee_id,
-                dgoandbox_id,
-                dgoandbox_name,
-                latitude,
-                longitude,
-                node_name,
-                address,
-                observation, 
-                created_at
-            ) 
-            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM tbl_dgoandbox_operations
-                WHERE dgoandbox_name = ? AND protocol = ?
-            );`;
+      UPDATE tbl_dgoandbox_operations 
+      SET 
+        latitude = ?, 
+        longitude = ?, 
+        node_name = ?, 
+        address = ?, 
+        observation = ?, 
+        created_at = ?
+      WHERE 
+        dgoandbox_name = ?
+        AND dgoandbox_id = ?
+        AND protocol = ?;
+    `;
 
           const queryDgoandboxOperationsLogs = `
       INSERT INTO tbl_dgoandbox_operations_logs (
@@ -140,8 +147,8 @@ router.post('/running/construction/class-f/finished-dgoandbox', async (req: Requ
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
       await executeTransaction([
-            { query: queryDgoandboxOperations, values: values },
-            { query: queryDgoandboxOperationsLogs, values: values.slice(0, -2) } // Remove o último elemento (dgoandbox_name extra
+            { query: queryDgoandboxOperations, values: valuesDgoandboxOperations },
+            { query: queryDgoandboxOperationsLogs, values: valuesDgoandboxOperationsLogs }
           ]);
 
           //const socket = await websocket(token) as Socket;

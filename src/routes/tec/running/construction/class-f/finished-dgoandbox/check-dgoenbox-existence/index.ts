@@ -43,7 +43,7 @@ router.post('/running/construction/class-f/finished-dgoandbox/check-dgoenbox-exi
         }
 
         try {
-          const sqlSelect = 'SELECT * FROM tbl_dgoandbox_operations WHERE dgoandbox_name = ? AND protocol = ?';
+          const sqlSelect = 'SELECT * FROM tbl_dgoandbox_operations WHERE dgoandbox_name = ? AND protocol = ? AND created_at IS NOT NULL;';
           const [data] = await executeQuery(sqlSelect, [dgoandbox_name, protocol]);
 
           if (data) {

@@ -4,6 +4,7 @@ import type { Decoded } from '../../../../../types/jwt';
 
 import { createProtocol } from '../../../../../utils/CreateProtocol';
 import { getAuthenticationHash } from '../../../../../functions';
+import { insert_operations_dgoendbox } from '../../../../../models/operations_dgoendbox';
 import { executeTransaction } from '../../../../../config/database';
 
 import { z, TypeOf, ZodError } from 'zod';
@@ -147,7 +148,7 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
         null,
         null,
         null,
-        listDgoandbox || null,
+        null,
         nodeName || null,
         createdAt,
         null,
@@ -227,7 +228,18 @@ router.post('/manage/new-construction-service/create-service', async (req: Reque
       const querySharedServiceOperations =  `
       INSERT INTO tbl_shared_service_operations (protocol, password) VALUES (?, ?)`;
 
+      const propsOperationsDgoendbox = {
+        operationProps: {
+          node_name: String(nodeName),
+          protocol: protocol
+        },
+        structureDgoandbox: JSON.parse(String(listDgoandbox))
+      };
+
+      const insertOperationsDgoendbox = await insert_operations_dgoendbox(propsOperationsDgoendbox);
+
       await executeTransaction([
+        insertOperationsDgoendbox,
         { query: queryOperations, values: insertQueryOperations },
         { query: queryOperationsHistory, values: insertQueryOperations },
         { query: querySharedServiceOperations, values: insertSharedServiceOperations },

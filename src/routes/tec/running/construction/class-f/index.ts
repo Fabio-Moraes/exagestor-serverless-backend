@@ -14,6 +14,30 @@ const router = express.Router();
 
 const executionStatus: Map<string, boolean> = new Map();
 
+interface Dgoandbox {
+  dgoandbox_id: string;
+  dgoandbox_name: string;
+}
+
+interface StructureDgoandbox {
+  [dgoandbox_id: string]: {
+    [dgoandbox_name: string]: { value: string };
+  };
+}
+
+function parseItemsToObject(insertItems: Dgoandbox[]): StructureDgoandbox {
+  const structureDgoandbox: StructureDgoandbox = {};
+
+  insertItems.forEach(item => {
+    if (!structureDgoandbox[item.dgoandbox_id]) {
+      structureDgoandbox[item.dgoandbox_id] = {};
+    }
+    structureDgoandbox[item.dgoandbox_id][item.dgoandbox_name] = { value: item.dgoandbox_name };
+  });
+
+  return structureDgoandbox;
+}
+
 router.post('/running/construction/class-f', async (req: Request, res: Response) => {
   const ip = req.ip;
 
@@ -53,10 +77,13 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
       WHERE u1.protocol = ?
       ORDER BY u1.created_at DESC`; */
 
-      const sqlSelectedDgoandbox = `
+      const sqlSelectedServiceOperations = `
       SELECT * FROM tbl_operations WHERE protocol = ?`;
 
-      const sqlSelectedcompletedDgoenbox = 'SELECT * FROM tbl_dgoandbox_operations WHERE protocol = ?';
+      const sqlSelectedDgoandbox = `
+      SELECT * FROM tbl_dgoandbox_operations WHERE protocol = ?`;
+
+      const sqlSelectedcompletedDgoenbox = 'SELECT * FROM tbl_dgoandbox_operations WHERE protocol = ? AND created_at IS NOT NULL';
 
       const sqlCatalogDgoandbox = `
       SELECT * FROM tbl_dgoandbox_catalog`;
@@ -69,13 +96,15 @@ router.post('/running/construction/class-f', async (req: Request, res: Response)
           WHERE p.protocol = u1.protocol AND p.employee_id = ?
       ) AND protocol = ?`;
 
-      const currentSelectedDgoandbox = await executeQuery(sqlSelectedDgoandbox, [protocol]);
+      const currentSelectedServiceOperations = await executeQuery(sqlSelectedServiceOperations, [protocol]);
+      const currentSelectedDgoandbox = await executeQuery(sqlSelectedDgoandbox, [protocol]) as Dgoandbox[];
       const currentSelectedcompletedDgoenbox = await executeQuery(sqlSelectedcompletedDgoenbox, [protocol]);
       const currentCatalogDgoandbox = await executeQuery(sqlCatalogDgoandbox);
       const currentSharedPassword = await executeQuery(sqlSharedPassword, [user.id, protocol]);
 
       const data = {
-        selectedDgoandbox: currentSelectedDgoandbox,
+        selectedServiceOperations: currentSelectedServiceOperations,
+        selectedDgoandbox: parseItemsToObject(currentSelectedDgoandbox),
         selectedcompletedDgoenbox: currentSelectedcompletedDgoenbox,
         catalogDgoandbox: currentCatalogDgoandbox,
         sharedPassword: currentSharedPassword
